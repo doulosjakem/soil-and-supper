@@ -2,7 +2,7 @@
 
 An offline-first native iOS garden companion built with SwiftUI.
 
-## Milestone 2 — Garden CRUD
+## Milestone 3 — Plant Photos
 
 ### Prerequisites
 
@@ -29,21 +29,23 @@ An offline-first native iOS garden companion built with SwiftUI.
    - `GardenToTableView.swift`
    - `AddPlantView.swift`
    - `PlantDetailView.swift`
+   - `PhotoStore.swift`
    - `Models/` (entire folder)
    - `Info.plist`
    - `Assets.xcassets/` (entire folder)
 7. In Xcode project settings, set **iOS Deployment Target** to `17.0` or higher.
 8. Build and run on the iOS Simulator.
 
-### Project Structure (Milestone 2)
+### Project Structure (Milestone 3)
 
 ```
 SoilAndSupper/
 ├── SoilAndSupperApp.swift   # App entry point with SwiftData ModelContainer
 ├── ContentView.swift        # Root TabView
 ├── GardenView.swift         # Plant list with add/delete
-├── PlantDetailView.swift    # Edit plant details
+├── PlantDetailView.swift    # Edit plant details + photos
 ├── AddPlantView.swift       # Add new plant form
+├── PhotoStore.swift         # Local photo file management
 ├── HarvestView.swift        # Placeholder
 ├── IdentifyView.swift       # Placeholder
 ├── GardenToTableView.swift  # Placeholder
@@ -52,20 +54,20 @@ SoilAndSupper/
 │   └── AppIcon.appiconset/
 └── Models/
     ├── Garden.swift
-    └── Plant.swift
+    ├── Plant.swift
+    └── PlantPhoto.swift
 ```
 
-### What Changed in Milestone 2
+### What Changed in Milestone 3
 
-- Added SwiftData persistence layer with `Garden` and `Plant` models.
-- `GardenView` now shows a list of plants with navigation to detail.
-- `AddPlantView` provides a form to create new plants.
-- `PlantDetailView` allows editing and deleting plants.
-- All data persists across app launches.
+- Added `PlantPhoto` SwiftData model with local file storage.
+- `PlantDetailView` now shows a horizontal scroll of plant photos.
+- Users can add photos via the system photo picker.
+- Users can delete photos from the context menu.
+- Photos are stored locally in the app's documents directory, not in iCloud or third-party services.
 
 ### Next Steps
 
-- Milestone 3: Photos.
 - Milestone 4: Journal entries.
 - Milestone 5: Harvest records.
 - Milestone 6: Plant identification AI.
@@ -75,4 +77,5 @@ SoilAndSupper/
 
 - No third-party dependencies are used.
 - Persistence uses SwiftData (iOS 17+), Apple's native framework.
-- The app is structured to add AI service protocols later without major refactoring.
+- Photo storage uses the app's local documents directory.
+- Camera capture is deferred to a later milestone; photo library selection is available now.
