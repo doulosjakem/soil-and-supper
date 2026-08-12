@@ -2,7 +2,7 @@
 
 An offline-first native iOS garden companion built with SwiftUI.
 
-## Milestone 1 — Empty App
+## Milestone 2 — Garden CRUD
 
 ### Prerequisites
 
@@ -18,39 +18,53 @@ An offline-first native iOS garden companion built with SwiftUI.
    - **Interface:** `SwiftUI`
    - **Language:** `Swift`
    - **Bundle Identifier:** `com.soilandsupper.app`
-   - **User Interface:** `Storyboard` is not applicable; use SwiftUI.
 4. Save the project in this repository directory: `D:\soil-and-supper\soil-and-supper\SoilAndSupper.xcodeproj`
 5. **Important:** After creating the project, delete the auto-generated `ContentView.swift` that Xcode creates. The `ContentView.swift` in this repository is the one you want.
-6. Drag the following files from this repository into your Xcode project (choose **Copy items if needed**):
+6. Drag the following files/folders from this repository into your Xcode project (choose **Copy items if needed**):
    - `SoilAndSupperApp.swift`
    - `ContentView.swift`
    - `GardenView.swift`
    - `HarvestView.swift`
    - `IdentifyView.swift`
    - `GardenToTableView.swift`
+   - `AddPlantView.swift`
+   - `PlantDetailView.swift`
+   - `Models/` (entire folder)
    - `Info.plist`
-   - `Assets.xcassets/` (the entire folder)
+   - `Assets.xcassets/` (entire folder)
 7. In Xcode project settings, set **iOS Deployment Target** to `17.0` or higher.
 8. Build and run on the iOS Simulator.
 
-### Project Structure (Milestone 1)
+### Project Structure (Milestone 2)
 
 ```
 SoilAndSupper/
-├── SoilAndSupperApp.swift   # App entry point (@main)
+├── SoilAndSupperApp.swift   # App entry point with SwiftData ModelContainer
 ├── ContentView.swift        # Root TabView
-├── GardenView.swift         # Placeholder for Garden tab
-├── HarvestView.swift        # Placeholder for Harvest tab
-├── IdentifyView.swift       # Placeholder for Identify tab
-├── GardenToTableView.swift  # Placeholder for Garden-to-Table tab
+├── GardenView.swift         # Plant list with add/delete
+├── PlantDetailView.swift    # Edit plant details
+├── AddPlantView.swift       # Add new plant form
+├── HarvestView.swift        # Placeholder
+├── IdentifyView.swift       # Placeholder
+├── GardenToTableView.swift  # Placeholder
 ├── Info.plist
-└── Assets.xcassets/
-    └── AppIcon.appiconset/
+├── Assets.xcassets/
+│   └── AppIcon.appiconset/
+└── Models/
+    ├── Garden.swift
+    └── Plant.swift
 ```
+
+### What Changed in Milestone 2
+
+- Added SwiftData persistence layer with `Garden` and `Plant` models.
+- `GardenView` now shows a list of plants with navigation to detail.
+- `AddPlantView` provides a form to create new plants.
+- `PlantDetailView` allows editing and deleting plants.
+- All data persists across app launches.
 
 ### Next Steps
 
-- Milestone 2: Garden CRUD with local persistence.
 - Milestone 3: Photos.
 - Milestone 4: Journal entries.
 - Milestone 5: Harvest records.
@@ -59,5 +73,6 @@ SoilAndSupper/
 
 ### Notes
 
-- No third-party dependencies are used in Milestone 1.
+- No third-party dependencies are used.
+- Persistence uses SwiftData (iOS 17+), Apple's native framework.
 - The app is structured to add AI service protocols later without major refactoring.
