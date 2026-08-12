@@ -8,9 +8,15 @@ struct PlantDetailView: View {
     @Query private var allPhotos: [PlantPhoto]
     @State private var showingPhotoPicker = false
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
+    @State private var showingJournalEntry = false
+    @State private var editingEntry: JournalEntry? = nil
 
     private var plantPhotos: [PlantPhoto] {
         allPhotos.filter { $0.plant?.id == plant.id }
+    }
+
+    private var sortedJournalEntries: [JournalEntry] {
+        plant.journalEntries.sorted { $0.date > $1.date }
     }
 
     var body: some View {
@@ -60,14 +66,53 @@ struct PlantDetailView: View {
                     }
                 }
             }
+
+            Section("Journal") {
+                if sortedJournalEntries.isEmpty {
+                    ContentUnavailableView(
+                        "No Journal Entries",
+                        systemImage: "book",
+                        description: Text("Tap + to add your first entry.")
+                    )
+                } else {
+                    ForEach(sortedJournalEntries) { entry in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(entry.date, format: .dateTime.day().month().year())
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(entry.text)
+                                .font(.body)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button("Edit") {
+                                editingEntry = entry
+                                showingJournalEntry = true
+                            }
+                            Button("Delete", role: .destructive) {
+                                modelContext.delete(entry)
+                            }
+                        }
+                    }
+                }
+            }
         }
         .navigationTitle(plant.name)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showingPhotoPicker = true
+                Menu {
+                    Button {
+                        showingPhotoPicker = true
+                    } label: {
+                        Label("Add Photo", systemImage: "photo")
+                    }
+                    Button {
+                        editingEntry = nil
+                        showingJournalEntry = true
+                    } label: {
+                        Label("Add Journal Entry", systemImage: "square.and.pencil")
+                    }
                 } label: {
-                    Label("Add Photo", systemImage: "plus")
+                    Label("Add", systemImage: "plus")
                 }
             }
             ToolbarItem(placement: .destructiveAction) {
@@ -86,6 +131,11 @@ struct PlantDetailView: View {
             Task {
                 await handlePhotoSelection(newItem)
             }
+        }
+        .sheet(isPresented: $showingJournalEntry, onDismiss: {
+            editingEntry = nil
+        }) {
+            JournalEntryView(plant: plant, entry: editingEntry)
         }
         .onDisappear {
             plant.updatedAt = Date()

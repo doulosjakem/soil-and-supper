@@ -17,6 +17,9 @@ final class Plant {
     @Relationship(deleteRule: .cascade, inverse: \PlantPhoto.plant)
     var photos: [PlantPhoto] = []
 
+    @Relationship(deleteRule: .cascade, inverse: \JournalEntry.plant)
+    var journalEntries: [JournalEntry] = []
+
     init(
         name: String,
         variety: String? = nil,
@@ -33,6 +36,7 @@ final class Plant {
         self.notes = notes
         self.garden = garden
         self.photos = []
+        self.journalEntries = []
         self.createdAt = Date()
         self.updatedAt = Date()
     }

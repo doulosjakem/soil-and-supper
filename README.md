@@ -2,7 +2,7 @@
 
 An offline-first native iOS garden companion built with SwiftUI.
 
-## Milestone 3 — Plant Photos
+## Milestone 4 — Plant Journal
 
 ### Prerequisites
 
@@ -29,6 +29,7 @@ An offline-first native iOS garden companion built with SwiftUI.
    - `GardenToTableView.swift`
    - `AddPlantView.swift`
    - `PlantDetailView.swift`
+   - `JournalEntryView.swift`
    - `PhotoStore.swift`
    - `Models/` (entire folder)
    - `Info.plist`
@@ -36,14 +37,15 @@ An offline-first native iOS garden companion built with SwiftUI.
 7. In Xcode project settings, set **iOS Deployment Target** to `17.0` or higher.
 8. Build and run on the iOS Simulator.
 
-### Project Structure (Milestone 3)
+### Project Structure (Milestone 4)
 
 ```
 SoilAndSupper/
 ├── SoilAndSupperApp.swift   # App entry point with SwiftData ModelContainer
 ├── ContentView.swift        # Root TabView
 ├── GardenView.swift         # Plant list with add/delete
-├── PlantDetailView.swift    # Edit plant details + photos
+├── PlantDetailView.swift    # Edit plant details + photos + journal
+├── JournalEntryView.swift   # Add/edit journal entry sheet
 ├── AddPlantView.swift       # Add new plant form
 ├── PhotoStore.swift         # Local photo file management
 ├── HarvestView.swift        # Placeholder
@@ -55,20 +57,21 @@ SoilAndSupper/
 └── Models/
     ├── Garden.swift
     ├── Plant.swift
-    └── PlantPhoto.swift
+    ├── PlantPhoto.swift
+    └── JournalEntry.swift
 ```
 
-### What Changed in Milestone 3
+### What Changed in Milestone 4
 
-- Added `PlantPhoto` SwiftData model with local file storage.
-- `PlantDetailView` now shows a horizontal scroll of plant photos.
-- Users can add photos via the system photo picker.
-- Users can delete photos from the context menu.
-- Photos are stored locally in the app's documents directory, not in iCloud or third-party services.
+- Added `JournalEntry` SwiftData model with `date` and `text` fields.
+- `PlantDetailView` now shows a Journal section with entries sorted newest-first.
+- Users can add new journal entries via a sheet form.
+- Users can edit existing entries by swiping and tapping Edit.
+- Users can delete entries by swiping and tapping Delete.
+- Journal entries persist locally via SwiftData.
 
 ### Next Steps
 
-- Milestone 4: Journal entries.
 - Milestone 5: Harvest records.
 - Milestone 6: Plant identification AI.
 - Milestone 7: Garden-to-table AI.
@@ -78,4 +81,4 @@ SoilAndSupper/
 - No third-party dependencies are used.
 - Persistence uses SwiftData (iOS 17+), Apple's native framework.
 - Photo storage uses the app's local documents directory.
-- Camera capture is deferred to a later milestone; photo library selection is available now.
+- Journal entries are plain text only; rich text/markdown is not supported in this milestone.

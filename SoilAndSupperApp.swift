@@ -8,7 +8,7 @@ struct SoilAndSupperApp: App {
     init() {
         do {
             modelContainer = try ModelContainer(
-                for: [Garden.self, Plant.self, PlantPhoto.self]
+                for: [Garden.self, Plant.self, PlantPhoto.self, JournalEntry.self]
             )
         } catch {
             fatalError("Failed to initialize ModelContainer: \(error)")
