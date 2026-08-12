@@ -10,6 +10,8 @@ struct PlantDetailView: View {
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
     @State private var showingJournalEntry = false
     @State private var editingEntry: JournalEntry? = nil
+    @State private var showingHarvest = false
+    @State private var editingHarvest: Harvest? = nil
 
     private var plantPhotos: [PlantPhoto] {
         allPhotos.filter { $0.plant?.id == plant.id }
@@ -17,6 +19,10 @@ struct PlantDetailView: View {
 
     private var sortedJournalEntries: [JournalEntry] {
         plant.journalEntries.sorted { $0.date > $1.date }
+    }
+
+    private var sortedHarvests: [Harvest] {
+        plant.harvests.sorted { $0.date > $1.date }
     }
 
     var body: some View {
@@ -95,6 +101,35 @@ struct PlantDetailView: View {
                     }
                 }
             }
+
+            Section("Harvests") {
+                if sortedHarvests.isEmpty {
+                    ContentUnavailableView(
+                        "No Harvests",
+                        systemImage: "basket",
+                        description: Text("Tap + to add your first harvest.")
+                    )
+                } else {
+                    ForEach(sortedHarvests) { harvest in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("\(harvest.cropName) — \(harvest.quantity, specifier: "%.1f") \(harvest.unit)")
+                                .font(.body)
+                            Text(harvest.date, format: .dateTime.day().month().year())
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button("Edit") {
+                                editingHarvest = harvest
+                                showingHarvest = true
+                            }
+                            Button("Delete", role: .destructive) {
+                                modelContext.delete(harvest)
+                            }
+                        }
+                    }
+                }
+            }
         }
         .navigationTitle(plant.name)
         .toolbar {
@@ -110,6 +145,12 @@ struct PlantDetailView: View {
                         showingJournalEntry = true
                     } label: {
                         Label("Add Journal Entry", systemImage: "square.and.pencil")
+                    }
+                    Button {
+                        editingHarvest = nil
+                        showingHarvest = true
+                    } label: {
+                        Label("Add Harvest", systemImage: "basket")
                     }
                 } label: {
                     Label("Add", systemImage: "plus")
@@ -136,6 +177,11 @@ struct PlantDetailView: View {
             editingEntry = nil
         }) {
             JournalEntryView(plant: plant, entry: editingEntry)
+        }
+        .sheet(isPresented: $showingHarvest, onDismiss: {
+            editingHarvest = nil
+        }) {
+            AddEditHarvestView(plant: plant, harvest: editingHarvest)
         }
         .onDisappear {
             plant.updatedAt = Date()

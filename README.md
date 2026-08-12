@@ -2,7 +2,7 @@
 
 An offline-first native iOS garden companion built with SwiftUI.
 
-## Milestone 4 — Plant Journal
+## Milestone 5 — Harvest Tracking and Inventory
 
 ### Prerequisites
 
@@ -30,6 +30,7 @@ An offline-first native iOS garden companion built with SwiftUI.
    - `AddPlantView.swift`
    - `PlantDetailView.swift`
    - `JournalEntryView.swift`
+   - `AddEditHarvestView.swift`
    - `PhotoStore.swift`
    - `Models/` (entire folder)
    - `Info.plist`
@@ -37,18 +38,19 @@ An offline-first native iOS garden companion built with SwiftUI.
 7. In Xcode project settings, set **iOS Deployment Target** to `17.0` or higher.
 8. Build and run on the iOS Simulator.
 
-### Project Structure (Milestone 4)
+### Project Structure (Milestone 5)
 
 ```
 SoilAndSupper/
 ├── SoilAndSupperApp.swift   # App entry point with SwiftData ModelContainer
 ├── ContentView.swift        # Root TabView
 ├── GardenView.swift         # Plant list with add/delete
-├── PlantDetailView.swift    # Edit plant details + photos + journal
-├── JournalEntryView.swift   # Add/edit journal entry sheet
+├── PlantDetailView.swift    # Edit plant details + photos + journal + harvests
 ├── AddPlantView.swift       # Add new plant form
+├── JournalEntryView.swift   # Add/edit journal entry sheet
+├── AddEditHarvestView.swift # Add/edit harvest entry sheet
+├── HarvestView.swift        # Harvest inventory view
 ├── PhotoStore.swift         # Local photo file management
-├── HarvestView.swift        # Placeholder
 ├── IdentifyView.swift       # Placeholder
 ├── GardenToTableView.swift  # Placeholder
 ├── Info.plist
@@ -58,22 +60,24 @@ SoilAndSupper/
     ├── Garden.swift
     ├── Plant.swift
     ├── PlantPhoto.swift
-    └── JournalEntry.swift
+    ├── JournalEntry.swift
+    └── Harvest.swift
 ```
 
-### What Changed in Milestone 4
+### What Changed in Milestone 5
 
-- Added `JournalEntry` SwiftData model with `date` and `text` fields.
-- `PlantDetailView` now shows a Journal section with entries sorted newest-first.
-- Users can add new journal entries via a sheet form.
-- Users can edit existing entries by swiping and tapping Edit.
-- Users can delete entries by swiping and tapping Delete.
-- Journal entries persist locally via SwiftData.
+- Added `Harvest` SwiftData model with `cropName`, `quantity`, `unit`, `date`, and `notes` fields.
+- `PlantDetailView` now shows a Harvests section with entries sorted newest-first.
+- Users can add new harvests via a sheet form.
+- Users can edit existing harvests by swiping and tapping Edit.
+- Users can delete harvests by swiping and tapping Delete.
+- `HarvestView` now shows a simple inventory aggregated by crop name and unit.
+- Users can tap an inventory item to see the underlying harvest records.
+- Harvest data is structured for future Garden-to-Table AI integration.
 
 ### Next Steps
 
-- Milestone 5: Harvest records.
-- Milestone 6: Plant identification AI.
+- Milestone 6: Local Plant AI identification.
 - Milestone 7: Garden-to-table AI.
 
 ### Notes
@@ -81,4 +85,4 @@ SoilAndSupper/
 - No third-party dependencies are used.
 - Persistence uses SwiftData (iOS 17+), Apple's native framework.
 - Photo storage uses the app's local documents directory.
-- Journal entries are plain text only; rich text/markdown is not supported in this milestone.
+- Journal entries and harvests are plain text only.
