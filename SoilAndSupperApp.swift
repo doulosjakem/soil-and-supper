@@ -19,6 +19,7 @@ struct SoilAndSupperApp: App {
         WindowGroup {
             ContentView()
                 .modelContainer(modelContainer)
+                .environmentObject(MockPlantIdentifier())
         }
     }
 }

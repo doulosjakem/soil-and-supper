@@ -2,7 +2,7 @@
 
 An offline-first native iOS garden companion built with SwiftUI.
 
-## Milestone 5 — Harvest Tracking and Inventory
+## Milestone 6 Phase 1 — Plant Identification Architecture
 
 ### Prerequisites
 
@@ -32,17 +32,18 @@ An offline-first native iOS garden companion built with SwiftUI.
    - `JournalEntryView.swift`
    - `AddEditHarvestView.swift`
    - `PhotoStore.swift`
+   - `Services/` (entire folder)
    - `Models/` (entire folder)
    - `Info.plist`
    - `Assets.xcassets/` (entire folder)
 7. In Xcode project settings, set **iOS Deployment Target** to `17.0` or higher.
 8. Build and run on the iOS Simulator.
 
-### Project Structure (Milestone 5)
+### Project Structure (Milestone 6 Phase 1)
 
 ```
 SoilAndSupper/
-├── SoilAndSupperApp.swift   # App entry point with SwiftData ModelContainer
+├── SoilAndSupperApp.swift   # App entry point with SwiftData + MockPlantIdentifier
 ├── ContentView.swift        # Root TabView
 ├── GardenView.swift         # Plant list with add/delete
 ├── PlantDetailView.swift    # Edit plant details + photos + journal + harvests
@@ -51,11 +52,14 @@ SoilAndSupper/
 ├── AddEditHarvestView.swift # Add/edit harvest entry sheet
 ├── HarvestView.swift        # Harvest inventory view
 ├── PhotoStore.swift         # Local photo file management
-├── IdentifyView.swift       # Placeholder
+├── IdentifyView.swift       # Plant identification UI with mock pipeline
 ├── GardenToTableView.swift  # Placeholder
 ├── Info.plist
 ├── Assets.xcassets/
 │   └── AppIcon.appiconset/
+├── Services/
+│   ├── PlantIdentifier.swift    # Protocol + result model
+│   └── MockPlantIdentifier.swift # Mock implementation for Phase 1
 └── Models/
     ├── Garden.swift
     ├── Plant.swift
@@ -64,25 +68,28 @@ SoilAndSupper/
     └── Harvest.swift
 ```
 
-### What Changed in Milestone 5
+### What Changed in Milestone 6 Phase 1
 
-- Added `Harvest` SwiftData model with `cropName`, `quantity`, `unit`, `date`, and `notes` fields.
-- `PlantDetailView` now shows a Harvests section with entries sorted newest-first.
-- Users can add new harvests via a sheet form.
-- Users can edit existing harvests by swiping and tapping Edit.
-- Users can delete harvests by swiping and tapping Delete.
-- `HarvestView` now shows a simple inventory aggregated by crop name and unit.
-- Users can tap an inventory item to see the underlying harvest records.
-- Harvest data is structured for future Garden-to-Table AI integration.
+- Added `PlantIdentifier` protocol with `identify(image:) async throws -> PlantIdentification`.
+- Added `PlantIdentification` result model with `cropName`, `variety`, and `confidence`.
+- Added `MockPlantIdentifier` that returns simulated predictions after a short delay.
+- Replaced the `IdentifyView` placeholder with a full identification UI:
+  - Lists existing plant photos.
+  - Runs selected photo through the mock identifier.
+  - Displays predicted name, optional variety, and confidence.
+  - Allows confirming the result.
+  - Allows correcting the result and saving the corrected name.
+  - If confirmed/corrected, creates a new Plant or updates an existing linked Plant.
 
-### Next Steps
+### Next Steps (Phase 2 — NOT YET IMPLEMENTED)
 
-- Milestone 6: Local Plant AI identification.
-- Milestone 7: Garden-to-table AI.
+- Determine plant dataset and species classes for MVP.
+- Evaluate Create ML training pipeline and base model choice.
+- Train, convert, and bundle a real Core ML model.
+- Replace `MockPlantIdentifier` with a Core ML + Vision implementation.
 
 ### Notes
 
-- No third-party dependencies are used.
-- Persistence uses SwiftData (iOS 17+), Apple's native framework.
-- Photo storage uses the app's local documents directory.
-- Journal entries and harvests are plain text only.
+- No third-party ML dependencies are used in Phase 1.
+- No Core ML model is bundled yet.
+- The architecture keeps the model behind the `PlantIdentifier` protocol so the real implementation can be swapped in later without changing the UI.
