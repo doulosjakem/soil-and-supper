@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Soil & Supper</string>
+    <string name="garden">Garden</string>
+    <string name="harvest">Harvest</string>
+    <string name="identify">Identify</string>
+    <string name="garden_to_table">Garden-to-Table</string>
+    <string name="add_plant">Add Plant</string>
+    <string name="edit_plant">Edit Plant</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="plant_name">Plant name</string>
+    <string name="variety">Variety</string>
+    <string name="planting_date">Planting date</string>
+    <string name="location">Location</string>
+    <string name="notes">Notes</string>
+    <string name="add_photo">Add photo</string>
+    <string name="add_journal_entry">Add journal entry</string>
+    <string name="add_harvest">Add harvest</string>
+    <string name="quantity">Quantity</string>
+    <string name="unit">Unit</string>
+    <string name="date">Date</string>
+    <string name="crop_name">Crop name</string>
+    <string name="confidence">Confidence</string>
+    <string name="confirm">Confirm</string>
+    <string name="correct">Correct</string>
+    <string name="no_plants">No plants yet</string>
+    <string name="no_harvests">No harvests yet</string>
+    <string name="identify_unavailable">Plant identification is unavailable</string>
+    <string name="select_photo">Select photo</string>
+    <string name="take_photo">Take photo</string>
+</resources>
