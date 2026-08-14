@@ -1,8 +1,10 @@
 data:
-  raw_dir: "../data/raw"
-  processed_dir: "../data/processed"
-  manifests_dir: "../data/manifests"
-  reports_dir: "../data/reports"
+  root_dir: "../training_data"
+  raw_dir: "../training_data/raw"
+  processed_dir: "../training_data/processed"
+  manifests_dir: "../training_data/manifests"
+  reports_dir: "../training_data/reports"
+  hold_dir: "../training_data/hold"
 
 domains:
   crops:
