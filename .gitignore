@@ -70,6 +70,8 @@ venv/
 env/
 ENV/
 .pylibs/
+pylibs/
+pylibs_pip/
 pip-selfcheck.json
 *.egg-info/
 dist/
