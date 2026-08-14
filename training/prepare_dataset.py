@@ -5,10 +5,11 @@ Filters, normalizes, and organizes images for training.
 """
 
 import shutil
+import csv
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 import yaml
 from PIL import Image
 
@@ -17,9 +18,12 @@ TRAINING_DATA_DIR = Path(__file__).resolve().parent.parent / "training_data"
 RAW_DIR = TRAINING_DATA_DIR / "raw"
 PROCESSED_DIR = TRAINING_DATA_DIR / "processed"
 MANIFESTS_DIR = TRAINING_DATA_DIR / "manifests"
+HOLD_DIR = TRAINING_DATA_DIR / "hold"
 
-PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
-MANIFESTS_DIR.mkdir(parents=True, exist_ok=True)
+for d in [PROCESSED_DIR, MANIFESTS_DIR, HOLD_DIR]:
+    d.mkdir(parents=True, exist_ok=True)
+
+SUPPORTED_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp"}
 
 
 def load_config() -> Dict:
@@ -33,48 +37,236 @@ def normalize_filename(src: Path, class_name: str, index: int) -> str:
     return f"{class_name}_{index:05d}{ext}"
 
 
-def prepare_class(class_name: str, source_dirs: List[Path], output_dir: Path, dataset_id: str) -> int:
-    """Copy and normalize images for a single class."""
+def validate_image_file(img_path: Path) -> bool:
+    """Verify image is readable and not corrupt."""
+    try:
+        with Image.open(img_path) as img:
+            img.verify()
+        return True
+    except Exception:
+        return False
+
+
+def ingest_images(
+    class_name: str,
+    image_paths: List[Path],
+    output_dir: Path,
+    dataset_id: str,
+) -> int:
+    """Copy and normalize validated images for a single class."""
     output_dir.mkdir(parents=True, exist_ok=True)
     count = 0
     manifest_entries = []
-    
-    for src_dir in source_dirs:
-        if not src_dir.exists():
+
+    for img_path in image_paths:
+        if not img_path.exists():
             continue
-        for img_path in src_dir.rglob("*"):
-            if img_path.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}:
-                try:
-                    with Image.open(img_path) as img:
-                        img.verify()
-                    dest_name = normalize_filename(img_path, class_name, count)
-                    dest_path = output_dir / dest_name
-                    if not dest_path.exists():
-                        shutil.copy2(img_path, dest_path)
-                        manifest_entries.append({
-                            "local_path": str(dest_path.relative_to(TRAINING_DATA_DIR)),
-                            "source_path": str(img_path),
-                            "source_dataset": dataset_id,
-                            "class": class_name,
-                        })
-                        count += 1
-                except Exception:
-                    continue
-    
+        if not validate_image_file(img_path):
+            continue
+        dest_name = normalize_filename(img_path, class_name, count)
+        dest_path = output_dir / dest_name
+        if not dest_path.exists():
+            shutil.copy2(img_path, dest_path)
+            manifest_entries.append({
+                "local_path": str(dest_path.relative_to(TRAINING_DATA_DIR)),
+                "source_path": str(img_path),
+                "source_dataset": dataset_id,
+                "class": class_name,
+            })
+            count += 1
+
     if manifest_entries:
         manifest_path = MANIFESTS_DIR / f"{dataset_id}_{class_name}_manifest.jsonl"
         with open(manifest_path, "a") as f:
             for entry in manifest_entries:
                 f.write(json.dumps(entry) + "\n")
-    
+
     return count
+
+
+def count_images(directory: Path) -> int:
+    """Count images in directory recursively."""
+    return sum(
+        1
+        for ext in SUPPORTED_IMAGE_EXTS
+        for _ in directory.rglob(f"*{ext}")
+    )
+
+
+def discover_dataset_structure(dataset_dir: Path) -> Dict[str, List[Path]]:
+    """Auto-discover class directories in common dataset layouts.
+
+    Supported layouts:
+        dataset/class/image.jpg
+        dataset/train/class/image.jpg
+        dataset/val/class/image.jpg
+        dataset/test/class/image.jpg
+        dataset/images/train/class/image.jpg
+        dataset/images/val/class/image.jpg
+        dataset/images/test/class/image.jpg
+    """
+    classes: Dict[str, List[Path]] = {}
+
+    def add_images(class_name: str, paths: List[Path]):
+        classes.setdefault(class_name, []).extend(paths)
+
+    image_exts = SUPPORTED_IMAGE_EXTS
+
+    # Check for split directories: train/, val/, test/
+    split_dirs = {}
+    for split in ["train", "val", "test"]:
+        split_path = dataset_dir / split
+        if split_path.exists() and split_path.is_dir():
+            split_dirs[split] = split_path
+
+    # Check for images/ subdirectory with splits
+    images_dir = dataset_dir / "images"
+    if images_dir.exists() and images_dir.is_dir():
+        for split in ["train", "val", "test"]:
+            split_path = images_dir / split
+            if split_path.exists() and split_path.is_dir():
+                split_dirs[split] = split_path
+
+    if split_dirs:
+        for split_path in split_dirs.values():
+            for class_dir in split_path.iterdir():
+                if class_dir.is_dir():
+                    images = [
+                        p for p in class_dir.rglob("*")
+                        if p.is_file() and p.suffix.lower() in image_exts
+                    ]
+                    if images:
+                        add_images(class_dir.name, images)
+    else:
+        # Direct class directories: dataset/class/image.jpg
+        for item in dataset_dir.iterdir():
+            if item.is_dir():
+                images = [
+                    p for p in item.rglob("*")
+                    if p.is_file() and p.suffix.lower() in image_exts
+                ]
+                if images:
+                    add_images(item.name, images)
+
+    return classes
+
+
+def parse_label_file(label_path: Path, dataset_dir: Path) -> Dict[str, List[Path]]:
+    """Parse CSV or JSON annotation files into class->image mappings."""
+    classes: Dict[str, List[Path]] = {}
+
+    if label_path.suffix.lower() == ".csv":
+        with open(label_path, "r", newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                img_file = (
+                    row.get("image")
+                    or row.get("filename")
+                    or row.get("file")
+                    or row.get("path")
+                )
+                label = (
+                    row.get("label")
+                    or row.get("class")
+                    or row.get("category")
+                )
+                if img_file and label:
+                    img_path = dataset_dir / img_file
+                    if img_path.exists():
+                        classes.setdefault(label, []).append(img_path)
+
+    elif label_path.suffix.lower() == ".json":
+        with open(label_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        if isinstance(data, list):
+            for item in data:
+                img_file = (
+                    item.get("image")
+                    or item.get("filename")
+                    or item.get("file")
+                )
+                label = (
+                    item.get("label")
+                    or item.get("class")
+                    or item.get("category")
+                )
+                if img_file and label:
+                    img_path = dataset_dir / img_file
+                    if img_path.exists():
+                        classes.setdefault(label, []).append(img_path)
+        elif isinstance(data, dict):
+            for label, files in data.items():
+                if isinstance(files, list):
+                    for img_file in files:
+                        img_path = dataset_dir / img_file
+                        if img_path.exists():
+                            classes.setdefault(label, []).append(img_path)
+
+    return classes
+
+
+def prepare_unlabeled_dataset(dataset_dir: Path, dataset_id: str) -> int:
+    """Preserve unlabeled images in hold directory instead of discarding them."""
+    images = [
+        p for p in dataset_dir.rglob("*")
+        if p.is_file() and p.suffix.lower() in SUPPORTED_IMAGE_EXTS
+    ]
+    if not images:
+        return 0
+
+    hold_dir = HOLD_DIR / dataset_id
+    hold_dir.mkdir(parents=True, exist_ok=True)
+
+    count = 0
+    for img_path in images:
+        if not validate_image_file(img_path):
+            continue
+        dest_name = normalize_filename(img_path, "unlabeled", count)
+        dest_path = hold_dir / dest_name
+        if not dest_path.exists():
+            shutil.copy2(img_path, dest_path)
+            count += 1
+
+    print(f"  [HOLD] {dataset_id}: {count} unlabeled images preserved in hold/")
+    return count
+
+
+def scan_dataset_for_class(
+    dataset_dir: Path,
+    target_class: str,
+    dataset_id: str,
+    mapper: Optional["ClassMapper"] = None,
+) -> List[Path]:
+    """Generic adapter: find images in a dataset that belong to target_class."""
+    discovered = discover_dataset_structure(dataset_dir)
+
+    # Check for label files if class dirs weren't found
+    if not discovered:
+        for label_file in ["labels.csv", "annotations.csv", "train_labels.csv", "val_labels.csv"]:
+            lf = dataset_dir / label_file
+            if lf.exists():
+                discovered = parse_label_file(lf, dataset_dir)
+                break
+
+    image_paths = []
+    for source_label, paths in discovered.items():
+        mapped_class = None
+        if mapper:
+            mapped_class, _ = mapper.get_target_class(dataset_id, source_label)
+        if mapped_class is None:
+            mapped_class = source_label
+        if mapped_class == target_class:
+            image_paths.extend(paths)
+
+    return image_paths
 
 
 def prepare_all(config: Dict):
     """Prepare all approved datasets."""
     from class_mapper import initialize_default_mappings
     mapper = initialize_default_mappings()
-    
+
     domain_map = {
         "crops": config["domains"]["crops"]["classes"],
         "weeds": config["domains"]["weeds"]["classes"],
@@ -82,57 +274,108 @@ def prepare_all(config: Dict):
         "diseases": config["domains"]["diseases"]["classes"],
         "growth_stages": config["domains"]["growth_stages"]["classes"],
     }
-    
+
+    raw_datasets = {}
+    if RAW_DIR.exists():
+        for item in RAW_DIR.iterdir():
+            if item.is_dir():
+                raw_datasets[item.name] = item
+
     total = 0
     for domain, classes in domain_map.items():
         print(f"\nProcessing domain: {domain}")
         for cls in classes:
             class_dir = PROCESSED_DIR / domain / cls
             if class_dir.exists():
-                existing = len(list(class_dir.rglob("*.jpg"))) + len(list(class_dir.rglob("*.jpeg"))) + len(list(class_dir.rglob("*.png"))) + len(list(class_dir.rglob("*.webp")))
+                existing = count_images(class_dir)
                 if existing > 0:
                     print(f"  {cls}: {existing} images (already prepared)")
                 else:
                     print(f"  {cls}: 0 images — NO SOURCE DATA FOUND")
                 total += existing
                 continue
-            
-            source_dirs = []
+
+            source_image_paths: List[Path] = []
             dataset_id = None
-            
-            if domain == "crops" and cls in ["Tomato", "Pepper_sweet", "Cucumber", "Eggplant"]:
-                source_dirs = [
-                    RAW_DIR / "bangladesh_veg" / cls,
-                    RAW_DIR / "smartphone_veg" / cls,
-                ]
-                dataset_id = "bangladesh_veg"
-            elif domain == "diseases" and cls in ["Apple_scab", "Powdery_mildew", "Bacterial_spot", "Early_blight"]:
-                source_dirs = [
-                    RAW_DIR / "plantvillage" / cls,
-                    RAW_DIR / "plantdoc" / cls,
-                ]
-                dataset_id = "plantvillage"
+
+            # Known dataset layouts with specific source structures
+            if domain == "crops" and cls in [
+                "Tomato", "Pepper_sweet", "Cucumber", "Eggplant"
+            ]:
+                for ds in [RAW_DIR / "bangladesh_veg", RAW_DIR / "smartphone_veg"]:
+                    ds_cls = ds / cls
+                    if ds_cls.exists():
+                        source_image_paths.extend([
+                            p for p in ds_cls.rglob("*")
+                            if p.is_file() and p.suffix.lower() in SUPPORTED_IMAGE_EXTS
+                        ])
+                        if dataset_id is None:
+                            dataset_id = ds.name
+
+            elif domain == "diseases" and cls in [
+                "Apple_scab", "Powdery_mildew", "Bacterial_spot", "Early_blight"
+            ]:
+                for ds in [RAW_DIR / "plantvillage", RAW_DIR / "plantdoc"]:
+                    ds_cls = ds / cls
+                    if ds_cls.exists():
+                        source_image_paths.extend([
+                            p for p in ds_cls.rglob("*")
+                            if p.is_file() and p.suffix.lower() in SUPPORTED_IMAGE_EXTS
+                        ])
+                        if dataset_id is None:
+                            dataset_id = ds.name
+
             elif domain == "weeds" and cls == "Other_weed":
-                source_dirs = [RAW_DIR / "deepweeds" / cls]
-                dataset_id = "deepweeds"
-            elif domain == "growth_stages" and cls in ["Flowering", "Vegetative", "Seedling", "Fruiting"]:
-                source_dirs = [
-                    RAW_DIR / "plant_growth_stage" / cls,
-                ]
-                dataset_id = "plant_growth_stage"
+                ds = RAW_DIR / "deepweeds"
+                if ds.exists():
+                    discovered = discover_dataset_structure(ds)
+                    for source_label, paths in discovered.items():
+                        mapped_class, _ = mapper.get_target_class("deepweeds", source_label)
+                        if mapped_class == "Other_weed":
+                            source_image_paths.extend(paths)
+                    dataset_id = "deepweeds"
+
+            elif domain == "growth_stages" and cls in [
+                "Flowering", "Vegetative", "Seedling", "Fruiting"
+            ]:
+                ds = RAW_DIR / "plant_growth_stage"
+                ds_cls = ds / cls
+                if ds_cls.exists():
+                    source_image_paths.extend([
+                        p for p in ds_cls.rglob("*")
+                        if p.is_file() and p.suffix.lower() in SUPPORTED_IMAGE_EXTS
+                    ])
+                    dataset_id = "plant_growth_stage"
+
             else:
-                source_dirs = [RAW_DIR / domain / cls]
-                dataset_id = domain
-            
-            count = prepare_class(cls, source_dirs, class_dir, dataset_id)
-            if count > 0:
-                print(f"  {cls}: {count} images")
+                # Generic discovery across all raw datasets
+                for ds_name, ds_dir in raw_datasets.items():
+                    found = scan_dataset_for_class(ds_dir, cls, ds_name, mapper)
+                    if found:
+                        source_image_paths.extend(found)
+                        if dataset_id is None:
+                            dataset_id = ds_name
+                        # Do not break: allow multiple datasets to contribute
+
+            if source_image_paths:
+                count = ingest_images(cls, source_image_paths, class_dir, dataset_id or "unknown")
+                if count > 0:
+                    print(f"  {cls}: {count} images")
+                else:
+                    print(f"  {cls}: 0 valid images after validation")
+                total += count
             else:
-                print(f"  {cls}: 0 images — NO SOURCE DATA FOUND (expected in: {[str(d) for d in source_dirs]})")
-            total += count
-    
+                print(f"  {cls}: 0 images — NO SOURCE DATA FOUND")
+
+    # Handle datasets with no class structure
+    print("\nChecking for unlabeled datasets...")
+    for ds_name, ds_dir in raw_datasets.items():
+        discovered = discover_dataset_structure(ds_dir)
+        if not discovered:
+            prepare_unlabeled_dataset(ds_dir, ds_name)
+
     print(f"\nTotal prepared: {total} images")
-    
+
     if total == 0:
         print("\nERROR: Zero images prepared. Dataset acquisition is incomplete.")
         print("Run: python training/pipeline.py --step acquisition_status")

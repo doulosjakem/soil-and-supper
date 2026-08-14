@@ -118,6 +118,7 @@ build/
 *.xz
 *.zip
 *.zst
+*.7z
 *tfevents*
 *.pcm
 *.sam

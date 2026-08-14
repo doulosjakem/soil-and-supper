@@ -129,7 +129,22 @@ def scan_archive(archive_path: Path) -> Dict:
         "file_count": 0,
         "image_count": 0,
         "sample_files": [],
+        "is_html": False,
+        "error": None,
     }
+    
+    # First check if it's actually HTML disguised as an archive
+    try:
+        with open(archive_path, "rb") as f:
+            header = f.read(200)
+        
+        if b"<!doctype html>" in header.lower() or b"<html" in header.lower():
+            info["is_html"] = True
+            info["error"] = "File is HTML, not an archive"
+            return info
+    except Exception as e:
+        info["error"] = str(e)
+        return info
     
     try:
         if archive_path.suffix.lower() == ".zip":
@@ -215,21 +230,25 @@ def generate_acquisition_status_table() -> str:
     from discover_datasets import APPROVED_DATASETS
     
     lines = []
-    lines.append("=" * 80)
+    lines.append("=" * 90)
     lines.append("ACQUISITION STATUS TABLE")
-    lines.append("=" * 80)
-    lines.append(f"{'Dataset':<30} {'Status':<10} {'Archive':<8} {'Images':<10} {'License'}")
-    lines.append("-" * 80)
+    lines.append("=" * 90)
+    lines.append(f"{'Dataset':<30} {'Status':<12} {'Archive':<8} {'Images':<10} {'License'}")
+    lines.append("-" * 90)
     
     for dataset_id, info in sorted(APPROVED_DATASETS.items()):
         dataset_dir = RAW_DIR / dataset_id
         archive_path = None
+        archive_valid = False
         
         # Check for directory
         if dataset_dir.exists():
             image_count = count_images_in_dir(dataset_dir)
             archive = "no"
-            status = "READY" if image_count > 0 else "EMPTY"
+            if image_count > 0:
+                status = "READY"
+            else:
+                status = "EMPTY"
         else:
             image_count = 0
             archive = "no"
@@ -241,14 +260,23 @@ def generate_acquisition_status_table() -> str:
             if potential.exists():
                 archive_path = potential
                 archive = "yes"
-                if status == "MISSING":
+                # Check if it's actually valid
+                scan = scan_archive(potential)
+                if scan.get("is_html"):
+                    status = "HTML"
+                    archive_valid = False
+                elif scan.get("valid"):
                     status = "ARCHIVE"
+                    archive_valid = True
+                else:
+                    status = "INVALID"
+                    archive_valid = False
                 break
         
         license_str = info.get("license", "unknown")
-        lines.append(f"{dataset_id:<30} {status:<10} {archive:<8} {image_count:<10} {license_str}")
+        lines.append(f"{dataset_id:<30} {status:<12} {archive:<8} {image_count:<10} {license_str}")
     
-    lines.append("=" * 80)
+    lines.append("=" * 90)
     return "\n".join(lines)
 
 
