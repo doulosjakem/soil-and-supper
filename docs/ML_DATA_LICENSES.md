@@ -28,15 +28,23 @@ Every training image must be traceable to its source, license, and attribution r
 |--------|---------|---------------|---------------------|--------|
 | PlantVillage | CC0 1.0 | Yes | No | Disease |
 | PlantDoc | CC BY 4.0 | Yes | Yes | Disease |
+| Crop Disease Image Dataset (HF) | CC BY 4.0 | Yes | Yes | Disease |
 | Bangladesh Vegetables | CC BY 4.0 | Yes | Yes | Crops |
 | Smartphone Vegetable Detection | CC BY 4.0 | Yes | Yes | Crops |
 | BanglaVeg | CC BY 4.0 | Yes | Yes | Crops |
 | VegNet | CC BY 4.0 | Yes | Yes | Crops |
+| Early-Stage Crops | CC BY 4.0 | Yes | Yes | Crops |
 | DeepWeeds | CC BY 4.0 | Yes | Yes | Weeds |
+| Weed-crop dataset (NDSU) | CC BY 4.0 | Yes | Yes | Weeds |
+| Weed Growth Stage Dataset | CC BY 4.0 | Yes | Yes | Weeds |
 | Plant Growth Stage Detection | CC BY 4.0 | Yes | Yes | Growth Stage |
 | BDFlower | CC BY 4.0 | Yes | Yes | Growth Stage |
 | Sunflower Growth Stage | CC BY 4.0 | Yes | Yes | Growth Stage |
-| Early-Stage Crops | CC BY 4.0 | Yes | Yes | Crops |
+| BIOSCAN-5M | CC BY 3.0 | Yes | Yes | Insects |
+| images.cv Vegetables | CC0 | Yes | No | Crops |
+| images.cv Insects | CC0 | Yes | No | Insects |
+| Roboflow Insect Pest | CC BY 4.0 | Yes | Yes | Insects |
+| USDA ARS | Public Domain | Yes | No | Crops |
 
 ## 4. Conditional / Rejected Sources
 
@@ -51,6 +59,8 @@ Every training image must be traceable to its source, license, and attribution r
 | Kaggle Vegetable (misrakahmed) | CC BY-SA 4.0 | REJECT | ShareAlike incompatible |
 | Oxford 102 Flowers | Unclear | REJECT | License not confirmed |
 | PlantSeg | CC BY-NC 4.0 | REJECT | Non-commercial |
+| Plant Seedlings Dataset | CC BY-SA 4.0 | REJECT | ShareAlike incompatible |
+| OpenPlant | Unclear | REJECT until verified | License must be confirmed on GitHub |
 
 ## 5. Attribution Requirements
 
@@ -253,19 +263,54 @@ Every processed image must have a manifest entry:
 - **Image Count**: 6,500+
 - **Attribution**: "Courtesy of the USDA Agricultural Research Service." (Requested but not required)
 
+### 7.12 BIOSCAN-5M
+
+- **Dataset ID**: bioscan_5m
+- **Name**: BIOSCAN-5M Insect Dataset
+- **Authors**: BIOSCAN Consortium
+- **URL**: https://huggingface.co/datasets/bioscan-ml/BIOSCAN-5M
+- **License**: CC BY 3.0
+- **Published**: 2024 (NeurIPS)
+- **Image Count**: 5,150,850
+- **Attribution**: "BIOSCAN-5M Insect Dataset. CC BY 3.0. https://huggingface.co/datasets/bioscan-ml/BIOSCAN-5M"
+
+### 7.13 Weed-crop dataset (NDSU)
+
+- **Dataset ID**: weed_ndsu
+- **Name**: Weed-crop dataset (NDSU)
+- **Authors**: North Dakota State University
+- **URL**: https://data.mendeley.com/datasets/mthv4ppwyw/2
+- **License**: CC BY 4.0
+- **Published**: 2023
+- **Image Count**: 5,000+
+- **Attribution**: "NDSU Weed-crop dataset. CC BY 4.0. https://data.mendeley.com/datasets/mthv4ppwyw/2"
+
+### 7.14 Weed Growth Stage Dataset
+
+- **Dataset ID**: weed_growth_stage_zenodo
+- **Name**: Weed Growth Stage Dataset
+- **Authors**: Various
+- **URL**: https://zenodo.org/records/15808623
+- **License**: CC BY 4.0
+- **Published**: 2025
+- **Image Count**: 203,567
+- **Attribution**: "Weed Growth Stage Dataset. CC BY 4.0. https://zenodo.org/records/15808623"
+
 ## 8. Compliance Checklist
 
 Before training:
 
 - [ ] Verify each dataset's license from primary source
 - [ ] Confirm commercial-use compatibility
-- [ ] Record attribution requirements
-- [ ] Generate manifest with provenance for every image
-- [ ] Exclude rejected datasets (PlantCLEF, iNaturalist, Pl@ntNet, Kaggle Vegetable, Oxford 102 Flowers, PlantSeg)
+- [ ] Check for ShareAlike or NonCommercial restrictions
+- [ ] Record full provenance in this document
+- [ ] Exclude rejected datasets (PlantCLEF, iNaturalist, Pl@ntNet, Kaggle Vegetable, Oxford 102 Flowers, PlantSeg, Plant Seedlings, OpenPlant)
 - [ ] Do not use CC BY-SA or CC BY-NC datasets for proprietary model
 - [ ] Include attribution in app's "About" or "Licenses" section
 - [ ] Track Bugwood images individually for photographer attribution
 - [ ] Contact CWD30 and IP102 authors for commercial use clarification
+- [ ] Verify OpenPlant license before use
+- [ ] Curate BIOSCAN-5M to extract only target insect classes
 
 ## 9. Future Dataset Acquisition
 

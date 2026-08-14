@@ -642,3 +642,284 @@ python training/export.py --all
 
 - 2026-08-14: Initial taxonomy v1 — 50 crop classes
 - 2026-08-14: Revised taxonomy v2 — expanded to 150+ classes across 6 domains, architecture recommendation, data sufficiency assessment, MVP phasing
+- 2026-08-14: Phase 14 update — class-level readiness assessment, dataset acquisition status, taxonomy refinements
+
+---
+
+## 12. Class-Level Readiness Assessment (Phase 14)
+
+Each class is classified by current data availability and commercial-license status:
+
+| Status | Meaning |
+|--------|---------|
+| **TRAINABLE_NOW** | ≥500 validated, labeled, license-compatible images available |
+| **NEEDS_MORE_DATA** | Some images exist but <500 or from limited sources |
+| **DATASET_SEARCH_REQUIRED** | No current dataset; need to find or curate alternative |
+| **LICENSE_BLOCKED** | Best source exists but license prohibits commercial use |
+| **DEFERRED** | Post-MVP; not critical for initial product scope |
+
+### Crops
+
+| Class | Status | Est. Images | Primary Source | Notes |
+|-------|--------|-------------|----------------|-------|
+| Tomato | TRAINABLE_NOW | 8,000+ | PlantVillage + Bangladesh Veg + Smartphone Veg + VegNet | Strong multi-source coverage |
+| Pepper_sweet | TRAINABLE_NOW | 5,000+ | PlantVillage + Bangladesh Veg + Smartphone Veg + VegNet | Map Capsicum/Bell Pepper |
+| Pepper_hot | NEEDS_MORE_DATA | 1,500+ | VegNet + Smartphone Veg | Limited hot pepper images |
+| Cucumber | TRAINABLE_NOW | 4,000+ | PlantVillage + Bangladesh Veg + Smartphone Veg | Strong coverage |
+| Bean | TRAINABLE_NOW | 4,000+ | PlantVillage + Bangladesh Veg + Smartphone Veg + Early Stage | Good multi-source |
+| Carrot | TRAINABLE_NOW | 2,500+ | Bangladesh Veg + Smartphone Veg + VegNet | Adequate |
+| Corn | TRAINABLE_NOW | 3,000+ | PlantVillage + Early Stage + VegNet | Good coverage |
+| Onion | TRAINABLE_NOW | 2,000+ | Bangladesh Veg + Smartphone Veg | Adequate |
+| Potato | TRAINABLE_NOW | 2,500+ | PlantVillage + Bangladesh Veg | Good disease + crop coverage |
+| Broccoli | NEEDS_MORE_DATA | 2,000+ | Bangladesh Veg | Limited sources |
+| Cabbage | NEEDS_MORE_DATA | 1,500+ | Bangladesh Veg + Smartphone Veg | Adequate but thin |
+| Lettuce | NEEDS_MORE_DATA | 1,500+ | Smartphone Veg + VegNet | Limited |
+| Spinach | NEEDS_MORE_DATA | 1,000+ | Smartphone Veg + VegNet | Limited |
+| Pea | NEEDS_MORE_DATA | 1,500+ | Early Stage + Smartphone Veg | Limited |
+| Radish | NEEDS_MORE_DATA | 1,500+ | Bangladesh Veg + Smartphone Veg + VegNet | Adequate |
+| Summer_squash | NEEDS_MORE_DATA | 2,000+ | PlantVillage + Bangladesh Veg + VegNet | Map Zucchini |
+| Winter_squash | NEEDS_MORE_DATA | 1,500+ | PlantVillage + Bangladesh Veg | Limited |
+| Watermelon | DATASET_SEARCH_REQUIRED | 500+ | VegNet (partial) | Need more sources |
+| Cantaloupe | DATASET_SEARCH_REQUIRED | 400+ | VegNet (partial) | Need more sources |
+| Pumpkin | NEEDS_MORE_DATA | 1,000+ | PlantVillage + Bangladesh Veg | Adequate |
+| Beet | NEEDS_MORE_DATA | 1,500+ | Smartphone Veg + VegNet | Limited |
+| Turnip | DATASET_SEARCH_REQUIRED | 400+ | VegNet (partial) | Need more sources |
+| Sweet_potato | DATASET_SEARCH_REQUIRED | 300+ | Smartphone Veg (partial) | Need more sources |
+| Basil | DATASET_SEARCH_REQUIRED | 500+ | Herb datasets (CC BY 4.0) | Herb-specific datasets available |
+| Cilantro | DATASET_SEARCH_REQUIRED | 400+ | Herb datasets (CC BY 4.0) | Herb-specific datasets available |
+| Parsley | DATASET_SEARCH_REQUIRED | 300+ | Herb datasets (CC BY 4.0) | Herb-specific datasets available |
+| Dill | DATASET_SEARCH_REQUIRED | 200+ | Herb datasets (CC BY 4.0) | Herb-specific datasets available |
+| Chives | DATASET_SEARCH_REQUIRED | 200+ | Herb datasets (CC BY 4.0) | Herb-specific datasets available |
+| Rosemary | DATASET_SEARCH_REQUIRED | 300+ | Herb datasets (CC BY 4.0) | Herb-specific datasets available |
+| Thyme | DATASET_SEARCH_REQUIRED | 200+ | Herb datasets (CC BY 4.0) | Herb-specific datasets available |
+| Oregano | DATASET_SEARCH_REQUIRED | 200+ | Herb datasets (CC BY 4.0) | Herb-specific datasets available |
+| Sage | DATASET_SEARCH_REQUIRED | 200+ | Herb datasets (CC BY 4.0) | Herb-specific datasets available |
+| Strawberry | TRAINABLE_NOW | 2,000+ | PlantVillage + Smartphone Veg | Good coverage |
+| Blueberry | NEEDS_MORE_DATA | 800+ | PlantVillage + Smartphone Veg | Limited |
+| Grape | NEEDS_MORE_DATA | 600+ | PlantVillage | Limited |
+| Marigold | DATASET_SEARCH_REQUIRED | 200+ | images.cv plants | Need to verify license |
+| Zinnia | DATASET_SEARCH_REQUIRED | 200+ | images.cv plants | Need to verify license |
+| Nasturtium | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Sunflower | NEEDS_MORE_DATA | 500+ | PlantVillage + Sunflower Growth Stage | Limited |
+| Cosmos | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Petunia | DATASET_SEARCH_REQUIRED | 200+ | images.cv plants | Need to verify license |
+| Begonia | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Eggplant | TRAINABLE_NOW | 1,000+ | PlantVillage + Bangladesh Veg + Smartphone Veg | Good coverage |
+| Okra | NEEDS_MORE_DATA | 600+ | Bangladesh Veg + Smartphone Veg | Limited |
+| Asparagus | DATASET_SEARCH_REQUIRED | 200+ | Web images | Very limited |
+| Rhubarb | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Celery | NEEDS_MORE_DATA | 400+ | Smartphone Veg | Limited |
+| Leek | NEEDS_MORE_DATA | 300+ | Early Stage + Smartphone Veg | Limited |
+| Fennel | DATASET_SEARCH_REQUIRED | 100+ | Herb datasets | Very limited |
+| Artichoke | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+
+### Weeds
+
+| Class | Status | Est. Images | Primary Source | Notes |
+|-------|--------|-------------|----------------|-------|
+| Dandelion | NEEDS_MORE_DATA | 1,000+ | DeepWeeds (supplement) + UC IPM | Need NA-specific images |
+| Crabgrass | NEEDS_MORE_DATA | 800+ | DeepWeeds (supplement) + UC IPM | Need NA-specific images |
+| White_clover | NEEDS_MORE_DATA | 600+ | DeepWeeds (supplement) | Need NA-specific images |
+| Purslane | NEEDS_MORE_DATA | 600+ | DeepWeeds (supplement) + UC IPM | Need NA-specific images |
+| Lambsquarters | NEEDS_MORE_DATA | 600+ | DeepWeeds (supplement) + UC IPM | Need NA-specific images |
+| Chickweed | NEEDS_MORE_DATA | 400+ | UC IPM | Limited |
+| Pigweed | NEEDS_MORE_DATA | 800+ | DeepWeeds (supplement) + UC IPM | Need NA-specific images |
+| Plantain | NEEDS_MORE_DATA | 400+ | UC IPM | Limited |
+| Nutsedge | NEEDS_MORE_DATA | 400+ | UC IPM | Limited |
+| Ragweed | NEEDS_MORE_DATA | 500+ | DeepWeeds (supplement) + UC IPM | Need NA-specific images |
+| Bindweed | NEEDS_MORE_DATA | 300+ | UC IPM | Limited |
+| Foxtail | NEEDS_MORE_DATA | 400+ | UC IPM | Limited |
+| Thistle | NEEDS_MORE_DATA | 400+ | UC IPM | Limited |
+| Poison_ivy | DATASET_SEARCH_REQUIRED | 200+ | Bugwood (requires approval) | Need alternative |
+| Garlic_mustard | DATASET_SEARCH_REQUIRED | 100+ | UC IPM (partial) | Very limited |
+| Knotweed | DATASET_SEARCH_REQUIRED | 100+ | UC IPM (partial) | Very limited |
+| Ground_ivy | DATASET_SEARCH_REQUIRED | 100+ | UC IPM (partial) | Very limited |
+| Woodsorrel | DATASET_SEARCH_REQUIRED | 100+ | UC IPM (partial) | Very limited |
+| Johnsongrass | DATASET_SEARCH_REQUIRED | 100+ | UC IPM (partial) | Very limited |
+| Quackgrass | DATASET_SEARCH_REQUIRED | 100+ | UC IPM (partial) | Very limited |
+| Other_weed | TRAINABLE_NOW | 5,000+ | DeepWeeds Negative + UC IPM | Strong negative examples |
+
+### Insects / Pests
+
+| Class | Status | Est. Images | Primary Source | Notes |
+|-------|--------|-------------|----------------|-------|
+| Aphid | NEEDS_MORE_DATA | 1,000+ | BIOSCAN-5M + Roboflow | Curation required from 5M dataset |
+| Japanese_beetle | DATASET_SEARCH_REQUIRED | 200+ | Bugwood (requires approval) | No bulk dataset |
+| Colorado_potato_beetle | DATASET_SEARCH_REQUIRED | 200+ | Bugwood (requires approval) | No bulk dataset |
+| Cucumber_beetle | DATASET_SEARCH_REQUIRED | 200+ | Bugwood (requires approval) | No bulk dataset |
+| Cabbage_worm | DATASET_SEARCH_REQUIRED | 200+ | Bugwood (requires approval) | No bulk dataset |
+| Tomato_hornworm | DATASET_SEARCH_REQUIRED | 200+ | Bugwood (requires approval) | No bulk dataset |
+| Squash_bug | DATASET_SEARCH_REQUIRED | 200+ | Bugwood (requires approval) | No bulk dataset |
+| Whitefly | NEEDS_MORE_DATA | 800+ | BIOSCAN-5M + Roboflow | Curation required |
+| Spider_mite | NEEDS_MORE_DATA | 600+ | BIOSCAN-5M + Roboflow | Curation required |
+| Thrips | NEEDS_MORE_DATA | 600+ | BIOSCAN-5M + Roboflow | Curation required |
+| Leafminer | DATASET_SEARCH_REQUIRED | 300+ | Roboflow + web images | Very limited |
+| Cutworm | DATASET_SEARCH_REQUIRED | 200+ | Bugwood (requires approval) | No bulk dataset |
+| Stink_bug | DATASET_SEARCH_REQUIRED | 300+ | Bugwood (requires approval) | No bulk dataset |
+| Flea_beetle | DATASET_SEARCH_REQUIRED | 200+ | Bugwood (requires approval) | No bulk dataset |
+| Mexican_bean_beetle | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Corn_earworm | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Squash_vine_borer | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Blister_beetle | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Other_pest | TRAINABLE_NOW | 5,000+ | BIOSCAN-5M non-target | Strong negative examples |
+
+### Beneficial Insects
+
+| Class | Status | Est. Images | Primary Source | Notes |
+|-------|--------|-------------|----------------|-------|
+| Ladybug | NEEDS_MORE_DATA | 600+ | BIOSCAN-5M + UC IPM + Roboflow | Curation required |
+| Green_lacewing | DATASET_SEARCH_REQUIRED | 200+ | BIOSCAN-5M + web images | Very limited |
+| Honey_bee | NEEDS_MORE_DATA | 500+ | BIOSCAN-5M + UC IPM | Curation required |
+| Hoverfly | DATASET_SEARCH_REQUIRED | 200+ | BIOSCAN-5M | Very limited |
+| Praying_mantis | NEEDS_MORE_DATA | 400+ | BIOSCAN-5M + UC IPM | Curation required |
+| Spider | NEEDS_MORE_DATA | 500+ | BIOSCAN-5M + UC IPM | Curation required |
+| Earthworm | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+
+### Diseases
+
+| Class | Status | Est. Images | Primary Source | Notes |
+|-------|--------|-------------|----------------|-------|
+| Healthy | TRAINABLE_NOW | 15,000+ | PlantVillage + PlantDoc | Excellent coverage |
+| Powdery_mildew | TRAINABLE_NOW | 4,000+ | PlantVillage + PlantDoc | Strong multi-crop coverage |
+| Downy_mildew | NEEDS_MORE_DATA | 1,500+ | PlantVillage + PlantDoc | Limited |
+| Early_blight | TRAINABLE_NOW | 2,000+ | PlantVillage + PlantDoc | Good tomato/potato coverage |
+| Late_blight | TRAINABLE_NOW | 2,000+ | PlantVillage + PlantDoc | Good tomato/potato coverage |
+| Septoria_leaf_spot | NEEDS_MORE_DATA | 1,000+ | PlantVillage + PlantDoc | Tomato-specific |
+| Bacterial_spot | NEEDS_MORE_DATA | 1,000+ | PlantVillage + PlantDoc | Pepper/tomato |
+| Fusarium_wilt | NEEDS_MORE_DATA | 1,500+ | PlantVillage | Multiple crops |
+| Verticillium_wilt | NEEDS_MORE_DATA | 1,000+ | PlantVillage | Multiple crops |
+| Anthracnose | NEEDS_MORE_DATA | 1,000+ | PlantVillage + PlantDoc | Multiple crops |
+| Rust | NEEDS_MORE_DATA | 1,500+ | PlantVillage | Multiple crops |
+| Leaf_spot | NEEDS_MORE_DATA | 1,500+ | PlantDoc + web images | Generic; may overlap with other classes |
+| Blossom_end_rot | DATASET_SEARCH_REQUIRED | 300+ | PlantDoc (partial) + web images | Very limited |
+| Nutrient_deficiency | DATASET_SEARCH_REQUIRED | 200+ | Web images | Very limited; hard to distinguish from disease |
+| Sunscald | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Frost_damage | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Hail_damage | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Overwatering_stress | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Underwatering_stress | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Insect_damage | DATASET_SEARCH_REQUIRED | 200+ | IP102 (blocked) + web images | Hard to distinguish from disease |
+| Chewing_damage | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Leaf_miner_damage | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
+| Apple_scab | NEEDS_MORE_DATA | 500+ | PlantVillage + PlantDoc | Limited |
+| Cedar_apple_rust | NEEDS_MORE_DATA | 500+ | PlantVillage + PlantDoc | Limited |
+| Grape_black_rot | NEEDS_MORE_DATA | 500+ | PlantVillage + PlantDoc | Limited |
+| Peach_bacterial_spot | NEEDS_MORE_DATA | 300+ | PlantDoc | Limited |
+| Soybean_rust | NEEDS_MORE_DATA | 300+ | PlantVillage | Limited |
+| Squash_powdery_mildew | NEEDS_MORE_DATA | 500+ | PlantVillage | Limited |
+| Tomato_mosaic_virus | NEEDS_MORE_DATA | 300+ | PlantDoc | Limited |
+| Tomato_yellow_leaf_curl | NEEDS_MORE_DATA | 300+ | PlantDoc | Limited |
+
+### Growth Stages
+
+| Class | Status | Est. Images | Primary Source | Notes |
+|-------|--------|-------------|----------------|-------|
+| Seedling | NEEDS_MORE_DATA | 1,500+ | Early Stage Crops + Plant Growth Stage Detection | Limited seedling diversity |
+| Vegetative | NEEDS_MORE_DATA | 2,000+ | Plant Growth Stage Detection + BDFlower | Adequate but thin |
+| Flowering | NEEDS_MORE_DATA | 1,500+ | BDFlower + Plant Growth Stage Detection | Flower-specific bias |
+| Fruiting | NEEDS_MORE_DATA | 1,500+ | Plant Growth Stage Detection + BDFlower | Adequate but thin |
+| Mature_Harvest | NEEDS_MORE_DATA | 1,000+ | Plant Growth Stage Detection | Limited |
+| Senescing | DATASET_SEARCH_REQUIRED | 200+ | Web images | Very limited |
+
+---
+
+## 13. Taxonomy Improvements for ML Practicality
+
+### Problem Classes That May Need Refactoring
+
+**"Nutrient_deficiency", "Overwatering_stress", "Underwatering_stress"**
+- These are abiotic disorders that look very similar to each other and to diseases.
+- Current datasets do not have enough labeled examples to distinguish them reliably.
+- **Recommendation**: Either merge into a single "Abiotic_stress" class, or defer to v2 until sufficient data is curated.
+- For MVP, treat as DATASET_SEARCH_REQUIRED and do not include in initial DiseaseClassifier.
+
+**"Insect_damage", "Chewing_damage", "Leaf_miner_damage"**
+- These are damage types, not pest identifications.
+- A gardener asking "what is damaging my plant?" wants to know the pest, not just the damage pattern.
+- Damage patterns are often indistinguishable between pests and appear similar to disease symptoms.
+- **Recommendation**: Remove from DiseaseClassifier. Instead:
+  - Train InsectClassifier to identify the pest directly.
+  - If damage classification is needed, create a separate DamageClassifier trained on labeled damage images (requires new dataset).
+
+**"Leaf_spot"**
+- Extremely generic. PlantVillage maps multiple specific diseases to Leaf_spot (Tomato_leaf_mold, Tomato_target_spot).
+- **Recommendation**: Keep as catch-all only if specific disease data is insufficient. Otherwise, prefer specific disease names.
+
+**Growth stage per-crop vs. general growth stage**
+- The current architecture uses a single GrowthStageClassifier for all crops.
+- This is correct because growth stages look similar across species (seedling is seedling regardless of crop).
+- **Recommendation**: Maintain single 6-class growth stage model. Do NOT create per-crop growth stages.
+
+### Proposed Revised Disease Taxonomy for MVP
+
+```
+DiseaseClassifier v1 (trainable now):
+  - Healthy
+  - Powdery_mildew
+  - Downy_mildew
+  - Early_blight
+  - Late_blight
+  - Septoria_leaf_spot
+  - Bacterial_spot
+  - Fusarium_wilt
+  - Verticillium_wilt
+  - Anthracnose
+  - Rust
+  - Apple_scab
+  - Cedar_apple_rust
+  - Grape_black_rot
+  - Peach_bacterial_spot
+  - Soybean_rust
+  - Squash_powdery_mildew
+  - Tomato_mosaic_virus
+  - Tomato_yellow_leaf_curl
+
+DiseaseClassifier v2 (after additional data curation):
+  + Blossom_end_rot
+  + Leaf_spot (generic)
+  + Nutrient_deficiency (if merged into Abiotic_stress)
+  + Sunscald
+  + Frost_damage
+  + Hail_damage
+  + Overwatering_stress
+  + Underwatering_stress
+  + Insect_damage
+  + Chewing_damage
+  + Leaf_miner_damage
+```
+
+### Proposed Revised Insect Taxonomy for MVP
+
+```
+InsectClassifier v1 (trainable after BIOSCAN-5M curation + Roboflow):
+  - Aphid
+  - Whitefly
+  - Spider_mite
+  - Thrips
+  - Ladybug
+  - Honey_bee
+  - Praying_mantis
+  - Spider
+  - Other_pest
+  - Other_beneficial
+
+InsectClassifier v2 (after Bugwood approval + web curation):
+  + Japanese_beetle
+  + Colorado_potato_beetle
+  + Cucumber_beetle
+  + Cabbage_worm
+  + Tomato_hornworm
+  + Squash_bug
+  + Leafminer
+  + Cutworm
+  + Stink_bug
+  + Flea_beetle
+  + Green_lacewing
+  + Hoverfly
+  + Earthworm
+```
+
+### Key Principle
+
+**Do not train a classifier on a class unless you have ≥200 verified, labeled, license-compatible images.**
+If a class cannot reach this threshold with currently available datasets, classify it as DEFERRED or DATASET_SEARCH_REQUIRED rather than manufacturing weak training data.

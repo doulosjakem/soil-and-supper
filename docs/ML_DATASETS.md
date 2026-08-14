@@ -496,28 +496,111 @@ Each dataset is evaluated against:
 12. Bugwood Images — Use only CC BY-licensed images; track photographer attribution per image
 13. USDA ARS — Manual download; public domain but no bulk access
 
+### Phase 14 Additions
+
+#### DS-18: BIOSCAN-5M Insect Dataset
+
+| Field | Value |
+|-------|-------|
+| **Name** | BIOSCAN-5M |
+| **URL** | https://huggingface.co/datasets/bioscan-ml/BIOSCAN-5M |
+| **License** | CC BY 3.0 |
+| **Commercial Use** | Yes |
+| **Image Count** | 5,150,850 |
+| **Classes** | Taxonomic labels, hierarchical |
+| **Relevant Classes** | All insect pest and beneficial classes (after curation) |
+| **Image Characteristics** | Specimen photos, varied quality, taxonomic hierarchy |
+| **Estimated Useful Images** | 500,000+ after filtering to target orders/families |
+| **Recommendation** | **USE** — Primary insect source after curation |
+
+**Notes**:
+- Published NeurIPS 2024.
+- Requires heavy curation to extract target pest/beneficial classes.
+- HuggingFace and Zenodo download available.
+
+#### DS-19: images.cv Vegetables
+
+| Field | Value |
+|-------|-------|
+| **Name** | images.cv Vegetables |
+| **URL** | https://images.cv/dataset/vegetables-image-classification-dataset |
+| **License** | CC0 / Public Domain |
+| **Commercial Use** | Yes |
+| **Image Count** | 19,300+ |
+| **Classes** | 32 vegetable types |
+| **Recommendation** | **USE** — Supplement for crop classes (download mechanism TBD) |
+
+#### DS-20: images.cv Insects
+
+| Field | Value |
+|-------|-------|
+| **Name** | images.cv Insects |
+| **URL** | https://images.cv/dataset/insects-image-classification-dataset |
+| **License** | CC0 / Public Domain |
+| **Commercial Use** | Yes |
+| **Image Count** | 24,800+ |
+| **Classes** | 24 insect types |
+| **Recommendation** | **USE** — Supplement for insect classes (download mechanism TBD) |
+
+#### DS-21: Weed-crop dataset (NDSU)
+
+| Field | Value |
+|-------|-------|
+| **Name** | Weed-crop dataset (NDSU) |
+| **URL** | https://data.mendeley.com/datasets/mthv4ppwyw/2 |
+| **License** | CC BY 4.0 |
+| **Commercial Use** | Yes |
+| **Image Count** | 5,000+ |
+| **Classes** | 5 NA weeds + 8 crops |
+| **Recommendation** | **USE** — Best North American weed dataset |
+
+#### DS-22: Weed Growth Stage Dataset (Zenodo)
+
+| Field | Value |
+|-------|-------|
+| **Name** | Weed Growth Stage Dataset |
+| **URL** | https://zenodo.org/records/15808623 |
+| **License** | CC BY 4.0 |
+| **Commercial Use** | Yes |
+| **Image Count** | 203,567 |
+| **Classes** | 16 weed species, weekly growth stages |
+| **Recommendation** | **USE** — Supplement for weed and growth stage models |
+
+#### DS-23: Roboflow Insect Pest Dataset
+
+| Field | Value |
+|-------|-------|
+| **Name** | Roboflow Insect Pest Dataset |
+| **URL** | https://universe.roboflow.com/ai-project-h07h1/insect-pest-dataset-all |
+| **License** | CC BY 4.0 |
+| **Commercial Use** | Yes |
+| **Image Count** | 1,213+ |
+| **Classes** | 11 pest types |
+| **Recommendation** | **SUPPLEMENT** — Small but useful |
+
 ---
 
 ## 9. Estimated Total Data by Domain
 
 | Domain | Estimated Images | Status |
 |--------|-----------------|--------|
-| Crops | 25,000–30,000 | Strong |
-| Weeds | 15,000–20,000 | Moderate (CWD30 gap if license unresolved) |
-| Diseases | 25,000–30,000 | Strong (PlantVillage CC0 is excellent) |
-| Growth Stages | 10,000–15,000 | Moderate |
-| Insects/Pests | 2,000–5,000 | Weak (IP102 license unresolved; Bugwood requires approval) |
-| Beneficial Insects | 500–1,000 | Weak |
+| Crops | 50,000+ | Strong (PlantVillage + Bangladesh Veg + Smartphone Veg + VegNet + images.cv) |
+| Weeds | 220,000+ | Strong (Weed Growth Stage Dataset + DeepWeeds + NDSU weed-crop) |
+| Diseases | 60,000+ | Strong (PlantVillage CC0 + PlantDoc + Crop Disease HF) |
+| Growth Stages | 220,000+ | Strong (Weed Growth Stage + Plant Growth Stage Detection + BDFlower) |
+| Insects/Pests | 5,000,000+ | Moderate (BIOSCAN-5M after curation) |
+| Beneficial Insects | 5,000+ | Moderate (BIOSCAN-5M + images.cv + UC IPM) |
 
-**Key Finding**: Crops and diseases have strong data. Weeds have moderate data if CWD30 license is resolved. Insects are the weakest domain due to IP102 licensing and Bugwood's per-photographer approval requirements.
+**Key Finding**: Crops, weeds, diseases, and growth stages have strong data from CC-compatible sources. Insects have massive raw data (BIOSCAN-5M) but require curation. The main gap is high-quality labeled insect pest images for North American garden pests.
 
 ---
 
 ## 10. Next Steps for Data Acquisition
 
-1. **Download immediately**: PlantVillage, PlantDoc, Bangladesh Vegetables, Smartphone Veg, BanglaVeg, VegNet, DeepWeeds, Plant Growth Stage Detection, BDFlower
-2. **Contact authors**: CWD30 (Talha Ilyas), IP102 (Xiaoping Wu)
-3. **Manual curation**: USDA ARS for external test set
-4. **Supplement with caution**: Bugwood CC BY images only
-5. **Generate manifest**: Every image must have provenance metadata
-6. **Run pipeline**: prepare → validate → deduplicate → split → report
+1. **Automatic download**: Run `python training/pipeline.py --step download`
+2. **Manual downloads**: PlantVillage (Figshare), DeepWeeds (Zenodo), BDFlower (PMC), Bangladesh Veg (Mendeley), BIOSCAN-5M (HuggingFace)
+3. **Manual placement**: Place manually downloaded files in `training_data/raw/`
+4. **Research needed**: images.cv download API, OpenPlant license verification
+5. **Contact required**: CWD30 authors (Talha Ilyas), IP102 author (Xiaoping Wu), Bugwood photographers
+6. **Generate manifest**: Every image must have provenance metadata
+7. **Run pipeline**: prepare → validate → deduplicate → split → report

@@ -53,7 +53,7 @@ def get_downloader(dataset_id: str, info: Dict):
     """Get appropriate downloader for dataset."""
     url = info.get("url", "")
     download_url = info.get("download_url", "")
-    
+
     if dataset_id == "deepweeds":
         from downloaders.deepweeds import DeepWeedsDownloader
         return DeepWeedsDownloader(RAW_DIR, MANIFESTS_DIR)
@@ -66,9 +66,24 @@ def get_downloader(dataset_id: str, info: Dict):
     elif dataset_id == "plant_growth_stage":
         from downloaders.roboflow import RoboflowDownloader
         return RoboflowDownloader(RAW_DIR, MANIFESTS_DIR)
-    elif dataset_id in ["bdflower"]:
+    elif dataset_id == "bdflower":
         from downloaders.pmc import PMCDownloader
         return PMCDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif dataset_id == "bioscan_5m":
+        from downloaders.direct import DirectDownloader
+        return DirectDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif dataset_id == "images_cv_vegetables" or dataset_id == "images_cv_insects":
+        from downloaders.direct import DirectDownloader
+        return DirectDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif dataset_id == "roboflow_insect_pest":
+        from downloaders.roboflow import RoboflowDownloader
+        return RoboflowDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif dataset_id == "weed_growth_stage_zenodo":
+        from downloaders.zenodo import ZenodoDownloader
+        return ZenodoDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif dataset_id == "weed_ndsu":
+        from downloaders.mendeley import MendeleyDownloader
+        return MendeleyDownloader(RAW_DIR, MANIFESTS_DIR)
     elif "github.com" in url:
         from downloaders.github import GitHubDownloader
         return GitHubDownloader(RAW_DIR, MANIFESTS_DIR)
@@ -170,14 +185,14 @@ def download_dataset(dataset_id: str, info: Dict) -> bool:
     
     print(f"\n[DOWNLOAD] {info['name']}")
     downloader = get_downloader(dataset_id, info)
-    
+
     try:
         record = downloader.download(dataset_id, info)
-        
-        if hasattr(record, 'status') and record.status.value in ["failed", "hold"]:
+
+        if hasattr(record, 'status') and record.status in ["failed", "hold"]:
             print(f"[FAILED] {dataset_id}: {record.error}")
             return False
-        
+
         print(f"[OK] {dataset_id} acquired")
         return True
     except Exception as e:

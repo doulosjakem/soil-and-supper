@@ -119,15 +119,15 @@ def run_acquisition_status():
     print("=" * 60)
     print("STEP: Acquisition status")
     print("=" * 60)
-    from verify_acquisition import generate_acquisition_status_table
+    from verify_acquisition import generate_acquisition_status_table, generate_detailed_report
     print(generate_acquisition_status_table())
-    
-    from verify_acquisition import scan_raw_directory
-    report = scan_raw_directory()
-    print(f"\nTotal images on disk: {report['total_images']}")
-    print(f"Total archives on disk: {report['total_archives']}")
-    print(f"Recognized datasets: {len(report['datasets_recognized'])}")
-    print(f"Unrecognized/empty datasets: {len(report['datasets_unrecognized'])}")
+    print()
+    report = generate_detailed_report()
+    print(f"Total images on disk: {report['summary']['images_extracted']}")
+    print(f"Datasets acquired: {report['summary']['ready']}")
+    print(f"Datasets missing: {report['summary']['missing']}")
+    print(f"Manual action required: {report['summary']['manual_required']}")
+    print(f"License blocked: {report['summary']['license_blocked']}")
 
 
 def main():

@@ -4,21 +4,19 @@ Mendeley Data downloader for Soil & Supper ML pipeline.
 Handles Mendeley Data dataset downloads.
 """
 
-import requests
 import re
 from pathlib import Path
 from typing import Dict, Optional
+
+import requests
+
 from . import BaseDownloader, AcquisitionRecord, AcquisitionStatus
+from .shared import download_with_resume
 
 
 class MendeleyDownloader(BaseDownloader):
-    """Download datasets from Mendeley Data."""
-    
     def find_download_url(self, dataset_id: str, info: Dict) -> Optional[str]:
-        """Try to find direct download URL from Mendeley page."""
         source_url = info.get("url", "")
-        
-        # Try known direct download URLs first
         known_urls = {
             "bangladesh_veg": "https://data.mendeley.com/public-files/datasets/rtx9ngb68j/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
             "smartphone_veg": "https://data.mendeley.com/public-files/datasets/gnc4s3z2mf/files/3c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
@@ -26,17 +24,20 @@ class MendeleyDownloader(BaseDownloader):
             "vegnet": "https://data.mendeley.com/public-files/datasets/6nxnjbn9w6/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
             "sunflower_growth": "https://data.mendeley.com/public-files/datasets/byftmdzg4g/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
         }
-        
+
         if dataset_id in known_urls:
-            return known_urls[dataset_id]
-        
-        # Try to extract file ID from URL or find download link
+            url = known_urls[dataset_id]
+            try:
+                resp = requests.head(url, timeout=10, allow_redirects=True)
+                if resp.status_code == 200:
+                    return url
+            except Exception:
+                pass
+
         try:
             response = requests.get(source_url, timeout=30, allow_redirects=True)
             if response.status_code == 200:
-                # Look for download links in the page
                 content = response.text
-                # Mendeley often has direct download links
                 patterns = [
                     r'href="([^"]*download[^"]*)"',
                     r'href="([^"]*\.zip)"',
@@ -46,22 +47,19 @@ class MendeleyDownloader(BaseDownloader):
                 for pattern in patterns:
                     matches = re.findall(pattern, content, re.IGNORECASE)
                     if matches:
-                        # Return first matching URL
                         url = matches[0]
                         if not url.startswith("http"):
                             url = "https://data.mendeley.com" + url
                         return url
         except Exception:
             pass
-        
+
         return None
-    
+
     def get_download_url(self, dataset_id: str, info: Dict) -> Optional[str]:
-        """Get download URL."""
         return self.find_download_url(dataset_id, info)
-    
+
     def download(self, dataset_id: str, info: Dict) -> AcquisitionRecord:
-        """Download from Mendeley."""
         record = AcquisitionRecord(
             dataset_id=dataset_id,
             name=info["name"],
@@ -70,48 +68,13 @@ class MendeleyDownloader(BaseDownloader):
             license=info.get("license"),
             license_url=info.get("license_url"),
         )
-        
+
         url = self.get_download_url(dataset_id, info)
         if not url:
-            record = self.update_status(record, AcquisitionStatus.FAILED, "No downloadable URL found on Mendeley page")
-            return record
-        
+            return self.update_status(record, AcquisitionStatus.FAILED, "No downloadable URL found on Mendeley page")
+
         record.download_url = url
         ext = ".zip" if ".zip" in url.lower() else ".tar.gz"
         dest_path = self.output_dir / f"{dataset_id}{ext}"
-        
-        try:
-            response = requests.get(url, stream=True, timeout=120, allow_redirects=True)
-            response.raise_for_status()
-            
-            total_size = int(response.headers.get("content-length", 0))
-            downloaded = 0
-            
-            with open(dest_path, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
-                        downloaded += len(chunk)
-            
-            record.actual_size = downloaded
-            record.file_size = total_size if total_size > 0 else downloaded
-            
-            # Verify it's actually an archive
-            if dest_path.suffix == ".zip":
-                import zipfile
-                if zipfile.is_zipfile(dest_path):
-                    record = self.update_status(record, AcquisitionStatus.DOWNLOADED)
-                else:
-                    record = self.update_status(record, AcquisitionStatus.FAILED, "Not a valid zip file")
-            elif dest_path.suffix in [".tar.gz", ".tgz"]:
-                import tarfile
-                if tarfile.is_tarfile(dest_path):
-                    record = self.update_status(record, AcquisitionStatus.DOWNLOADED)
-                else:
-                    record = self.update_status(record, AcquisitionStatus.FAILED, "Not a valid tar.gz file")
-            else:
-                record = self.update_status(record, AcquisitionStatus.DOWNLOADED)
-        except Exception as e:
-            record = self.update_status(record, AcquisitionStatus.FAILED, str(e))
-        
-        return record
+        download_meta = download_with_resume(url, dest_path)
+        return self._finalize_download(record, dataset_id, info, dest_path, download_meta)
