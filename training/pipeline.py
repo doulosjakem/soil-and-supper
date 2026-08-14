@@ -115,9 +115,24 @@ def run_license_check():
     print(f"Ambiguous mappings: {len(mapper.get_ambiguous_mappings())}")
 
 
+def run_acquisition_status():
+    print("=" * 60)
+    print("STEP: Acquisition status")
+    print("=" * 60)
+    from verify_acquisition import generate_acquisition_status_table
+    print(generate_acquisition_status_table())
+    
+    from verify_acquisition import scan_raw_directory
+    report = scan_raw_directory()
+    print(f"\nTotal images on disk: {report['total_images']}")
+    print(f"Total archives on disk: {report['total_archives']}")
+    print(f"Recognized datasets: {len(report['datasets_recognized'])}")
+    print(f"Unrecognized/empty datasets: {len(report['datasets_unrecognized'])}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Soil & Supper ML Pipeline")
-    parser.add_argument("--step", choices=["license", "download", "prepare", "validate", "deduplicate", "split", "report", "all"], default="all")
+    parser.add_argument("--step", choices=["license", "acquisition_status", "download", "prepare", "validate", "deduplicate", "split", "report", "all"], default="all")
     parser.add_argument("--skip-download", action="store_true", help="Skip download step (use existing data)")
     args = parser.parse_args()
     
@@ -125,6 +140,10 @@ def main():
     
     if args.step in ["license", "all"]:
         run_license_check()
+    
+    if args.step == "acquisition_status":
+        run_acquisition_status()
+        return
     
     if args.step == "license":
         return

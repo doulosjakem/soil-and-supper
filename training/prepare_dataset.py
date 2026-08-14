@@ -6,6 +6,7 @@ Filters, normalizes, and organizes images for training.
 
 import shutil
 import json
+import sys
 from pathlib import Path
 from typing import Dict, List
 import yaml
@@ -89,7 +90,10 @@ def prepare_all(config: Dict):
             class_dir = PROCESSED_DIR / domain / cls
             if class_dir.exists():
                 existing = len(list(class_dir.rglob("*.jpg"))) + len(list(class_dir.rglob("*.jpeg"))) + len(list(class_dir.rglob("*.png"))) + len(list(class_dir.rglob("*.webp")))
-                print(f"  {cls}: {existing} images (already prepared)")
+                if existing > 0:
+                    print(f"  {cls}: {existing} images (already prepared)")
+                else:
+                    print(f"  {cls}: 0 images — NO SOURCE DATA FOUND")
                 total += existing
                 continue
             
@@ -121,10 +125,19 @@ def prepare_all(config: Dict):
                 dataset_id = domain
             
             count = prepare_class(cls, source_dirs, class_dir, dataset_id)
-            print(f"  {cls}: {count} images")
+            if count > 0:
+                print(f"  {cls}: {count} images")
+            else:
+                print(f"  {cls}: 0 images — NO SOURCE DATA FOUND (expected in: {[str(d) for d in source_dirs]})")
             total += count
     
     print(f"\nTotal prepared: {total} images")
+    
+    if total == 0:
+        print("\nERROR: Zero images prepared. Dataset acquisition is incomplete.")
+        print("Run: python training/pipeline.py --step acquisition_status")
+        print("Or: python training/verify_acquisition.py --scan")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-# Phase 12 — Robust Dataset Acquisition: Manual Download Manifest
+# Phase 13 — Manual Dataset Download Manifest
 
 ## Purpose
 
@@ -18,6 +18,17 @@ D:\soil-and-supper\soil-and-supper\training_data\raw\
 ```
 
 If a dataset is already present in this folder, the pipeline will skip re-downloading it.
+
+---
+
+## How to Verify Current Status
+
+Run these commands to see what's actually on disk:
+
+```powershell
+python training/pipeline.py --step acquisition_status
+python training/verify_acquisition.py --scan
+```
 
 ---
 
@@ -149,6 +160,8 @@ They are rejected or on hold for legal reasons.
 Run exactly these commands:
 
 ```powershell
+python training/pipeline.py --step acquisition_status
+python training/verify_acquisition.py --scan
 python training/pipeline.py --step prepare
 python training/pipeline.py --step validate
 python training/quality_checker.py
