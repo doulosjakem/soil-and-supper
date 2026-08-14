@@ -52,8 +52,24 @@ DATASET_URLS = {
 def get_downloader(dataset_id: str, info: Dict):
     """Get appropriate downloader for dataset."""
     url = info.get("url", "")
+    download_url = info.get("download_url", "")
     
-    if "github.com" in url:
+    if dataset_id == "deepweeds":
+        from downloaders.deepweeds import DeepWeedsDownloader
+        return DeepWeedsDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif dataset_id == "plantvillage":
+        from downloaders.plantvillage import PlantVillageDownloader
+        return PlantVillageDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif dataset_id == "plantdoc":
+        from downloaders.plantdoc import PlantDocDownloader
+        return PlantDocDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif dataset_id == "plant_growth_stage":
+        from downloaders.roboflow import RoboflowDownloader
+        return RoboflowDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif dataset_id in ["bdflower"]:
+        from downloaders.pmc import PMCDownloader
+        return PMCDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif "github.com" in url:
         from downloaders.github import GitHubDownloader
         return GitHubDownloader(RAW_DIR, MANIFESTS_DIR)
     elif "zenodo.org" in url:

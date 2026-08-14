@@ -18,6 +18,18 @@ class MendeleyDownloader(BaseDownloader):
         """Try to find direct download URL from Mendeley page."""
         source_url = info.get("url", "")
         
+        # Try known direct download URLs first
+        known_urls = {
+            "bangladesh_veg": "https://data.mendeley.com/public-files/datasets/rtx9ngb68j/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
+            "smartphone_veg": "https://data.mendeley.com/public-files/datasets/gnc4s3z2mf/files/3c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
+            "plantvillage": "https://data.mendeley.com/public-files/datasets/tywbtsjrjv/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
+            "vegnet": "https://data.mendeley.com/public-files/datasets/6nxnjbn9w6/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
+            "sunflower_growth": "https://data.mendeley.com/public-files/datasets/byftmdzg4g/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
+        }
+        
+        if dataset_id in known_urls:
+            return known_urls[dataset_id]
+        
         # Try to extract file ID from URL or find download link
         try:
             response = requests.get(source_url, timeout=30, allow_redirects=True)
