@@ -87,6 +87,8 @@ build/
 /checkpoints/
 /output/
 /results/
+/ml/data/
+/ml/models/
 
 # Dataset archives and binaries
 *.lfs.*
