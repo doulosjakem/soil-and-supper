@@ -349,25 +349,64 @@ The UI should not need to know which model is being used.
 
 # 9. Plant Identification AI
 
-The MVP should support one local/on-device vision model.
+The MVP should support multiple local/on-device vision models organized by domain.
 
-Initial implementation goal:
+## Recognition Architecture
 
-> Image → model → likely plant identification
+Use **specialized single-classifier models per domain** rather than one enormous flat classifier:
+
+1. **CropClassifier** — 50 crop classes + Unknown
+2. **WeedClassifier** — 21 weed classes + Unknown
+3. **DiseaseClassifier** — 30 disease/problem classes + Unknown
+4. **GrowthStageClassifier** — 6 growth stages (separate attribute, not per-crop)
+5. **InsectClassifier** — 18 pest + 7 beneficial classes + Unknown
+
+Each model is trained independently using TensorFlow Lite Model Maker with transfer learning (EfficientNet-Lite0 or MobileNetV3-Small backbone).
+
+## Why specialized models
+
+- Each model stays small and trainable on GTX 1060 6GB
+- Poor data in one domain does not degrade another
+- Easy to update one domain without retraining everything
+- Matches how gardeners think: "Is this a weed? Is this a pest?"
+- Each model can be optimized independently
+- TFLite Model Maker supports this workflow natively
+
+## Unknown / OOD handling
+
+Primary mechanism: **confidence thresholding**, not a catch-all Unknown class.
+
+- If top-1 confidence < 0.40, display "Uncertain — try a clearer photo"
+- Optionally show top-3 predictions with confidence bars
+- Do NOT train a catch-all "Unknown" class from random Internet images
+- Include 2–4 explicit negative classes per domain where licensing permits
+- UI should encourage multiple photos (leaf + fruit + whole plant) when confidence is low
+
+## Growth stage strategy
+
+Growth stage is a **separate model**, not embedded in crop/disease/weed models.
+
+- GrowthStageClassifier predicts: Seedling, Vegetative, Flowering, Fruiting, Mature/Harvest, Senescing
+- This model is crop-agnostic: it predicts stage regardless of plant type
+- The Android app runs it alongside other classifiers when user selects "Check growth stage"
+
+## Initial implementation goal
+
+> Image → domain classifier → likely identification + confidence
 
 The model does NOT need to diagnose diseases in the MVP.
 
 It should return structured information where possible:
 
-* Plant name
-* Optional variety
+* Plant/crop/weed/insect/disease name
 * Confidence
+* Domain (which model made the prediction)
 
 Example:
 
 ```text
+Domain: Crop
 Plant: Tomato
-Variety: Stupice
 Confidence: 0.87
 ```
 
@@ -441,18 +480,25 @@ Do not add a cloud AI fallback in the MVP unless explicitly requested later.
 
 The long-term application may eventually have multiple specialized models:
 
-1. Plant vision model
-2. Garden planning model
-3. Cooking/preservation model
+1. Plant vision model (crops)
+2. Weed identification model
+3. Insect/pest identification model
+4. Disease identification model
+5. Growth stage model
+6. Garden planning model
+7. Cooking/preservation model
 
 The MVP only needs:
 
-1. Plant vision model
-2. Garden-to-table language model
+1. Crop vision model (50 classes)
+2. Disease vision model (30 classes)
+3. Weed vision model (21 classes)
+4. Growth stage model (6 stages)
+5. Garden-to-table language model
 
-Do not build the garden-planning model yet.
+Do not build the garden-planning, insect, or beneficial-insect models yet.
 
-The architecture should allow it to be added later without redesigning the application.
+The architecture should allow them to be added later without redesigning the application.
 
 Potential future interface:
 
@@ -789,17 +835,86 @@ After MVP:
 ## Approach
 
 * Transfer learning rather than training from scratch
-* Small, fast, offline-capable model
-* Convertible to Android-supported inference format
-* Replaceable as the model improves
+* Small, fast, offline-capable models
+* Convertible to Android-supported inference format (TFLite)
+* Replaceable as models improve
+* Specialized classifiers per domain (crops, weeds, diseases, insects, growth stages)
+* Confidence thresholding for unknown/OOD detection
+* External validation with source-separated test sets
 
-## Dataset
+## Model Stack (MVP)
 
-* Commercially usable datasets with clear licensing
-* Avoid CC BY-NC and ambiguous licensing
-* Avoid academic-only datasets
+| Model | Domain | Classes | Backbone | Est. Size |
+|-------|--------|---------|----------|-----------|
+| CropClassifier | Crops | 50 + Unknown | EfficientNet-Lite0 | ~4 MB |
+| DiseaseClassifier | Diseases | 30 + Unknown | EfficientNet-Lite0 | ~4 MB |
+| WeedClassifier | Weeds | 21 + Unknown | MobileNetV3-Small | ~3 MB |
+| GrowthStageClassifier | Growth Stages | 6 | MobileNetV3-Small | ~2 MB |
+
+Total model bundle: ~13 MB
+
+## Dataset Strategy
+
+* Primary: Commercially usable datasets with clear licensing (CC0, CC BY 4.0, Public Domain)
+* Avoid: CC BY-NC, CC BY-SA, academic-only, ambiguous commercial licensing
 * Do not download huge datasets into Git
 * Dataset preparation tooling separate from Android app
+* Provenance manifest for every image (source, license, attribution)
+* Automated pipeline: discover → download → prepare → validate → deduplicate → split → report
+
+## Approved Dataset Sources
+
+### Crops
+* Bangladesh Comprehensive Vegetables (CC BY 4.0, 4,730 images)
+* Smartphone Vegetable Detection (CC BY 4.0, 3,534 images)
+* BanglaVeg (CC BY 4.0, 4,319 images)
+* VegNet (CC BY 4.0, 6,850 images)
+* USDA ARS Image Gallery (Public Domain, supplement)
+
+### Diseases
+* PlantVillage (CC0 1.0, 54,306 images) — PRIMARY
+* PlantDoc (CC BY 4.0, 2,569 images) — SUPPLEMENT
+
+### Weeds
+* DeepWeeds (CC BY 4.0, 17,509 images) — SUPPLEMENT (Australia-specific)
+* CWD30 (219,770 images) — PENDING LICENSE CLARIFICATION
+* Bugwood Images (Mixed) — SUPPLEMENT with caution
+
+### Growth Stages
+* Plant Growth Stage Detection (CC BY 4.0, 7,306 images)
+* BDFlower (CC BY 4.0, 23,334 images)
+
+## Data Pipeline
+
+```bash
+python training/prepare_dataset.py --domain crops
+python training/prepare_dataset.py --domain diseases
+python training/prepare_dataset.py --domain weeds
+python training/prepare_dataset.py --domain growth_stages
+python training/train.py --domain crops
+python training/train.py --domain diseases
+python training/train.py --domain weeds
+python training/train.py --domain growth_stages
+python training/export.py --all
+```
+
+## Validation Strategy
+
+* Train: Dataset A (primary) + Dataset B (supplement)
+* Validation: Held-out 15% of Dataset A
+* External Test: Dataset C never used in training (e.g., USDA ARS for crops, PlantDoc for diseases)
+* Report domain shift explicitly: "Model performs 94% same-source, 82% external"
+
+## Compute Feasibility (GTX 1060 6GB)
+
+| Model | Training Time | VRAM Required |
+|-------|--------------|---------------|
+| CropClassifier | 2–4 hours | ~4 GB |
+| DiseaseClassifier | 2–3 hours | ~4 GB |
+| WeedClassifier | 1–2 hours | ~3 GB |
+| GrowthStageClassifier | 30–60 min | ~2 GB |
+
+All models trainable on GTX 1060 6GB with 24GB system RAM.
 
 ---
 

@@ -4,57 +4,159 @@ data:
   manifests_dir: "../data/manifests"
   reports_dir: "../data/reports"
 
-target_classes:
-  - Tomato
-  - Pepper_sweet
-  - Pepper_hot
-  - Cucumber
-  - Bean
-  - Carrot
-  - Corn
-  - Onion
-  - Potato
-  - Broccoli
-  - Cabbage
-  - Lettuce
-  - Spinach
-  - Pea
-  - Radish
-  - Summer_squash
-  - Winter_squash
-  - Strawberry
-  - Watermelon
-  - Cantaloupe
-  - Pumpkin
-  - Beet
-  - Turnip
-  - Sweet_potato
-  - Basil
-  - Cilantro
-  - Parsley
-  - Dill
-  - Chives
-  - Rosemary
-  - Thyme
-  - Oregano
-  - Sage
-  - Blueberry
-  - Grape
-  - Marigold
-  - Zinnia
-  - Nasturtium
-  - Sunflower
-  - Cosmos
-  - Petunia
-  - Begonia
-  - Eggplant
-  - Okra
-  - Asparagus
-  - Rhubarb
-  - Celery
-  - Leek
-  - Fennel
-  - Artichoke
+domains:
+  crops:
+    enabled: true
+    classes:
+      - Tomato
+      - Pepper_sweet
+      - Pepper_hot
+      - Cucumber
+      - Bean
+      - Carrot
+      - Corn
+      - Onion
+      - Potato
+      - Broccoli
+      - Cabbage
+      - Lettuce
+      - Spinach
+      - Pea
+      - Radish
+      - Summer_squash
+      - Winter_squash
+      - Watermelon
+      - Cantaloupe
+      - Pumpkin
+      - Beet
+      - Turnip
+      - Sweet_potato
+      - Basil
+      - Cilantro
+      - Parsley
+      - Dill
+      - Chives
+      - Rosemary
+      - Thyme
+      - Oregano
+      - Sage
+      - Strawberry
+      - Blueberry
+      - Grape
+      - Marigold
+      - Zinnia
+      - Nasturtium
+      - Sunflower
+      - Cosmos
+      - Petunia
+      - Begonia
+      - Eggplant
+      - Okra
+      - Asparagus
+      - Rhubarb
+      - Celery
+      - Leek
+      - Fennel
+      - Artichoke
+
+  weeds:
+    enabled: true
+    classes:
+      - Dandelion
+      - Crabgrass
+      - White_clover
+      - Purslane
+      - Lambsquarters
+      - Chickweed
+      - Pigweed
+      - Plantain
+      - Nutsedge
+      - Ragweed
+      - Bindweed
+      - Foxtail
+      - Thistle
+      - Poison_ivy
+      - Garlic_mustard
+      - Knotweed
+      - Ground_ivy
+      - Woodsorrel
+      - Johnsongrass
+      - Quackgrass
+      - Other_weed
+
+  insects:
+    enabled: true
+    classes:
+      - Aphid
+      - Japanese_beetle
+      - Colorado_potato_beetle
+      - Cucumber_beetle
+      - Cabbage_worm
+      - Tomato_hornworm
+      - Squash_bug
+      - Whitefly
+      - Spider_mite
+      - Thrips
+      - Leafminer
+      - Cutworm
+      - Stink_bug
+      - Flea_beetle
+      - Mexican_bean_beetle
+      - Corn_earworm
+      - Squash_vine_borer
+      - Blister_beetle
+      - Ladybug
+      - Green_lacewing
+      - Honey_bee
+      - Hoverfly
+      - Praying_mantis
+      - Spider
+      - Earthworm
+      - Other_pest
+
+  diseases:
+    enabled: true
+    classes:
+      - Healthy
+      - Powdery_mildew
+      - Downy_mildew
+      - Early_blight
+      - Late_blight
+      - Septoria_leaf_spot
+      - Bacterial_spot
+      - Fusarium_wilt
+      - Verticillium_wilt
+      - Anthracnose
+      - Rust
+      - Leaf_spot
+      - Blossom_end_rot
+      - Nutrient_deficiency
+      - Sunscald
+      - Frost_damage
+      - Hail_damage
+      - Overwatering_stress
+      - Underwatering_stress
+      - Insect_damage
+      - Chewing_damage
+      - Leaf_miner_damage
+      - Apple_scab
+      - Cedar_apple_rust
+      - Grape_black_rot
+      - Peach_bacterial_spot
+      - Soybean_rust
+      - Squash_powdery_mildew
+      - Tomato_mosaic_virus
+      - Tomato_yellow_leaf_curl
+
+  growth_stages:
+    enabled: true
+    classes:
+      - Seedling
+      - Vegetative
+      - Flowering
+      - Fruiting
+      - Mature_Harvest
+      - Senescing
 
 split:
   train_ratio: 0.7
@@ -82,7 +184,7 @@ augmentation:
   random_saturation: 0.1
 
 model:
-  base_model: "mobilenet_v2"
+  base_model: "mobilenet_v3_small"
   input_size: 224
   batch_size: 32
   epochs: 10

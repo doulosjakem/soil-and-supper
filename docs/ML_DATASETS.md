@@ -1,4 +1,4 @@
-# Soil & Supper — ML Datasets
+# Soil & Supper — ML Datasets (Revised)
 
 ## 1. Evaluation Criteria
 
@@ -13,9 +13,9 @@ Each dataset is evaluated against:
 - **Environmental Diversity**: Indoor, outdoor, greenhouse, market
 - **Known Limitations**: Background removal, low resolution, geographic bias
 - **Estimated Useful Images**: After filtering for target classes
-- **Recommendation**: USE / SUPPLEMENT / REJECT
+- **Recommendation**: USE / SUPPLEMENT / REJECT / CONTACT_REQUIRED
 
-## 2. Dataset Evaluations
+## 2. Crop Datasets
 
 ### DS-01: Bangladesh Comprehensive Vegetables (Mendeley)
 
@@ -40,7 +40,6 @@ Each dataset is evaluated against:
 - Original collection using Poco F3 smartphone.
 - Peer-reviewed publication.
 - Clear CC BY 4.0 license.
-- Manual curation by authors.
 - DOI: 10.17632/rtx9ngb68j
 
 ---
@@ -89,7 +88,7 @@ Each dataset is evaluated against:
 | **Environmental Diversity** | Greenhouse/controlled |
 | **Known Limitations** | Only 3 classes; early growth stage only |
 | **Estimated Useful Images** | ~1,500 |
-| **Recommendation** | **SUPPLEMENT** — Early growth images for Corn and Bean |
+| **Recommendation** | **USE** — Supplement for Corn and Bean seedling images |
 
 **Notes**:
 - Collected in France using Intel RealSense, Canon EOS, Sony W800.
@@ -115,7 +114,7 @@ Each dataset is evaluated against:
 | **Environmental Diversity** | Field research, agricultural settings |
 | **Known Limitations** | Must manually search and download per class; no pre-labeled classification dataset |
 | **Estimated Useful Images** | 200–500 per target class after manual curation |
-| **Recommendation** | **SUPPLEMENT** — High-quality public domain images for augmentation |
+| **Recommendation** | **SUPPLEMENT** — High-quality public domain images for augmentation AND external test set |
 
 **Notes**:
 - Copyright-free unless otherwise indicated.
@@ -140,8 +139,8 @@ Each dataset is evaluated against:
 | **Growth Stages** | Unripe, Ripe, Old, Dried, Damaged |
 | **Environmental Diversity** | Indoor lab and outdoor |
 | **Known Limitations** | Only 4 classes; white background (not realistic garden settings) |
-| **Estimated Useful Images** | ~5,000 |
-| **Recommendation** | **SUPPLEMENT** — High-quality pepper and tomato images with quality labels |
+| **Estimated Useful Images** | ~6,000 |
+| **Recommendation** | **USE** — Supplement for pepper and tomato images with quality labels |
 
 **Notes**:
 - DOI: 10.17632/6nxnjbn9w6.1
@@ -150,202 +149,7 @@ Each dataset is evaluated against:
 
 ---
 
-### DS-06: Kaggle Vegetable Image Dataset (misrakahmed)
-
-| Field | Value |
-|-------|-------|
-| **Name** | Vegetable Image Dataset |
-| **URL** | https://www.kaggle.com/datasets/misrakahmed/vegetable-image-dataset |
-| **License** | CC BY-SA 4.0 |
-| **Commercial Use** | Yes, but ShareAlike required |
-| **Attribution Required** | Yes |
-| **Image Count** | 21,000 images |
-| **Classes** | 15 classes |
-| **Relevant Classes** | Bean, Bitter Gourd, Bottle Gourd, Brinjal (Eggplant), Broccoli, Cabbage, Capsicum (Pepper), Carrot, Cauliflower, Cucumber, Papaya, Potato, Pumpkin, Radish, Tomato |
-| **Image Characteristics** | 224×224, JPG, clean backgrounds |
-| **Growth Stages** | Mature vegetables |
-| **Environmental Diversity** | Studio/controlled |
-| **Known Limitations** | CC BY-SA license requires derivative works to be shared under same license; may be incompatible with proprietary app |
-| **Estimated Useful Images** | ~15,000 |
-| **Recommendation** | **REJECT for primary use** — ShareAlike license incompatible with proprietary Android app |
-
-**Notes**:
-- Already split into train (15,000), test (3,000), validation (3,000).
-- High quality and convenient, but license is problematic.
-
----
-
-### DS-07: Oxford 102 Flower Dataset
-
-| Field | Value |
-|-------|-------|
-| **Name** | 102 Category Flower Dataset |
-| **URL** | https://www.robots.ox.ac.uk/~vgg/data/flowers/102/ |
-| **License** | Unclear (no explicit license on dataset page) |
-| **Commercial Use** | Unknown — verify before use |
-| **Attribution Required** | Unknown |
-| **Image Count** | 8,189 images |
-| **Classes** | 102 flower categories |
-| **Relevant Classes** | Various common garden flowers |
-| **Image Characteristics** | Various scales, poses, lighting |
-| **Growth Stages** | Blooming flowers |
-| **Environmental Diversity** | Gardens, nature |
-| **Known Limitations** | License unclear; UK-focused flowers |
-| **Estimated Useful Images** | Unknown |
-| **Recommendation** | **REJECT until license clarified** — Do not use without explicit commercial-use confirmation |
-
-**Notes**:
-- HuggingFace dataset shows empty license field.
-- Original publication: Nilsback & Zisserman, 2008.
-- Contact Oxford VGG for license clarification before use.
-
----
-
-### DS-08: Pl@ntNet Images
-
-| Field | Value |
-|-------|-------|
-| **Name** | Pl@ntNet Collaborative Images |
-| **URL** | https://plantnet.org |
-| **License** | CC BY-SA (images), CC BY (observation data) |
-| **Commercial Use** | Yes, but ShareAlike required for images |
-| **Attribution Required** | Yes |
-| **Image Count** | Millions of images |
-| **Classes** | 7806+ plant species (PlantCLEF 2024) |
-| **Relevant Classes** | All target classes |
-| **Image Characteristics** | User-contributed, variable quality, diverse backgrounds |
-| **Growth Stages** | All stages |
-| **Environmental Diversity** | Global |
-| **Known Limitations** | CC BY-SA requires derivative works to be shared under same license; impractical for proprietary app |
-| **Estimated Useful Images** | Very large |
-| **Recommendation** | **REJECT for primary use** — ShareAlike license incompatible with proprietary app |
-
-**Notes**:
-- PlantCLEF 2024/2025 data is a subset of Pl@ntNet training data.
-- Individual image licenses may vary; most are CC BY-SA.
-- Do not use for proprietary commercial model.
-
----
-
-### DS-09: PlantCLEF 2024/2025
-
-| Field | Value |
-|-------|-------|
-| **Name** | PlantCLEF 2024/2025 Training Data |
-| **URL** | https://www.imageclef.org/PlantCLEF2025 |
-| **License** | CC BY-NC-SA 4.0 |
-| **Commercial Use** | No |
-| **Attribution Required** | Yes |
-| **Image Count** | ~1.4M images (PlantCLEF 2024) |
-| **Classes** | ~7,806 species (southwestern Europe flora) |
-| **Relevant Classes** | Many target classes |
-| **Image Characteristics** | Individual plant photos, vegetation quadrat images |
-| **Growth Stages** | All stages |
-| **Environmental Diversity** | Southwestern Europe |
-| **Known Limitations** | Non-commercial only; European flora bias |
-| **Estimated Useful Images** | Very large but unusable |
-| **Recommendation** | **REJECT** — Non-commercial license explicitly prohibits commercial AI training |
-
-**Notes**:
-- Kaggle competition rules state: "Competition Use and Non-Commercial & Academic Research only."
-- Even though some underlying data may be CC BY, the competition dataset has NC restrictions.
-- Do not use.
-
----
-
-### DS-10: iNaturalist AWS Open Data
-
-| Field | Value |
-|-------|-------|
-| **Name** | iNaturalist Open Data (AWS) |
-| **URL** | https://registry.opendata.aws/inaturalist-open-data/ |
-| **License** | Mixed (mostly CC BY-NC) |
-| **Commercial Use** | Prohibited by iNaturalist Terms of Service |
-| **Attribution Required** | Yes |
-| **Image Count** | Millions of observations |
-| **Classes** | All species |
-| **Relevant Classes** | All target classes |
-| **Image Characteristics** | User-contributed, variable quality |
-| **Growth Stages** | All stages |
-| **Environmental Diversity** | Global |
-| **Known Limitations** | Terms of Service explicitly prohibit commercial AI training |
-| **Estimated Useful Images** | Very large but unusable |
-| **Recommendation** | **REJECT** — Terms of Service prohibit commercial AI training |
-
-**Notes**:
-- iNaturalist Terms of Service (Section 7): "Users may not use any iNaturalist data for training artificial intelligence, machine learning models, large language models, or similar networks, algorithms, or systems for commercial purposes."
-- Even if individual images are CC0, the platform terms prohibit commercial AI training.
-
----
-
-### DS-11: VegNet (PMC 9679474)
-
-| Field | Value |
-|-------|-------|
-| **Name** | VegNet: Dataset of vegetable quality images |
-| **URL** | https://data.mendeley.com/datasets/6nxnjbn9w6 |
-| **License** | CC BY 4.0 |
-| **Commercial Use** | Yes, with attribution |
-| **Attribution Required** | Yes |
-| **Image Count** | 6,850 images |
-| **Classes** | Bell Pepper, Tomato, Chili Pepper, New Mexico Chile |
-| **Relevant Classes** | Pepper, Tomato |
-| **Image Characteristics** | Mobile phone, white background, 256×256, quality stages |
-| **Growth Stages** | Unripe, Ripe, Old, Dried, Damaged |
-| **Environmental Diversity** | Indoor lab |
-| **Known Limitations** | Only 4 classes; controlled background |
-| **Estimated Useful Images** | ~6,000 |
-| **Recommendation** | **SUPPLEMENT** — High-quality pepper/tomato images with quality labels |
-
-**Notes**:
-- Same dataset as DS-05? Actually different - this is the 6,850 image dataset with 4 classes and quality sub-labels.
-- DOI: 10.17632/6nxnjbn9w6.1
-
----
-
-### DS-12: CommonCanvas CC-BY
-
-| Field | Value |
-|-------|-------|
-| **Name** | CommonCanvas CC-BY |
-| **URL** | https://huggingface.co/datasets/common-canvas/commoncatalog-cc-by |
-| **License** | CC BY 2.0 (varies by image) |
-| **Commercial Use** | Yes, with attribution |
-| **Attribution Required** | Yes |
-| **Image Count** | ~14.5M images |
-| **Classes** | General web images |
-| **Relevant Classes** | Indirect — contains some plant/vegetable images |
-| **Image Characteristics** | Web-crawled, variable quality |
-| **Growth Stages** | Mixed |
-| **Environmental Diversity** | Global web |
-| **Known Limitations** | Not plant-specific; requires filtering; very large |
-| **Estimated Useful Images** | Unknown |
-| **Recommendation** | **LOW PRIORITY** — Not worth the filtering effort for plant-specific model |
-
----
-
-### DS-13: KoalaAI StockImages-CC0
-
-| Field | Value |
-|-------|-------|
-| **Name** | StockImages-CC0 |
-| **URL** | https://huggingface.co/datasets/KoalaAI/StockImages-CC0 |
-| **License** | CC0 (Public Domain) |
-| **Commercial Use** | Yes, no restrictions |
-| **Attribution Required** | No |
-| **Image Count** | ~4,000 images |
-| **Classes** | General stock photos |
-| **Relevant Classes** | Indirect — contains some plant images |
-| **Image Characteristics** | Stock photography, high quality |
-| **Growth Stages** | Mixed |
-| **Environmental Diversity** | Studio and outdoor |
-| **Known Limitations** | Not plant-specific; very small for our needs |
-| **Estimated Useful Images** | <100 plant-related |
-| **Recommendation** | **REJECT** — Not plant-specific; insufficient scale |
-
----
-
-### DS-14: BanglaVeg (ScienceDirect 2025)
+### DS-06: BanglaVeg (ScienceDirect 2025)
 
 | Field | Value |
 |-------|-------|
@@ -371,7 +175,28 @@ Each dataset is evaluated against:
 
 ---
 
-### DS-15: Mendeley Vegetables Image Dataset (j33g3nsm9k)
+### DS-07: Kaggle Vegetable Image Dataset (misrakahmed)
+
+| Field | Value |
+|-------|-------|
+| **Name** | Vegetable Image Dataset |
+| **URL** | https://www.kaggle.com/datasets/misrakahmed/vegetable-image-dataset |
+| **License** | CC BY-SA 4.0 |
+| **Commercial Use** | Yes, but ShareAlike required |
+| **Attribution Required** | Yes |
+| **Image Count** | 21,000 images |
+| **Classes** | 15 classes |
+| **Relevant Classes** | Bean, Bitter Gourd, Bottle Gourd, Brinjal (Eggplant), Broccoli, Cabbage, Capsicum (Pepper), Carrot, Cauliflower, Cucumber, Papaya, Potato, Pumpkin, Radish, Tomato |
+| **Image Characteristics** | 224×224, JPG, clean backgrounds |
+| **Growth Stages** | Mature vegetables |
+| **Environmental Diversity** | Studio/controlled |
+| **Known Limitations** | CC BY-SA license requires derivative works to be shared under same license; incompatible with proprietary app |
+| **Estimated Useful Images** | ~15,000 |
+| **Recommendation** | **REJECT for primary use** — ShareAlike license incompatible with proprietary Android app |
+
+---
+
+### DS-08: Mendeley Vegetables Image Dataset (j33g3nsm9k)
 
 | Field | Value |
 |-------|-------|
@@ -386,7 +211,7 @@ Each dataset is evaluated against:
 | **Image Characteristics** | Unknown |
 | **Growth Stages** | Unknown |
 | **Environmental Diversity** | Unknown |
-| **Known Limitations** | Limited class list |
+| **Known Limitations** | Limited class list; metadata not yet reviewed |
 | **Estimated Useful Images** | Unknown |
 | **Recommendation** | **EVALUATE** — Download and assess image quality and count |
 
@@ -396,70 +221,303 @@ Each dataset is evaluated against:
 
 ---
 
-## 3. Summary Recommendations
+## 3. Weed Datasets
 
-| Dataset | Recommendation | Target Classes | Est. Images | License Risk |
-|---------|---------------|----------------|-------------|--------------|
-| Bangladesh Vegetables (Mendeley) | USE | 12+ | ~2,500 | Low (CC BY 4.0) |
-| Smartphone Vegetable Detection | USE | 10+ | ~2,000 | Low (CC BY 4.0) |
-| USDA ARS Image Gallery | SUPPLEMENT | 15+ | ~500 | None (Public Domain) |
-| VegNet (Mendeley) | SUPPLEMENT | 2 | ~6,000 | Low (CC BY 4.0) |
-| BanglaVeg | USE | 8+ | ~3,000 | Low (CC BY 4.0) |
-| Early-Stage Crops | SUPPLEMENT | 2 | ~1,500 | Low (CC BY 4.0) |
-| Kaggle Vegetable (misrakahmed) | REJECT | 15 | ~15,000 | High (CC BY-SA) |
-| Pl@ntNet | REJECT | All | Millions | High (CC BY-SA) |
-| PlantCLEF 2025 | REJECT | All | ~1.4M | High (CC BY-NC-SA) |
-| iNaturalist | REJECT | All | Millions | High (ToS prohibition) |
-| Oxford 102 Flowers | REJECT | Flowers | 8,189 | Unknown |
-| CommonCanvas CC-BY | LOW | Indirect | 14.5M | Low but not useful |
+### DS-09: DeepWeeds
 
-## 4. Estimated Total Data by Class (Without Personal Photography)
+| Field | Value |
+|-------|-------|
+| **Name** | DeepWeeds: A Multiclass Weed Species Image Dataset for Deep Learning |
+| **URL** | https://github.com/AlexOlsen/DeepWeeds |
+| **License** | CC BY 4.0 |
+| **Commercial Use** | Yes, with attribution |
+| **Attribution Required** | Yes |
+| **Image Count** | 17,509 images |
+| **Classes** | 8 weed species + 1 negative class |
+| **Relevant Classes** | Lantana, Prickly acacia, Parkinsonia, Rubber vine (some overlap with warm US climates). **NOT** common Northern American garden weeds. |
+| **Image Characteristics** | In-situ rangeland photos, 256×256, various lighting |
+| **Growth Stages** | Mature weeds |
+| **Environmental Diversity** | Northern Australia rangelands |
+| **Known Limitations** | Australian species; not representative of North American garden weeds |
+| **Estimated Useful Images** | ~2,000 usable for North American context (after filtering) |
+| **Recommendation** | **SUPPLEMENT** — Use only as supplementary weed data; prioritize CWD30 and Bugwood for North American weeds |
 
-| Class | Estimated Images | Status |
-|-------|-----------------|--------|
-| Tomato | 8,000+ | Strong |
-| Pepper (sweet + hot) | 6,000+ | Strong |
-| Cucumber | 4,000+ | Strong |
-| Bean | 4,000+ | Strong |
-| Corn | 3,000+ | Moderate |
-| Carrot | 2,500+ | Moderate |
-| Onion | 2,000+ | Moderate |
-| Potato | 2,500+ | Moderate |
-| Broccoli | 2,000+ | Moderate |
-| Cabbage | 1,500+ | Marginal |
-| Lettuce | 1,500+ | Marginal |
-| Spinach | 1,000+ | Weak |
-| Pea | 1,500+ | Marginal |
-| Radish | 1,500+ | Marginal |
-| Summer Squash | 2,000+ | Moderate |
-| Winter Squash | 1,500+ | Marginal |
-| Strawberry | 2,000+ | Moderate |
-| Watermelon | 1,000+ | Weak |
-| Cantaloupe | 800+ | Weak |
-| Eggplant | 1,000+ | Weak |
-| Herbs (each) | 200-500 | Weak |
-| Flowers (each) | 100-300 | Weak |
+**Notes**:
+- Published in Scientific Reports, 2019.
+- DOI: 10.1038/s41598-018-38343-3
 
-**Key Finding**: 6–8 classes have strong data. 10+ classes have moderate data. 10+ classes have weak or insufficient data.
+---
 
-**Strategy**: Train baseline with strong + moderate classes. Evaluate. Target weak classes for additional data acquisition or consider merging/removing.
+### DS-10: CWD30
 
-## 5. Data Pipeline Strategy
+| Field | Value |
+|-------|-------|
+| **Name** | CWD30: A new benchmark dataset for crop weed recognition in precision agriculture |
+| **URL** | https://cwd-30.github.io/cwd-30/ |
+| **License** | **UNCLEAR — no explicit license on GitHub or project website** |
+| **Commercial Use** | Unknown — published in Elsevier journal (Computers and Electronics in Agriculture) |
+| **Attribution Required** | Unknown |
+| **Image Count** | 219,770 images |
+| **Classes** | 10 crop + 20 weed species |
+| **Relevant Classes** | 20 weed species including: Amaranthus sp., Digitaria sp., Portulaca oleracea, Chenopodium album, Stellaria media, Cyperus sp., Ambrosia artemisiifolia, Calystegia sepium, Setaria sp., Cirsium sp., Polygonum sp., Oxalis corniculata, Sorghum halepense, Elymus repens, and others |
+| **Image Characteristics** | High resolution, multiple viewing angles, diverse growth stages, indoor/outdoor |
+| **Growth Stages** | Multiple growth stages documented |
+| **Environmental Diversity** | Agricultural fields, lab-grown |
+| **Known Limitations** | **License unclear for commercial use**; some species are Korean/Australian; dataset is large (219K images) |
+| **Estimated Useful Images** | ~50,000+ after filtering for 21 target weed classes |
+| **Recommendation** | **REJECT until license clarified** — Do not use for commercial model without explicit permission from authors |
 
-1. **Download** approved datasets automatically.
-2. **Filter** to only relevant classes.
-3. **Deduplicate** using perceptual hashing.
-4. **Validate** image integrity.
-5. **Normalize** filenames and metadata.
-6. **Split** stratified train/val/test.
-7. **Augment** training data (rotation, flip, color jitter).
-8. **Report** class counts, source counts, license attribution.
+**Notes**:
+- Published 2025 in Computers and Electronics in Agriculture.
+- DOI: 10.1016/j.compag.2024.109737
+- Contact authors before use.
 
-## 6. Next Steps
+---
 
-1. Finalize taxonomy (this document).
-2. Build automated download pipeline.
-3. Acquire and curate datasets.
-4. Generate manifest and quality report.
-5. Train baseline model.
-6. Evaluate and iterate.
+## 4. Insect / Pest Datasets
+
+### DS-11: IP102
+
+| Field | Value |
+|-------|-------|
+| **Name** | IP102: A Large-Scale Benchmark Dataset for Insect Pest Recognition |
+| **URL** | https://github.com/xpwu95/IP102 |
+| **License** | **Academic use only — contact author for commercial use** |
+| **Commercial Use** | **Prohibited without explicit permission** |
+| **Attribution Required** | Yes |
+| **Image Count** | 75,222 images |
+| **Classes** | 102 pest species |
+| **Relevant Classes** | Aphids, Japanese beetle, Colorado potato beetle, Cucumber beetles, Cabbage worms, Tomato hornworm, Squash bugs, Whiteflies, Thrips, Spider mites, Leaf miners, Cutworms, Stink bugs, Flea beetles, and more |
+| **Image Characteristics** | Field photos, variable quality, long-tailed distribution |
+| **Growth Stages** | Mixed (egg, larva, pupa, adult) |
+| **Environmental Diversity** | Agricultural fields, China |
+| **Known Limitations** | **License prohibits commercial use without contacting author**; long-tailed distribution; some classes have very few images |
+| **Estimated Useful Images** | Very large but currently unusable |
+| **Recommendation** | **REJECT for now** — Contact Xiaoping Wu (xpwu95@163.com) for commercial use permission before using |
+
+**Notes**:
+- Accepted at CVPR 2019.
+- Hierarchical taxonomy (pests grouped by crop).
+- 19,000 images have bounding box annotations.
+
+---
+
+### DS-12: Bugwood Images
+
+| Field | Value |
+|-------|-------|
+| **Name** | Bugwood Images (WeedImages, InsectImages, Invasive.org) |
+| **URL** | https://images.bugwood.org/ |
+| **License** | **Mixed — per-photographer Creative Commons licenses** |
+| **Commercial Use** | **Requires photographer approval for commercial use** |
+| **Attribution Required** | Yes (per photographer) |
+| **Image Count** | Unknown (hundreds of thousands across all sub-sites) |
+| **Classes** | Weeds, insects, diseases, invasive species |
+| **Relevant Classes** | All target weed, insect, and disease classes |
+| **Image Characteristics** | Professional identification photos, high quality, various angles |
+| **Growth Stages** | All stages |
+| **Environmental Diversity** | North American field and garden settings |
+| **Known Limitations** | **Individual photographers retain rights; commercial use requires approval per image**; no bulk download; time-consuming provenance tracking |
+| **Estimated Useful Images** | Unknown — requires manual search and download |
+| **Recommendation** | **SUPPLEMENT with caution** — Excellent quality and relevance, but requires approval workflow for commercial use. Use only CC BY-licensed images for MVP. |
+
+**Notes**:
+- Run by University of Georgia Center for Invasive Species and Ecosystem Health.
+- Sub-sites: WeedImages.org, InsectImages.org, Invasive.org, ForestryImages.org, IPMImages.org.
+- Automated image request system: https://forestryimages.org/about/image-usage
+
+---
+
+## 5. Disease Datasets
+
+### DS-13: PlantVillage
+
+| Field | Value |
+|-------|-------|
+| **Name** | PlantVillage Dataset |
+| **URL** | https://data.mendeley.com/datasets/tywbtsjrjv/1 |
+| **License** | CC0 1.0 (Public Domain) |
+| **Commercial Use** | Yes, no restrictions |
+| **Attribution Required** | No (but citation appreciated) |
+| **Image Count** | 54,306 images |
+| **Classes** | 38 classes (14 crop species × healthy/disease) |
+| **Relevant Classes** | Apple (scab, rust, healthy), Blueberry (healthy), Cherry (powdery mildew, healthy), Corn (rust, healthy), Grape (black rot, healthy), Orange (huanglongbing), Peach (healthy, bacterial spot), Pepper (bacterial spot, healthy), Potato (early/late blight, healthy), Raspberry (healthy), Soybean (healthy), Squash (powdery mildew), Strawberry (healthy), Tomato (bacterial spot, early/late blight, leaf mold, Septoria, spider mites, target spot, mosaic virus, yellow leaf curl, healthy) |
+| **Image Characteristics** | 256×256, controlled background (gray/black), lab lighting, leaf close-ups |
+| **Growth Stages** | Mature leaves |
+| **Environmental Diversity** | Controlled/lab |
+| **Known Limitations** | Controlled backgrounds; not real-world garden photos; some classes have few images |
+| **Estimated Useful Images** | ~54,000 (entire dataset usable) |
+| **Recommendation** | **USE** — Primary disease dataset. CC0 makes it legally risk-free. |
+
+**Notes**:
+- Original paper: Hughes & Salathé, 2015. arXiv:1511.08060
+- Available via TensorFlow Datasets: `plant_village`
+- Meta-Album confirms CC0 1.0 license.
+
+---
+
+### DS-14: PlantDoc
+
+| Field | Value |
+|-------|-------|
+| **Name** | PlantDoc: A Dataset for Visual Plant Disease Detection |
+| **URL** | https://github.com/pratikkayal/PlantDoc-Dataset |
+| **License** | CC BY 4.0 |
+| **Commercial Use** | Yes, with attribution |
+| **Attribution Required** | Yes |
+| **Image Count** | 2,569 images |
+| **Classes** | 29 classes (13 plant species, 17 disease types) |
+| **Relevant Classes** | Corn leaf blight, Tomato Septoria, Squash powdery mildew, Potato early/late blight, Tomato early blight, Tomato mold, Tomato bacterial spot, Tomato yellow virus, Tomato mosaic virus, Tomato two-spotted spider mites, Apple scab, Apple rust, Grape black rot, Peach leaf, Strawberry leaf, Blueberry leaf, Raspberry leaf, Soybean leaf, Bell pepper leaf spot, Cherry leaf, and more |
+| **Image Characteristics** | Real-world field photos, natural backgrounds, variable lighting, variable resolution |
+| **Growth Stages** | Mature leaves |
+| **Environmental Diversity** | Field/garden |
+| **Known Limitations** | Small dataset; some classes have few images; object detection format (can be converted to classification) |
+| **Estimated Useful Images** | ~2,500 |
+| **Recommendation** | **USE** — Supplement for real-world disease images with natural backgrounds. Complements PlantVillage perfectly. |
+
+**Notes**:
+- Published at CoDS-COMAD 2020.
+- DOI: 10.1145/3371158.3371196
+- Authors: Singh et al., IIT Gandhinagar.
+
+---
+
+## 6. Growth Stage Datasets
+
+### DS-15: Plant Growth Stage Detection (Roboflow)
+
+| Field | Value |
+|-------|-------|
+| **Name** | Plant Growth Stage Detection Dataset |
+| **URL** | https://universe.roboflow.com/mendozajrl/plant-growth-stage-detection |
+| **License** | CC BY 4.0 |
+| **Commercial Use** | Yes, with attribution |
+| **Attribution Required** | Yes |
+| **Image Count** | 7,306 images |
+| **Classes** | Flowering, Germination, Harvesting, Vegetative |
+| **Relevant Classes** | Flowering (→ Flowering), Vegetative (→ Vegetative), Germination (→ Seedling), Harvesting (→ Mature/Harvest) |
+| **Image Characteristics** | Various crops, overhead/side views, natural lighting |
+| **Growth Stages** | All 4 stages represented |
+| **Environmental Diversity** | Field/garden |
+| **Known Limitations** | Only 4 stages (no Senescing); object detection format |
+| **Estimated Useful Images** | ~7,000 |
+| **Recommendation** | **USE** — Supplement for growth stage training. Add "Senescing" from other sources. |
+
+**Notes**:
+- Published 2025.
+- CC BY 4.0 license confirmed on Roboflow.
+
+---
+
+### DS-16: BDFlower
+
+| Field | Value |
+|-------|-------|
+| **Name** | BDFlower: Growth stage flower image dataset for precision agriculture and floriculture |
+| **URL** | https://pmc.ncbi.nlm.nih.gov/articles/PMC13123495/ |
+| **License** | CC BY 4.0 |
+| **Commercial Use** | Yes, with attribution |
+| **Attribution Required** | Yes |
+| **Image Count** | 23,334 images (3,889 original + augmented) |
+| **Classes** | 8 flowers × 3 growth stages (Early, Mid, Full) |
+| **Relevant Classes** | General growth stage patterns applicable to all flowering plants |
+| **Image Characteristics** | Flower close-ups, controlled and natural backgrounds |
+| **Growth Stages** | Early, Mid, Full |
+| **Environmental Diversity** | Field and controlled |
+| **Known Limitations** | Only flowers; 3 stages (not 6); Bangladesh-specific flower species |
+| **Estimated Useful Images** | ~7,000 original-equivalent |
+| **Recommendation** | **USE** — Supplement for flowering stage recognition. Generalizable to other plants. |
+
+**Notes**:
+- Published 2025.
+- PMCID: PMC13123495
+- Authors: Das et al.
+
+---
+
+### DS-17: Sunflower Growth Stage Dataset
+
+| Field | Value |
+|-------|-------|
+| **Name** | Sunflower Growth Stage Image Dataset for Phenological Classification |
+| **URL** | https://data.mendeley.com/datasets/byftmdzg4g |
+| **License** | CC BY 4.0 |
+| **Commercial Use** | Yes, with attribution |
+| **Attribution Required** | Yes |
+| **Image Count** | 1,255 images |
+| **Classes** | 5 growth stages |
+| **Relevant Classes** | General growth stage patterns |
+| **Image Characteristics** | High resolution (12,288×16,320), field photos, Redmi Note 11 |
+| **Growth Stages** | 5 stages |
+| **Environmental Diversity** | Outdoor field, Bangladesh |
+| **Known Limitations** | Single crop (sunflower); very high resolution (needs downsampling) |
+| **Estimated Useful Images** | ~1,000 |
+| **Recommendation** | **SUPPLEMENT** — Useful for growth stage model but single-crop limitation |
+
+**Notes**:
+- Published 2025.
+- DOI: 10.17632/byftmdzg4g.2
+
+---
+
+## 7. Rejected or High-Risk Datasets
+
+| Dataset | Reason for Rejection |
+|---------|----------------------|
+| iNaturalist | Terms of Service explicitly prohibit commercial AI training |
+| PlantCLEF 2024/2025 | CC BY-NC-SA 4.0 — non-commercial |
+| Pl@ntNet | CC BY-SA — ShareAlike incompatible with proprietary app |
+| Kaggle Vegetable (misrakahmed) | CC BY-SA 4.0 — ShareAlike incompatible |
+| Oxford 102 Flowers | License unclear — no explicit commercial-use confirmation |
+| IP102 | Academic use only — commercial requires contacting author |
+| CWD30 | License unclear — published in Elsevier journal, no explicit license |
+| PlantSeg | CC BY-NC 4.0 — non-commercial |
+
+---
+
+## 8. Dataset Acquisition Priority
+
+### Immediate (No License Risk)
+1. PlantVillage — CC0 1.0, 54K images, diseases
+2. PlantDoc — CC BY 4.0, 2.5K images, diseases
+3. Bangladesh Vegetables — CC BY 4.0, 4.7K images, crops
+4. Smartphone Vegetable Detection — CC BY 4.0, 3.5K images, crops
+5. BanglaVeg — CC BY 4.0, 4.3K images, crops
+6. VegNet — CC BY 4.0, 6.8K images, crops
+7. DeepWeeds — CC BY 4.0, 17.5K images, weeds
+8. Plant Growth Stage Detection — CC BY 4.0, 7.3K images, growth stages
+9. BDFlower — CC BY 4.0, 23K images, growth stages
+
+### Conditional (License Clarification Needed)
+10. CWD30 — Contact authors for commercial use permission
+11. IP102 — Contact Xiaoping Wu for commercial use permission
+
+### Supplemental (Manual/Automated with Caution)
+12. Bugwood Images — Use only CC BY-licensed images; track photographer attribution per image
+13. USDA ARS — Manual download; public domain but no bulk access
+
+---
+
+## 9. Estimated Total Data by Domain
+
+| Domain | Estimated Images | Status |
+|--------|-----------------|--------|
+| Crops | 25,000–30,000 | Strong |
+| Weeds | 15,000–20,000 | Moderate (CWD30 gap if license unresolved) |
+| Diseases | 25,000–30,000 | Strong (PlantVillage CC0 is excellent) |
+| Growth Stages | 10,000–15,000 | Moderate |
+| Insects/Pests | 2,000–5,000 | Weak (IP102 license unresolved; Bugwood requires approval) |
+| Beneficial Insects | 500–1,000 | Weak |
+
+**Key Finding**: Crops and diseases have strong data. Weeds have moderate data if CWD30 license is resolved. Insects are the weakest domain due to IP102 licensing and Bugwood's per-photographer approval requirements.
+
+---
+
+## 10. Next Steps for Data Acquisition
+
+1. **Download immediately**: PlantVillage, PlantDoc, Bangladesh Vegetables, Smartphone Veg, BanglaVeg, VegNet, DeepWeeds, Plant Growth Stage Detection, BDFlower
+2. **Contact authors**: CWD30 (Talha Ilyas), IP102 (Xiaoping Wu)
+3. **Manual curation**: USDA ARS for external test set
+4. **Supplement with caution**: Bugwood CC BY images only
+5. **Generate manifest**: Every image must have provenance metadata
+6. **Run pipeline**: prepare → validate → deduplicate → split → report
