@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import com.soilandsupper.data.repository.PlantRepository
+import com.soilandsupper.domain.model.Harvest
 import com.soilandsupper.domain.model.JournalEntry
 import com.soilandsupper.domain.model.Plant
 import com.soilandsupper.domain.model.PlantPhoto
@@ -53,8 +54,13 @@ fun PlantDetailScreen(
     var plant by remember { mutableStateOf<Plant?>(null) }
     var photos by remember { mutableStateOf<List<PlantPhoto>>(emptyList()) }
     var journalEntries by remember { mutableStateOf<List<JournalEntry>>(emptyList()) }
+    var harvests by remember { mutableStateOf<List<Harvest>>(emptyList()) }
     var showAddJournal by remember { mutableStateOf(false) }
     var newJournalText by remember { mutableStateOf("") }
+    var showAddHarvest by remember { mutableStateOf(false) }
+    var harvestQuantity by remember { mutableStateOf("") }
+    var harvestUnit by remember { mutableStateOf("lb") }
+    var harvestNotes by remember { mutableStateOf("") }
 
     LaunchedEffect(plantId) {
         launch {
@@ -62,6 +68,7 @@ fun PlantDetailScreen(
         }
         repository.getPhotosForPlant(plantId).collect { photos = it }
         repository.getJournalEntriesForPlant(plantId).collect { journalEntries = it }
+        repository.getHarvestsForPlant(plantId).collect { harvests = it }
     }
 
     LazyColumn(
@@ -185,6 +192,91 @@ fun PlantDetailScreen(
 
             item {
                 Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Harvests",
+                        style = androidx.compose.material3.MaterialTheme.typography.titleMedium
+                    )
+                    FloatingActionButton(
+                        onClick = { showAddHarvest = true },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add harvest")
+                    }
+                }
+            }
+
+            if (showAddHarvest) {
+                item {
+                    OutlinedTextField(
+                        value = harvestQuantity,
+                        onValueChange = { harvestQuantity = it },
+                        label = { Text("Quantity") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = harvestUnit,
+                        onValueChange = { harvestUnit = it },
+                        label = { Text("Unit") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = harvestNotes,
+                        onValueChange = { harvestNotes = it },
+                        label = { Text("Notes") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = {
+                            val qty = harvestQuantity.toDoubleOrNull()
+                            if (qty != null) {
+                                kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                                    repository.insertHarvest(
+                                        Harvest(
+                                            plantId = plantId,
+                                            cropName = plant!!.name,
+                                            quantity = qty,
+                                            unit = harvestUnit,
+                                            notes = harvestNotes
+                                        )
+                                    )
+                                }
+                                harvestQuantity = ""
+                                harvestUnit = "lb"
+                                harvestNotes = ""
+                                showAddHarvest = false
+                            }
+                        }) {
+                            Text("Save")
+                        }
+                        Button(onClick = {
+                            showAddHarvest = false
+                            harvestQuantity = ""
+                            harvestUnit = "lb"
+                            harvestNotes = ""
+                        }) {
+                            Text("Cancel")
+                        }
+                    }
+                }
+            }
+
+            items(harvests) { harvest ->
+                HarvestItem(
+                    harvest = harvest,
+                    onDelete = {
+                        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                            repository.deleteHarvest(harvest)
+                        }
+                    }
+                )
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
                     Text("Back")
                 }
@@ -276,6 +368,29 @@ fun JournalEntryItem(entry: JournalEntry, onDelete: () -> Unit) {
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Delete entry"
+            )
+        }
+    }
+}
+
+@Composable
+fun HarvestItem(harvest: Harvest, onDelete: () -> Unit) {
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = dateFormat.format(Date(harvest.date)))
+            Text(text = "${harvest.cropName}: ${harvest.quantity} ${harvest.unit}")
+            if (harvest.notes.isNotBlank()) {
+                Text(text = harvest.notes)
+            }
+        }
+        IconButton(onClick = onDelete) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = "Delete harvest"
             )
         }
     }

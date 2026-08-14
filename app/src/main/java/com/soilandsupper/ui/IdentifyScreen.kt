@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,11 +21,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
+import com.soilandsupper.domain.model.MockPlantIdentifier
 import com.soilandsupper.domain.model.PlantIdentification
-import com.soilandsupper.domain.model.PlantIdentifier
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
-fun IdentifyScreen(plantIdentifier: PlantIdentifier) {
+fun IdentifyScreen(plantIdentifier: MockPlantIdentifier) {
     var selectedBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     var identification by remember { mutableStateOf<PlantIdentification?>(null) }
     var isLoading by remember { mutableStateOf(false) }
@@ -68,16 +71,6 @@ fun IdentifyScreen(plantIdentifier: PlantIdentifier) {
                 onClick = {
                     isLoading = true
                     error = null
-                    kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                        try {
-                            val result = plantIdentifier.identify(bitmap)
-                            identification = result
-                        } catch (e: Exception) {
-                            error = e.message
-                        } finally {
-                            isLoading = false
-                        }
-                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading
@@ -96,6 +89,19 @@ fun IdentifyScreen(plantIdentifier: PlantIdentifier) {
 
         error?.let {
             Text(text = "Error: $it", color = androidx.compose.material3.MaterialTheme.colorScheme.error)
+        }
+    }
+
+    LaunchedEffect(selectedBitmap, isLoading) {
+        if (isLoading && selectedBitmap != null) {
+            try {
+                val result = plantIdentifier.identify(selectedBitmap!!)
+                identification = result
+            } catch (e: Exception) {
+                error = e.message
+            } finally {
+                isLoading = false
+            }
         }
     }
 }
