@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Dataset download utilities for Soil & Supper ML pipeline.
-Downloads approved datasets to training_data/ directory.
+Downloads approved datasets to training_data/raw/ directory on D: drive.
 """
 
 import os
@@ -33,6 +33,17 @@ DATASET_URLS = {
     "deepweeds": "https://github.com/AlexOlsen/DeepWeeds/archive/refs/heads/master.zip",
     "plant_growth_stage": "https://universe.roboflow.com/ds/plant-growth-stage-detection?download=1",
     "bdflower": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13123495/bin/mmc1.zip",
+    "sunflower_growth": "https://data.mendeley.com/public-files/datasets/byftmdzg4g/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
+    "early_stage_crops": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8933512/bin/mmc1.zip",
+    "USDA_ARS": "https://www.ars.usda.gov/oc/images/image-gallery/",
+    "uc_ipm_weeds": "https://ipm.ucanr.edu/PMG/WEEDS/",
+    "usda_nrcs_plants": "https://plants.usda.gov/",
+    "uc_ipm_insects": "https://ipm.ucanr.edu/PMG/INSE/",
+    "uc_ipm_beneficials": "https://ipm.ucanr.edu/PMG/BENE/",
+    "cornell_disease_herbarium": "https://ppathgbif.cals.cornell.edu/",
+    "zenodo_plant_disease": "https://zenodo.org/",
+    "mendeley_plant_expanded": "https://data.mendeley.com/",
+    "zenodo_insects": "https://zenodo.org/",
 }
 
 
