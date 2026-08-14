@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Dataset report generator for Soil & Supper ML pipeline.
-Generates human-readable and machine-readable reports.
+Generates human-readable and machine-readable reports including data gap analysis.
 """
 
 import json
@@ -10,10 +10,13 @@ from typing import Dict, List
 from datetime import datetime
 import yaml
 
+TRAINING_DATA_DIR = Path(__file__).resolve().parent.parent / "training_data"
+PROCESSED_DIR = TRAINING_DATA_DIR / "processed"
+MANIFESTS_DIR = TRAINING_DATA_DIR / "manifests"
+REPORTS_DIR = TRAINING_DATA_DIR / "reports"
 CONFIG_PATH = Path(__file__).resolve().parent / "config.yaml"
-PROCESSED_DIR = Path(__file__).resolve().parent.parent / "data" / "processed"
-MANIFESTS_DIR = Path(__file__).resolve().parent.parent / "data" / "manifests"
-REPORTS_DIR = Path(__file__).resolve().parent.parent / "data" / "reports"
+
+REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def load_config() -> Dict:
@@ -29,65 +32,116 @@ def count_images(directory: Path) -> int:
     return count
 
 
-def generate_report() -> Dict:
-    """Generate dataset report."""
+def get_domain_stats(domain: str) -> Dict:
+    """Get statistics for a domain."""
+    domain_dir = PROCESSED_DIR / domain
+    if not domain_dir.exists():
+        return {"total": 0, "classes": {}}
+    
+    stats = {"total": 0, "classes": {}}
+    for class_dir in domain_dir.iterdir():
+        if class_dir.is_dir():
+            count = count_images(class_dir)
+            stats["classes"][class_dir.name] = count
+            stats["total"] += count
+    
+    return stats
+
+
+def classify_strength(count: int, num_sources: int) -> str:
+    """Classify class strength."""
+    if count >= 1000 and num_sources >= 3:
+        return "STRONG"
+    elif count >= 500 and num_sources >= 2:
+        return "MODERATE"
+    elif count >= 100:
+        return "WEAK"
+    else:
+        return "INSUFFICIENT"
+
+
+def generate_gap_report(config: Dict) -> Dict:
+    """Generate comprehensive data gap report."""
     report = {
         "generated_at": datetime.now().isoformat(),
-        "processed_dir": str(PROCESSED_DIR),
-        "manifests_dir": str(MANIFESTS_DIR),
-        "classes": {},
-        "total_images": 0,
-        "splits": {},
+        "domains": {},
+        "summary": {
+            "total_images": 0,
+            "total_classes": 0,
+            "strong": 0,
+            "moderate": 0,
+            "weak": 0,
+            "insufficient": 0,
+        }
     }
-
-    if PROCESSED_DIR.exists():
-        class_dirs = [d for d in PROCESSED_DIR.iterdir() if d.is_dir()]
-        for class_dir in class_dirs:
-            class_name = class_dir.name
-            count = count_images(class_dir)
-            report["classes"][class_name] = {
-                "count": count,
-                "path": str(class_dir),
+    
+    for domain, domain_config in config.get("domains", {}).items():
+        if not domain_config.get("enabled", False):
+            continue
+        
+        domain_stats = get_domain_stats(domain)
+        domain_report = {
+            "total": domain_stats["total"],
+            "classes": {},
+        }
+        
+        for cls in domain_config.get("classes", []):
+            count = domain_stats.get("classes", {}).get(cls, 0)
+            sources = 1 if count > 0 else 0
+            strength = classify_strength(count, sources)
+            
+            domain_report["classes"][cls] = {
+                "approved": count,
+                "sources": sources,
+                "status": strength,
             }
-            report["total_images"] += count
-
-    for split in ["train", "val", "test"]:
-        manifest_path = MANIFESTS_DIR / f"{split}_manifest.json"
-        if manifest_path.exists():
-            with open(manifest_path, "r") as f:
-                data = json.load(f)
-            report["splits"][split] = len(data)
-
+            
+            report["summary"]["total_images"] += count
+            report["summary"]["total_classes"] += 1
+            report["summary"][strength.lower()] += 1
+        
+        report["domains"][domain] = domain_report
+    
     return report
 
 
-def save_report(report: Dict, filename: str = "dataset_report.json") -> Path:
-    """Save JSON report."""
-    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    report_path = REPORTS_DIR / filename
+def generate_full_report(config: Dict):
+    """Generate and save full dataset report."""
+    report = generate_gap_report(config)
+    
+    report_path = REPORTS_DIR / "data_gap_report.json"
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2)
-    print(f"Saved report: {report_path}")
-    return report_path
-
-
-def print_summary(report: Dict) -> None:
-    """Print human-readable summary."""
+    print(f"Saved gap report: {report_path}")
+    
+    print("\n" + "=" * 60)
+    print("DATA GAP REPORT")
     print("=" * 60)
-    print("DATASET REPORT")
+    
+    for domain, domain_data in report["domains"].items():
+        print(f"\n{domain.upper()}")
+        print("-" * 40)
+        for cls, info in sorted(domain_data["classes"].items()):
+            status = info["status"]
+            count = info["approved"]
+            sources = info["sources"]
+            marker = "OK" if status == "STRONG" else "..." if status == "MODERATE" else "!!" if status == "WEAK" else "XX"
+            print(f"  {marker} {cls}: {count} images, {sources} source(s) -> {status}")
+    
+    print("\n" + "=" * 60)
+    print("SUMMARY")
     print("=" * 60)
-    print(f"Generated: {report['generated_at']}")
-    print(f"Total images: {report['total_images']}")
-    print(f"Total classes: {len(report['classes'])}")
-    print("\nClass distribution:")
-    for class_name, info in sorted(report["classes"].items()):
-        print(f"  {class_name}: {info['count']} images")
-    print("\nSplits:")
-    for split, count in report["splits"].items():
-        print(f"  {split}: {count} images")
+    summary = report["summary"]
+    print(f"Total images: {summary['total_images']}")
+    print(f"Total classes: {summary['total_classes']}")
+    print(f"STRONG: {summary['strong']}")
+    print(f"MODERATE: {summary['moderate']}")
+    print(f"WEAK: {summary['weak']}")
+    print(f"INSUFFICIENT: {summary['insufficient']}")
+    
+    return report
 
 
 if __name__ == "__main__":
-    report = generate_report()
-    save_report(report)
-    print_summary(report)
+    config = load_config()
+    generate_full_report(config)

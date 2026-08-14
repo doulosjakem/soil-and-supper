@@ -89,6 +89,7 @@ build/
 /results/
 /ml/data/
 /ml/models/
+/training_data/
 
 # Dataset archives and binaries
 *.lfs.*

@@ -5,15 +5,16 @@ Creates stratified splits with leakage prevention.
 """
 
 import random
-from pathlib import Path
-from typing import Dict, List, Tuple
 import json
 import shutil
+from pathlib import Path
+from typing import Dict, List, Tuple
 import yaml
 
+TRAINING_DATA_DIR = Path(__file__).resolve().parent.parent / "training_data"
+PROCESSED_DIR = TRAINING_DATA_DIR / "processed"
+MANIFESTS_DIR = TRAINING_DATA_DIR / "manifests"
 CONFIG_PATH = Path(__file__).resolve().parent / "config.yaml"
-PROCESSED_DIR = Path(__file__).resolve().parent.parent / "data" / "processed"
-MANIFESTS_DIR = Path(__file__).resolve().parent.parent / "data" / "manifests"
 
 
 def load_config() -> Dict:
@@ -80,16 +81,37 @@ def copy_to_split_dirs(splits: Dict[str, List[Tuple[Path, str]]], output_dir: Pa
                 shutil.copy2(img_path, dest)
 
 
-if __name__ == "__main__":
-    config = load_config()
-    class_dirs = [d for d in PROCESSED_DIR.iterdir() if d.is_dir()]
+def split_all(config: Dict):
+    """Generate splits for all processed data."""
+    if not PROCESSED_DIR.exists():
+        print("No processed directory found. Run prepare step first.")
+        return
+    
+    split_config = config.get("split", {})
+    train_ratio = split_config.get("train_ratio", 0.7)
+    val_ratio = split_config.get("val_ratio", 0.15)
+    test_ratio = split_config.get("test_ratio", 0.15)
+    seed = split_config.get("seed", 42)
+    
+    class_dirs = [d for d in PROCESSED_DIR.iterdir() if d.is_dir() and d.name not in ["train", "val", "test"]]
+    
+    if not class_dirs:
+        print("No class directories found in processed.")
+        return
+    
     splits = generate_stratified_split(
         class_dirs,
-        train_ratio=config["split"]["train_ratio"],
-        val_ratio=config["split"]["val_ratio"],
-        test_ratio=config["split"]["test_ratio"],
-        seed=config["split"]["seed"],
+        train_ratio=train_ratio,
+        val_ratio=val_ratio,
+        test_ratio=test_ratio,
+        seed=seed,
     )
+    
     save_splits(splits, MANIFESTS_DIR)
     copy_to_split_dirs(splits, PROCESSED_DIR)
     print("Split generation complete.")
+
+
+if __name__ == "__main__":
+    config = load_config()
+    split_all(config)
