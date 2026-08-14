@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Dataset download utilities for Soil & Supper ML pipeline.
-Downloads approved datasets to training_data/raw/ directory on D: drive.
+Uses modular adapters for different data sources.
 """
 
 import os
@@ -26,16 +26,18 @@ HEADERS = {
 }
 
 DATASET_URLS = {
-    "bangladesh_veg": "https://data.mendeley.com/public-files/datasets/rtx9ngb68j/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
-    "smartphone_veg": "https://data.mendeley.com/public-files/datasets/gnc4s3z2mf/files/3c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
-    "banglaveg": "https://data.mendeley.com/public-files/datasets/6nxnjbn9w6/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
-    "plantvillage": "https://data.mendeley.com/public-files/datasets/tywbtsjrjv/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
-    "deepweeds": "https://github.com/AlexOlsen/DeepWeeds/archive/refs/heads/master.zip",
-    "plant_growth_stage": "https://universe.roboflow.com/ds/plant-growth-stage-detection?download=1",
-    "bdflower": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13123495/bin/mmc1.zip",
-    "sunflower_growth": "https://data.mendeley.com/public-files/datasets/byftmdzg4g/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
-    "early_stage_crops": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8933512/bin/mmc1.zip",
+    # Phase 9 core datasets
+    "bangladesh_veg": "https://data.mendeley.com/datasets/rtx9ngb68j",
+    "smartphone_veg": "https://data.mendeley.com/datasets/gnc4s3z2mf/3",
+    "banglaveg": "https://www.sciencedirect.com/science/article/pii/S2352340925001738",
+    "plantvillage": "https://data.mendeley.com/datasets/tywbtsjrjv/1",
+    "deepweeds": "https://github.com/AlexOlsen/DeepWeeds",
+    "plant_growth_stage": "https://universe.roboflow.com/mendozajrl/plant-growth-stage-detection",
+    "bdflower": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13123495/",
+    "sunflower_growth": "https://data.mendeley.com/datasets/byftmdzg4g",
+    "early_stage_crops": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8933512/",
     "USDA_ARS": "https://www.ars.usda.gov/oc/images/image-gallery/",
+    # Phase 10 expansion datasets
     "uc_ipm_weeds": "https://ipm.ucanr.edu/PMG/WEEDS/",
     "usda_nrcs_plants": "https://plants.usda.gov/",
     "uc_ipm_insects": "https://ipm.ucanr.edu/PMG/INSE/",
@@ -45,6 +47,30 @@ DATASET_URLS = {
     "mendeley_plant_expanded": "https://data.mendeley.com/",
     "zenodo_insects": "https://zenodo.org/",
 }
+
+
+def get_downloader(dataset_id: str, info: Dict):
+    """Get appropriate downloader for dataset."""
+    url = info.get("url", "")
+    
+    if "github.com" in url:
+        from downloaders.github import GitHubDownloader
+        return GitHubDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif "zenodo.org" in url:
+        from downloaders.zenodo import ZenodoDownloader
+        return ZenodoDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif "mendeley.com" in url:
+        from downloaders.mendeley import MendeleyDownloader
+        return MendeleyDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif "ipm.ucanr.edu" in url:
+        from downloaders.uc_ipm import UCIPMDownloader
+        return UCIPMDownloader(RAW_DIR, MANIFESTS_DIR)
+    elif "usda.gov" in url or "plants.usda.gov" in url:
+        from downloaders.usda import USDADownloader
+        return USDADownloader(RAW_DIR, MANIFESTS_DIR)
+    else:
+        from downloaders.direct import DirectDownloader
+        return DirectDownloader(RAW_DIR, MANIFESTS_DIR)
 
 
 def download_file(url: str, dest_path: Path, description: str = "") -> bool:
@@ -121,33 +147,26 @@ def record_download(dataset_id: str, archive_path: Path, success: bool, error: s
 
 
 def download_dataset(dataset_id: str, info: Dict) -> bool:
-    """Download a specific dataset."""
-    if dataset_id not in DATASET_URLS:
-        print(f"[SKIP] No download URL configured for {dataset_id}")
+    """Download a specific dataset using appropriate adapter."""
+    if not info.get("commercial_ok", False):
+        print(f"[SKIP] {dataset_id}: Not commercially approved")
         return False
     
-    url = DATASET_URLS[dataset_id]
-    ext = ".zip" if "zip" in url.lower() or "download=1" in url.lower() else ".tar.gz"
-    archive_name = f"{dataset_id}{ext}"
-    archive_path = RAW_DIR / archive_name
-    extract_dir = RAW_DIR / dataset_id
+    print(f"\n[DOWNLOAD] {info['name']}")
+    downloader = get_downloader(dataset_id, info)
     
-    success = download_file(url, archive_path, info["name"])
-    if not success:
-        record_download(dataset_id, archive_path, False, "Download failed")
-        return False
-    
-    if extract_dir.exists():
-        import shutil
-        shutil.rmtree(extract_dir)
-    
-    extract_success = extract_archive(archive_path, extract_dir)
-    record_download(dataset_id, archive_path, extract_success)
-    
-    if extract_success:
-        print(f"[OK] {dataset_id} ready at {extract_dir}")
+    try:
+        record = downloader.download(dataset_id, info)
+        
+        if hasattr(record, 'status') and record.status.value in ["failed", "hold"]:
+            print(f"[FAILED] {dataset_id}: {record.error}")
+            return False
+        
+        print(f"[OK] {dataset_id} acquired")
         return True
-    return False
+    except Exception as e:
+        print(f"[ERROR] {dataset_id}: {e}")
+        return False
 
 
 if __name__ == "__main__":
