@@ -26,7 +26,7 @@ APPROVED_DATASETS = {
     "bangladesh_veg": {
         "name": "Bangladesh Comprehensive Vegetables",
         "url": "https://data.mendeley.com/datasets/rtx9ngb68j",
-        "download_url": "https://data.mendeley.com/public-files/datasets/rtx9ngb68j/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
+        "download_url": "",
         "license": "CC BY 4.0",
         "commercial_ok": True,
         "domain": "crops",
@@ -38,12 +38,12 @@ APPROVED_DATASETS = {
             "Radish", "Zucchini", "Flat Bean"
         ],
         "image_count": 4730,
-        "notes": "Mendeley download URL may be stale; scraper fallback required",
+        "notes": "Mendeley direct download URL returns 403. Manual download required from https://data.mendeley.com/datasets/rtx9ngb68j",
     },
     "smartphone_veg": {
         "name": "Smartphone Vegetable Detection",
         "url": "https://data.mendeley.com/datasets/gnc4s3z2mf/3",
-        "download_url": "https://data.mendeley.com/public-files/datasets/gnc4s3z2mf/files/3c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
+        "download_url": "",
         "license": "CC BY 4.0",
         "commercial_ok": True,
         "domain": "crops",
@@ -54,12 +54,12 @@ APPROVED_DATASETS = {
             "Pumpkin", "Radish", "Green Bean", "Carrot", "Onion"
         ],
         "image_count": 3534,
-        "notes": "Pascal VOC format; requires conversion to classification",
+        "notes": "Mendeley direct download URL returns 403. Manual download required from https://data.mendeley.com/datasets/gnc4s3z2mf/3",
     },
     "vegnet": {
         "name": "VegNet Vegetable Quality Dataset",
         "url": "https://data.mendeley.com/datasets/6nxnjbn9w6",
-        "download_url": "https://data.mendeley.com/public-files/datasets/6nxnjbn9w6/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
+        "download_url": "",
         "license": "CC BY 4.0",
         "commercial_ok": True,
         "domain": "crops",
@@ -67,7 +67,7 @@ APPROVED_DATASETS = {
         "status": "DOCUMENTED",
         "classes": ["Bell Pepper", "Tomato", "Chili Pepper", "New Mexico Chile"],
         "image_count": 6850,
-        "notes": "White background; supplement for pepper/tomato quality labels",
+        "notes": "Mendeley direct download URL returns 403. Manual download required from https://data.mendeley.com/datasets/6nxnjbn9w6",
     },
     "early_stage_crops": {
         "name": "Early-Stage Vegetable Crops",
@@ -80,7 +80,7 @@ APPROVED_DATASETS = {
         "status": "DOCUMENTED",
         "classes": ["Maize", "Bean", "Leek"],
         "image_count": 2801,
-        "notes": "Seedling stage only; PMC supplementary file required",
+        "notes": "PMC supplementary file required; download URL must be extracted from article page",
     },
     "plant_seedlings": {
         "name": "Plant Seedlings Dataset (Aarhus)",
@@ -106,14 +106,14 @@ APPROVED_DATASETS = {
         "status": "DATASET_SEARCH_REQUIRED",
         "classes": ["Tomato", "Potato", "Cucumber", "Bean", "Carrot", "Onion", "Capsicum", "Eggplant", "Broccoli", "Cabbage", "Cauliflower", "Pumpkin", "Radish", "Turnip", "Sweetcorn", "Beetroot", "Pea", "Asparagus", "Celery", "Leek", "Lettuce", "Spinach"],
         "image_count": 19300,
-        "notes": "CC0 license confirmed; download mechanism needs investigation",
+        "notes": "CC0 confirmed but download mechanism unknown. Requires API/web research.",
     },
 
     # Disease datasets
     "plantvillage": {
         "name": "PlantVillage Dataset",
         "url": "https://data.mendeley.com/datasets/tywbtsjrjv/1",
-        "download_url": "https://figshare.com/ndownloader/files/21528842?private_link=5ab5f7ea05ae4f9b88f3",
+        "download_url": "",
         "license": "CC0 1.0",
         "commercial_ok": True,
         "domain": "diseases",
@@ -138,12 +138,12 @@ APPROVED_DATASETS = {
             "Tomato_healthy"
         ],
         "image_count": 54306,
-        "notes": "Primary disease dataset; Figshare mirror added 2026-08-14",
+        "notes": "All automatic URLs stale (Mendeley 403, Figshare 202/0 bytes). Manual download required from https://data.mendeley.com/datasets/tywbtsjrjv/1 or https://figshare.com/articles/dataset/PlantVillage_Dataset/26096800",
     },
     "plantdoc": {
         "name": "PlantDoc Dataset",
         "url": "https://github.com/pratikkayal/PlantDoc-Dataset",
-        "download_url": "https://github.com/pratikkayal/PlantDoc-Dataset/archive/refs/heads/main.zip",
+        "download_url": "https://github.com/pratikkayal/PlantDoc-Dataset/archive/refs/heads/master.zip",
         "license": "CC BY 4.0",
         "commercial_ok": True,
         "domain": "diseases",
@@ -159,7 +159,7 @@ APPROVED_DATASETS = {
             "Bell_pepper_leaf_spot", "Cherry_leaf", "Tomato_leaf"
         ],
         "image_count": 2569,
-        "notes": "Real-world field images; complements PlantVillage",
+        "notes": "Real-world field images; GitHub master.zip works (main.zip 404)",
     },
     "crop_disease_hf": {
         "name": "Crop Disease Image Dataset (HuggingFace)",
@@ -172,14 +172,14 @@ APPROVED_DATASETS = {
         "status": "DATASET_SEARCH_REQUIRED",
         "classes": ["Corn", "Wheat", "Rice", "Tomato", "Potato", "Powdery_mildew", "Rust", "Healthy", "Bacterial_spot", "Late_blight", "Early_blight", "Leaf_spot", "Mosaic_virus", "Leaf_wilt", "Downy_mildew", "Anthracnose", "Fusarium_wilt", "Verticillium_wilt", "Blight"],
         "image_count": 22169,
-        "notes": "Combines PlantVillage + Mendeley sources under CC BY 4.0; HuggingFace download",
+        "notes": "HuggingFace dataset; download mechanism requires investigation",
     },
 
     # Weed datasets
     "deepweeds": {
         "name": "DeepWeeds",
         "url": "https://github.com/AlexOlsen/DeepWeeds",
-        "download_url": "https://zenodo.org/records/7939060/files/images.zip?download=1",
+        "download_url": "",
         "license": "CC BY 4.0",
         "commercial_ok": True,
         "domain": "weeds",
@@ -190,12 +190,12 @@ APPROVED_DATASETS = {
             "Siam_weed", "Parthenium", "Rubber_vine", "Parkinsonia", "Negative"
         ],
         "image_count": 17509,
-        "notes": "Australian species; supplement only. Zenodo direct ZIP preferred over Google Drive",
+        "notes": "Google Drive returns virus scan warning; Zenodo returns 403. Manual download required from https://drive.google.com/file/d/1xnK3B6K6KekDI55vwJ0vnc2IGoDga9cj",
     },
     "weed_ndsu": {
         "name": "Weed-crop dataset (NDSU)",
         "url": "https://data.mendeley.com/datasets/mthv4ppwyw/2",
-        "download_url": "https://data.mendeley.com/public-files/datasets/mthv4ppwyw/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
+        "download_url": "",
         "license": "CC BY 4.0",
         "commercial_ok": True,
         "domain": "weeds",
@@ -203,12 +203,12 @@ APPROVED_DATASETS = {
         "status": "DOCUMENTED",
         "classes": ["Kochia", "Horseweed", "Water_hemp", "Ragweed", "Redroot_pigweed", "Corn", "Soybean", "Sugarbeet", "Wheat", "Canola", "Pea", "Flax", "Lentil", "Oat", "Barley", "Sunflower", "Rye", "Triticale"],
         "image_count": 5000,
-        "notes": "North American weeds; YOLO annotations; convert to classification",
+        "notes": "Mendeley direct download URL returns 403. Manual download required from https://data.mendeley.com/datasets/mthv4ppwyw/2",
     },
     "weed_growth_stage_zenodo": {
         "name": "Weed Growth Stage Dataset",
         "url": "https://zenodo.org/records/15808623",
-        "download_url": "https://zenodo.org/records/15808623/files/weed_growth_stage_dataset.zip?download=1",
+        "download_url": "",
         "license": "CC BY 4.0",
         "commercial_ok": True,
         "domain": "weeds",
@@ -216,7 +216,7 @@ APPROVED_DATASETS = {
         "status": "DOCUMENTED",
         "classes": ["Amaranthus_sp", "Chenopodium_album", "Digitaria_sp", "Portulaca_oleracea", "Stellaria_media", "Cyperus_sp", "Ambrosia_artemisiifolia", "Calystegia_sepium", "Setaria_sp", "Cirsium_sp", "Polygonum_sp", "Oxalis_corniculata", "Sorghum_halepense", "Elymus_repens", "Abelmoschus_esculentus", "Brassica_oleracea"],
         "image_count": 203567,
-        "notes": "203K images, 16 species, weekly growth stages; Zenodo direct ZIP",
+        "notes": "Zenodo file download returns 403. Manual download required from https://zenodo.org/records/15808623",
     },
     "uc_ipm_weeds": {
         "name": "UC IPM Weed Images",
@@ -229,14 +229,14 @@ APPROVED_DATASETS = {
         "status": "DOCUMENTED",
         "classes": ["Dandelion", "Crabgrass", "Purslane", "Lambsquarters", "Pigweed", "Chickweed", "Plantain", "Bindweed", "Thistle", "Foxtail", "Nutsedge", "Ragweed", "Johnsongrass", "Quackgrass"],
         "image_count": 1500,
-        "notes": "Web scraper required; no bulk download",
+        "notes": "Web scraper only; no bulk download. Limited results expected.",
     },
 
     # Insect / Pest datasets
     "bioscan_5m": {
         "name": "BIOSCAN-5M Insect Dataset",
         "url": "https://huggingface.co/datasets/bioscan-ml/BIOSCAN-5M",
-        "download_url": "https://huggingface.co/datasets/bioscan-ml/BIOSCAN-5M/resolve/main/data/bioscan_5m.zip",
+        "download_url": "https://huggingface.co/datasets/bioscan-ml/BIOSCAN-5M/resolve/main/BIOSCAN_5M_original_256_train.zip?download=true",
         "license": "CC BY 3.0",
         "commercial_ok": True,
         "domain": "insects",
@@ -244,7 +244,7 @@ APPROVED_DATASETS = {
         "status": "DOCUMENTED",
         "classes": ["Aphid", "Japanese_beetle", "Colorado_potato_beetle", "Cucumber_beetle", "Cabbage_worm", "Tomato_hornworm", "Squash_bug", "Whitefly", "Spider_mite", "Thrips", "Leafminer", "Cutworm", "Stink_bug", "Flea_beetle", "Ladybug", "Green_lacewing", "Honey_bee", "Hoverfly", "Praying_mantis", "Spider", "Earthworm"],
         "image_count": 5150000,
-        "notes": "5.15M insect specimens; CC BY 3.0 commercial-compatible; requires heavy curation",
+        "notes": "Train ZIP is ~2.2GB. Requires heavy curation to extract target classes. Verify per-image license compliance before use.",
     },
     "images_cv_insects": {
         "name": "images.cv Insects",
@@ -257,12 +257,12 @@ APPROVED_DATASETS = {
         "status": "DATASET_SEARCH_REQUIRED",
         "classes": ["Fly", "Grasshopper", "Beetle", "Mantis", "Ladybug", "Cricket", "Cockroach", "Mosquito", "Cicada", "Dragonfly", "Butterfly", "Moth", "Bee", "Ant", "Wasp", "Spider", "Scorpion", "Centipede", "Millipede", "Earwig", "Aphid", "Whitefly", "Thrips", "Mite"],
         "image_count": 24800,
-        "notes": "CC0; download mechanism needs investigation",
+        "notes": "CC0 confirmed but download mechanism unknown. Requires API/web research.",
     },
     "roboflow_insect_pest": {
         "name": "Roboflow Insect Pest Dataset",
         "url": "https://universe.roboflow.com/ai-project-h07h1/insect-pest-dataset-all",
-        "download_url": "https://universe.roboflow.com/ai-project-h07h1/insect-pest-dataset-all?download=1",
+        "download_url": "",
         "license": "CC BY 4.0",
         "commercial_ok": True,
         "domain": "insects",
@@ -270,7 +270,7 @@ APPROVED_DATASETS = {
         "status": "DOCUMENTED",
         "classes": ["Aphid", "Fruit_fly", "Leafminer", "Mealybug", "Scale_insect", "Thrips", "Whitefly", "Spider_mite", "Beetle", "Caterpillar", "Bug"],
         "image_count": 1213,
-        "notes": "Small but useful supplement; Roboflow format",
+        "notes": "Roboflow download returns 403. Manual download required from Roboflow Universe page",
     },
 
     # Beneficial insects
@@ -285,14 +285,14 @@ APPROVED_DATASETS = {
         "status": "DOCUMENTED",
         "classes": ["Ladybug", "Green_lacewing", "Honey_bee", "Hoverfly", "Praying_mantis", "Spider", "Earthworm", "Ground_beetle", "Predatory_bug"],
         "image_count": 1000,
-        "notes": "Web scraper required; supplement with BIOSCAN-5M",
+        "notes": "Web scraper only; no bulk download. Supplement with BIOSCAN-5M.",
     },
 
     # Growth stage datasets
     "plant_growth_stage": {
         "name": "Plant Growth Stage Detection",
         "url": "https://universe.roboflow.com/mendozajrl/plant-growth-stage-detection",
-        "download_url": "https://universe.roboflow.com/mendozajrl/plant-growth-stage-detection?download=1",
+        "download_url": "",
         "license": "CC BY 4.0",
         "commercial_ok": True,
         "domain": "growth_stages",
@@ -300,7 +300,7 @@ APPROVED_DATASETS = {
         "status": "DOCUMENTED",
         "classes": ["Flowering", "Germination", "Harvesting", "Vegetative"],
         "image_count": 7306,
-        "notes": "4 stages; map Germination->Seedling, Harvesting->Mature/Harvest",
+        "notes": "Roboflow download returns 403. Manual download required from Roboflow Universe page",
     },
     "bdflower": {
         "name": "BDFlower",
@@ -313,12 +313,12 @@ APPROVED_DATASETS = {
         "status": "DOCUMENTED",
         "classes": ["Early_Stage", "Mid_Stage", "Full_Stage"],
         "image_count": 23334,
-        "notes": "Flower-specific growth stages; PMC supplementary file required",
+        "notes": "PMC supplementary download returns reCAPTCHA. Manual download required from PMC article page",
     },
     "sunflower_growth": {
         "name": "Sunflower Growth Stage Dataset",
         "url": "https://data.mendeley.com/datasets/byftmdzg4g",
-        "download_url": "https://data.mendeley.com/public-files/datasets/byftmdzg4g/files/8c5c7c5c-0b2c-4c4c-8e0e-0c5c7c5c0b2c",
+        "download_url": "",
         "license": "CC BY 4.0",
         "commercial_ok": True,
         "domain": "growth_stages",
@@ -326,7 +326,7 @@ APPROVED_DATASETS = {
         "status": "DOCUMENTED",
         "classes": ["Stage1", "Stage2", "Stage3", "Stage4", "Stage5"],
         "image_count": 1255,
-        "notes": "Single crop; supplement for growth stage model",
+        "notes": "Mendeley direct download URL returns 403. Manual download required from https://data.mendeley.com/datasets/byftmdzg4g",
     },
     "openplant": {
         "name": "OpenPlant",

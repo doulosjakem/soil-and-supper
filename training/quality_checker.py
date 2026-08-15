@@ -5,6 +5,7 @@ Detects blur, screenshots, malformed files, and other quality issues.
 """
 
 import cv2
+import json
 import numpy as np
 from pathlib import Path
 from typing import Dict, List

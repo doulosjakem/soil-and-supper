@@ -104,6 +104,8 @@ def discover_dataset_structure(dataset_dir: Path) -> Dict[str, List[Path]]:
         dataset/images/train/class/image.jpg
         dataset/images/val/class/image.jpg
         dataset/images/test/class/image.jpg
+        dataset/<single_subdir>/train/class/image.jpg
+        dataset/<single_subdir>/class/image.jpg
     """
     classes: Dict[str, List[Path]] = {}
 
@@ -112,12 +114,28 @@ def discover_dataset_structure(dataset_dir: Path) -> Dict[str, List[Path]]:
 
     image_exts = SUPPORTED_IMAGE_EXTS
 
-    # Check for split directories: train/, val/, test/
-    split_dirs = {}
-    for split in ["train", "val", "test"]:
-        split_path = dataset_dir / split
-        if split_path.exists() and split_path.is_dir():
-            split_dirs[split] = split_path
+    def scan_for_splits(base: Path):
+        split_dirs = {}
+        for split in ["train", "val", "test"]:
+            split_path = base / split
+            if split_path.exists() and split_path.is_dir():
+                split_dirs[split] = split_path
+        return split_dirs
+
+    def scan_for_classes(base: Path):
+        results = {}
+        for item in base.iterdir():
+            if item.is_dir():
+                images = [
+                    p for p in item.rglob("*")
+                    if p.is_file() and p.suffix.lower() in image_exts
+                ]
+                if images:
+                    results[item.name] = images
+        return results
+
+    # Direct splits in dataset root
+    split_dirs = scan_for_splits(dataset_dir)
 
     # Check for images/ subdirectory with splits
     images_dir = dataset_dir / "images"
@@ -137,16 +155,40 @@ def discover_dataset_structure(dataset_dir: Path) -> Dict[str, List[Path]]:
                     ]
                     if images:
                         add_images(class_dir.name, images)
-    else:
-        # Direct class directories: dataset/class/image.jpg
-        for item in dataset_dir.iterdir():
-            if item.is_dir():
-                images = [
-                    p for p in item.rglob("*")
-                    if p.is_file() and p.suffix.lower() in image_exts
-                ]
-                if images:
-                    add_images(item.name, images)
+        return classes
+
+    # Check for single top-level subdirectory (common in zip extracts)
+    top_level_dirs = [d for d in dataset_dir.iterdir() if d.is_dir()]
+    if len(top_level_dirs) == 1:
+        single_subdir = top_level_dirs[0]
+        # Check for splits inside the single subdirectory
+        inner_splits = scan_for_splits(single_subdir)
+        if inner_splits:
+            for split_path in inner_splits.values():
+                for class_dir in split_path.iterdir():
+                    if class_dir.is_dir():
+                        images = [
+                            p for p in class_dir.rglob("*")
+                            if p.is_file() and p.suffix.lower() in image_exts
+                        ]
+                        if images:
+                            add_images(class_dir.name, images)
+            return classes
+        # Check for class directories inside the single subdirectory
+        inner_classes = scan_for_classes(single_subdir)
+        if inner_classes:
+            classes.update(inner_classes)
+            return classes
+
+    # Direct class directories: dataset/class/image.jpg
+    for item in dataset_dir.iterdir():
+        if item.is_dir():
+            images = [
+                p for p in item.rglob("*")
+                if p.is_file() and p.suffix.lower() in image_exts
+            ]
+            if images:
+                add_images(item.name, images)
 
     return classes
 
@@ -249,11 +291,16 @@ def scan_dataset_for_class(
                 discovered = parse_label_file(lf, dataset_dir)
                 break
 
+    def normalize_label(label: str) -> str:
+        return label.strip().lower().replace(" ", "_").replace("-", "_")
+
     image_paths = []
     for source_label, paths in discovered.items():
         mapped_class = None
         if mapper:
             mapped_class, _ = mapper.get_target_class(dataset_id, source_label)
+            if mapped_class is None:
+                mapped_class, _ = mapper.get_target_class(dataset_id, normalize_label(source_label))
         if mapped_class is None:
             mapped_class = source_label
         if mapped_class == target_class:
@@ -290,10 +337,8 @@ def prepare_all(config: Dict):
                 existing = count_images(class_dir)
                 if existing > 0:
                     print(f"  {cls}: {existing} images (already prepared)")
-                else:
-                    print(f"  {cls}: 0 images — NO SOURCE DATA FOUND")
-                total += existing
-                continue
+                    total += existing
+                    continue
 
             source_image_paths: List[Path] = []
             dataset_id = None
@@ -316,14 +361,12 @@ def prepare_all(config: Dict):
                 "Apple_scab", "Powdery_mildew", "Bacterial_spot", "Early_blight"
             ]:
                 for ds in [RAW_DIR / "plantvillage", RAW_DIR / "plantdoc"]:
-                    ds_cls = ds / cls
-                    if ds_cls.exists():
-                        source_image_paths.extend([
-                            p for p in ds_cls.rglob("*")
-                            if p.is_file() and p.suffix.lower() in SUPPORTED_IMAGE_EXTS
-                        ])
-                        if dataset_id is None:
-                            dataset_id = ds.name
+                    if ds.exists():
+                        found = scan_dataset_for_class(ds, cls, ds.name, mapper)
+                        if found:
+                            source_image_paths.extend(found)
+                            if dataset_id is None:
+                                dataset_id = ds.name
 
             elif domain == "weeds" and cls == "Other_weed":
                 ds = RAW_DIR / "deepweeds"

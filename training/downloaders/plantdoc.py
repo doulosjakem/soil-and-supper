@@ -15,7 +15,7 @@ class PlantDocDownloader(BaseDownloader):
     def get_download_url(self, dataset_id: str, info: Dict) -> Optional[str]:
         source_url = info.get("url", "")
         if "github.com" in source_url:
-            return f"{source_url}/archive/refs/heads/main.zip"
+            return f"{source_url}/archive/refs/heads/master.zip"
         return None
 
     def download(self, dataset_id: str, info: Dict) -> AcquisitionRecord:

@@ -93,7 +93,13 @@ def split_all(config: Dict):
     test_ratio = split_config.get("test_ratio", 0.15)
     seed = split_config.get("seed", 42)
     
-    class_dirs = [d for d in PROCESSED_DIR.iterdir() if d.is_dir() and d.name not in ["train", "val", "test"]]
+    class_dirs = []
+    for domain_dir in PROCESSED_DIR.iterdir():
+        if not domain_dir.is_dir() or domain_dir.name in ["train", "val", "test"]:
+            continue
+        for class_dir in domain_dir.iterdir():
+            if class_dir.is_dir():
+                class_dirs.append(class_dir)
     
     if not class_dirs:
         print("No class directories found in processed.")
