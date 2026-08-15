@@ -136,11 +136,23 @@ Every processed image must have a manifest entry:
 - **Institution**: Indian Institute of Technology Gandhinagar
 - **URL**: https://github.com/pratikkayal/PlantDoc-Dataset
 - **DOI**: 10.1145/3371158.3371196
-- **License**: CC BY 4.0
+- **License**: Creative Commons Attribution 4.0 International (CC BY 4.0)
 - **Published**: 2020
-- **Image Count**: 2,569
-- **Classes**: 29 (13 plant species × disease/healthy)
+- **Image Count**: 2,569 (2,572 labeled/ingested, 2,502 after deduplication)
+- **Classes**: 28 (real-world field imagery, 13 disease classes + healthy)
 - **Attribution**: "Singh et al., 2020. PlantDoc: A Dataset for Visual Plant Disease Detection. CoDS-COMAD 2020. https://doi.org/10.1145/3371158.3371196"
+- **License Evidence**:
+  - LICENSE.txt fetched directly from https://raw.githubusercontent.com/pratikkayal/PlantDoc-Dataset/master/LICENSE.txt
+  - GitHub repo license field: Creative Commons Attribution 4.0 International
+  - Roboflow mirror: CC BY 4.0, commercial use explicitly permitted
+  - DatasetNinja: CC BY 4.0
+  - No ShareAlike, No NonCommercial restrictions
+  - Model training and commercial distribution of weights permitted
+  - Attribution must retain creator identification, copyright notice, license notice, and URI
+- **Commercial Use**: PERMITTED
+- **Modification/Derivative Works**: PERMITTED
+- **Redistribution**: PERMITTED
+- **Trained Model Distribution**: PERMITTED
 
 ### 7.3 Bangladesh Comprehensive Vegetables
 
@@ -267,12 +279,30 @@ Every processed image must have a manifest entry:
 
 - **Dataset ID**: bioscan_5m
 - **Name**: BIOSCAN-5M Insect Dataset
-- **Authors**: BIOSCAN Consortium
+- **Authors**: BIOSCAN Consortium (Zahra Gharaee, et al.)
+- **Institution**: Centre for Biodiversity Genomics, University of Guelph
 - **URL**: https://huggingface.co/datasets/bioscan-ml/BIOSCAN-5M
-- **License**: CC BY 3.0
-- **Published**: 2024 (NeurIPS)
-- **Image Count**: 5,150,850
+- **DOI**: 10.48550/arxiv.2406.12723 (NeurIPS 2024 Datasets and Benchmarks Track)
+- **License**: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+- **Copyright Holder**: CBG Photography Group
+- **Copyright Institution**: Centre for Biodiversity Genomics
+- **Photographer**: CBG Robotic Imager
+- **Copyright Year**: 2021
+- **Contact**: collectionsBIO@gmail.com, cbg.collections@uoguelph.ca
+- **Published**: 2024
+- **Image Count**: 5,150,850 specimens (2.1 GB downloaded: original_256_train split, 289,203 images)
 - **Attribution**: "BIOSCAN-5M Insect Dataset. CC BY 3.0. https://huggingface.co/datasets/bioscan-ml/BIOSCAN-5M"
+- **License Evidence**:
+  - GitHub README explicitly states: "Copyright License: Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+  - Supplementary materials (NeurIPS 2024) Table S1 confirms same license
+  - No ShareAlike, No NonCommercial restrictions
+  - Model training and commercial distribution of weights permitted
+  - Attribution required to CBG Photography Group / Centre for Biodiversity Genomics
+- **Commercial Use**: PERMITTED (with attribution)
+- **Modification/Derivative Works**: PERMITTED
+- **Redistribution**: PERMITTED
+- **Trained Model Distribution**: PERMITTED
+- **Status**: LICENSE VERIFIED but PRACTICAL SUITABILITY PENDING — see Phase 16 analysis
 
 ### 7.13 Weed-crop dataset (NDSU)
 

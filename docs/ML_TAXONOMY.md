@@ -8,41 +8,52 @@
 - Must be mobile-friendly: small model size, fast inference
 - Must be extensible: add new categories over time without retraining everything
 
-### Chosen Architecture: **Specialized Single-Classifier per Domain**
+### Chosen Architecture: **Hybrid Domain Router + Hierarchical Disease Classifier**
 
 Do NOT build one enormous flat classifier covering crops + weeds + insects + diseases.
 
-Instead, use **separate lightweight TFLite classifiers** for each domain:
+Instead, use **specialized lightweight TFLite classifiers** with conditional hierarchy:
 
 ```
-Stage 1 (UI routing): User selects what they are photographing
+Stage 1 (domain router): User selects what they are photographing
   OR
-Stage 1 (automatic): A tiny "domain router" classifier predicts:
+Stage 1 (automatic): A tiny "domain router" predicts:
   - Crop / Weed / Insect / Disease / GrowthStage / Unknown
 
-Stage 2 (domain classifier): Run the appropriate specialized model
-  - CropClassifier: 50 crop classes + Unknown
-  - WeedClassifier: 25 weed classes + Unknown  
-  - InsectClassifier: 20 pest/beneficial classes + Unknown
-  - DiseaseClassifier: 30 disease/problem classes + Unknown
-  - GrowthStageClassifier: 6 growth stages (separate attribute)
+Stage 2a (crop identification): CropClassifier identifies the crop type
+  Input: Image
+  Output: Crop class (e.g., "Tomato", "Corn", "Rose")
+
+Stage 2b (disease — HIERARCHICAL): DiseaseClassifier conditioned on crop
+  Input: Image + Crop prediction
+  Output: Disease class (e.g., "Early_blight", "Healthy")
+  Rationale: "Early_blight" on tomato looks different from "Early_blight" on potato.
+             Conditioning on crop reduces confusion and reduces per-head class count.
+
+Stage 2c (insects): InsectClassifier (flat)
+  Input: Image + optional crop hint
+  Output: Pest / Beneficial / Other + specific insect class
+  Rationale: Insects appear on many crops; conditioning is less important.
+
+Stage 2d (weeds): WeedClassifier (flat)
+  Input: Image
+  Output: Weed class + Unknown
+  Rationale: Weeds are visually distinct from crops; flat classification works.
+
+Stage 2e (growth stages): GrowthStageClassifier (flat, per-crop optional)
+  Input: Image + optional crop hint
+  Output: Seedling / Vegetative / Flowering / Fruiting / Mature_Harvest / Senescing
 ```
 
-**Why this approach:**
-1. Each model stays small and trainable on GTX 1060
-2. Poor data in one domain does not degrade another
-3. Easy to update one domain without touching others
-4. Matches how gardeners think: "Is this a weed? Is this a pest?"
-5. Each model can be optimized independently
-6. TFLite Model Maker supports this workflow natively
+**Why hybrid:**
+1. Domain router keeps models small and trainable
+2. Hierarchical disease classifier reduces confusion across crops
+3. Error propagation is bounded: if crop ID is wrong, disease classifier gets wrong context but can still fall back to flat prediction
+4. Each model can be optimized independently
+5. TFLite Model Maker supports this workflow
+6. Matches agronomic knowledge: farmers diagnose diseases in crop context
 
-**Why NOT hierarchical:**
-- Adds complexity without proven benefit for this use case
-- Error propagation between stages
-- Harder to debug and iterate
-- Mobile inference time increases
-
-**Why NOT single flat classifier:**
+**Why NOT fully flat:**
 - 100+ classes with wildly different visual characteristics
 - Severe class imbalance
 - Some domains have strong data, others weak
@@ -63,19 +74,13 @@ Implementation:
 - If top-1 confidence < 0.40, display "Uncertain — try a clearer photo"
 - Optionally show top-3 predictions with confidence bars
 - Do NOT create a catch-all "Unknown" class from random images
-- Add 2–4 explicit "negative" classes per domain where licensing permits (e.g., "Other Weed", "Non-target Insect", "Healthy Leaf" for disease)
+- Add explicit "negative" classes per domain where licensing permits
 - UI should encourage multiple photos (leaf + fruit + whole plant) when confidence is low
 
 **Rationale**: Unknown classes trained on random images degrade known-class performance. Confidence thresholding is simpler, more honest, and easier to tune.
 
 ### Growth Stage Strategy
-**Do NOT create separate classes like `Tomato_Seedling`, `Tomato_Flowering`.**
-
-Instead:
-- Train a **single GrowthStageClassifier** with 6 classes: Seedling, Vegetative, Flowering, Fruiting, Mature/Harvest, Senescing
-- This model predicts the growth stage regardless of crop type
-- The Android app runs this alongside the crop classifier when the user selects "Check growth stage"
-- This requires a dataset with multiple crop types at multiple stages (see CWD30, Plant Growth Stage Detection)
+Train a **single GrowthStageClassifier** with 6 classes: Seedling, Vegetative, Flowering, Fruiting, Mature/Harvest, Senescing. This model predicts the growth stage regardless of crop type. The Android app runs this alongside the crop classifier when the user selects "Check growth stage". This requires a dataset with multiple crop types at multiple stages.
 
 ### External Validation Strategy
 - **Train**: Dataset A (primary) + selected Dataset B (supplement)
@@ -290,6 +295,122 @@ Instead:
 - Beneficial nematodes, soil organisms — too small to photograph reliably
 - Specific pest life stages (egg/larva/pupa/adult) — too fine-grained for MVP
 - Regional/state-specific noxious weeds — defer to v2
+
+## 2.5 Training Readiness Thresholds
+
+Replace the old "≥200 images = trainable" heuristic with the following framework.
+
+### Training Readiness Score (per class)
+
+| Criterion | Weight | Threshold | Rationale |
+|-----------|--------|-----------|-----------|
+| Minimum image count | Required | ≥100 images | Below this, even a perfect model cannot generalize |
+| Source diversity | Required | ≥2 independent sources | Prevents overfitting to one dataset's artifacts |
+| Image diversity | Required | ≥3 capture conditions | Lab + field + smartphone, or multiple lighting/angles |
+| Label quality | Required | ≥90% consensus or expert-verified | Noisy labels destroy training |
+| Field-vs-lab ratio | Strongly preferred | ≥30% field imagery | Domain match to garden photos |
+| Near-duplicate rate | Strongly preferred | ≤5% | Prevents inflated validation scores |
+| Class confusion risk | Review | Expert review of edge cases | Some classes may need merging |
+
+### Readiness Categories
+
+| Category | Definition |
+|----------|-----------|
+| **TRAINABLE_NOW** | Meets all Required thresholds and ≥3 Strongly preferred thresholds |
+| **NEEDS_MORE_DATA** | Meets Required thresholds but <3 Strongly preferred thresholds |
+| **NEEDS_SOURCES** | Meets minimum image count but <2 sources |
+| **NEEDS_DIVERSITY** | Meets count and sources but lacks field/lab diversity |
+| **LICENSE_BLOCKED** | License is non-commercial or unclear |
+| **DATASET_SEARCH_REQUIRED** | Does not meet minimum image count |
+| **DEFERRED** | Low priority; can wait for later phases |
+
+## 2.6 External Evaluation Strategy
+
+### Principle
+Evaluate on held-out external datasets, NOT on same-source data alone. Report domain shift explicitly.
+
+### Per-Domain Evaluation Plan
+
+| Domain | Training Sources | Validation Source | External Test Source | Leakage Prevention |
+|--------|-----------------|-------------------|---------------------|-------------------|
+| Crops | Bangladesh Veg, Smartphone Veg, VegNet, PlantDoc (healthy plants) | Same-source 15% holdout | PlantVillage (different source, different geography) | Near-duplicate hash across splits |
+| Weeds | DeepWeeds, CWD30, Bugwood | Same-source 15% holdout | NDSU Weed-crop dataset | Geographic split (AU vs US) |
+| Insects | BIOSCAN-5M (selective, specimen only), Bugwood | Same-source 15% holdout | Roboflow Insect Pest (if license clears) | Taxonomic split (never mix same species across splits) |
+| Diseases | PlantVillage, PlantDoc | Same-source 15% holdout | iNaturalist disease observations (CC BY only) | Crop-split: train on Tomato diseases, test on Pepper diseases |
+| Growth Stages | CWD30, BDFlower, Plant Growth Stage Detection | Same-source 15% holdout | Sunflower Growth Stage dataset | Species split |
+
+### Domain Shift Measurement
+- Report same-source validation accuracy
+- Report external-test accuracy
+- Report drop: "Model performs X% on same-source validation, Y% on external-source test (drop: Z%)"
+- A drop >15% indicates the model is overfit to training domain
+
+### Domain Shift Concerns
+- **PlantVillage-style controlled lab photos** vs **real garden photographs** (PlantDoc): PlantDoc images have soil, multiple plants, shadows, clutter. This is the desired target domain.
+- **BIOSCAN specimen microscopy** vs **smartphone garden photos**: Severe domain shift. Do NOT evaluate garden-photo performance on BIOSCAN.
+- **Smartphone datasets** (Bangladesh Veg, Smartphone Veg, VegNet): These use phone cameras but in controlled settings. Closer to target domain than lab photos.
+
+### No Personal Photographs
+- Do not use personal garden photos for required validation
+- Personal photos may be used as informal post-deployment sanity checks only
+- All formal evaluation must use publicly available, licensed datasets
+
+## 2.7 BIOSCAN-5M Analysis
+
+### Archive Structure
+- **Format**: ZIP
+- **Compressed size**: 2,119.7 MB
+- **Contents**: `bioscan5m/images/original_256/train/{chunk}/{processid}.jpg`
+- **Chunks**: 16 numeric subdirectories, ~17,900-18,300 images each
+- **Total images in archive**: 289,203 (train split only)
+- **Image format**: RGB JPEG, 341×256 pixels
+- **Image source**: Keyence VHX-7000 microscope, cropped/resized from 1024×768 originals
+
+### Metadata
+- **Metadata file**: `BIOSCAN_5M_Insect_Dataset_metadata_MultiTypes.zip` (2 GB compressed, 4 GB CSV)
+- **Columns**: processid, sampleid, taxon, phylum, class, order, family, subfamily, genus, species, dna_bin, dna_barcode, country, province_state, coord-lat, coord-lon, image_measurement_value, area_fraction, scale_factor, inferred_ranks, split, index_bioscan_1M_insect, chunk
+- **Total records**: 5,150,850
+- **Records with species labels**: 473,094 (9.2%)
+- **Records with genus labels**: 1,226,765 (23.8%)
+
+### Taxonomic Coverage (train split, 289,203 images)
+| Rank | Categories | Labelled |
+|------|-----------|----------|
+| phylum | 1 | 100% |
+| class | 10 | 99.9% |
+| order | 55 | 99.7% |
+| family | 934 | 95.8% |
+| genus | 7,605 | 23.8% |
+| species | 22,622 | 9.2% |
+
+### Defensible Target-Class Mappings (genus-level only)
+
+| Target Class | Genus Filter | Train Count | NA Only |
+|-------------|-------------|-------------|---------|
+| Aphid | Aphis, Rhopalosiphum, Acyrthosiphon, Myzus, Macrosiphum, Sitobion, Cinara | 3,845 | 1,307 |
+| Whitefly | Bemisia, Trialeurodes | 2,639 | 74 |
+| Leafminer | Liriomyza, Phytomyza, Calycomyza, Pseudonapomyza, Agromyza, Ophiomyia | 2,509 | 1,386 |
+| Spider | Order Araneae | 6,493 | 3,820 |
+| Thrips | Frankliniella, Thrips, Scirtothrips | 1,768 | 970 |
+| Hoverfly | Toxomerus, Paragus, Sphaerophoria, Eupeodes, Episyrphus, Eristalinus | 702 | 544 |
+| Flea_beetle | Chaetocnema, Epitrix, Phyllotreta, Longitarsus | 227 | 55 |
+| Ladybug | Hippodamia, Coleomegilla, Coccinella, Harmonia, Adalia, Propylea | 156 | 62 |
+| Honey_bee | Apis | 41 | 1 |
+| Spider_mite | Tetranychus, Panonychus, Oligonychus | 127 | 5 |
+| Green_lacewing | Chrysoperla, Chrysopa, Ceraeochrysa, Mallada, Plesiochrysa | 38 | 11 |
+| Japanese_beetle | Popillia | 0 | 0 |
+| Colorado_potato_beetle | Leptinotarsa | 0 | 0 |
+| Cucumber_beetle | Diabrotica | 0 | 0 |
+| Mexican_bean_beetle | Epilachna | 0 | 0 |
+| Tomato_hornworm | Manduca | 0 | 0 |
+| Cabbage_worm | Pieris, Artogeia | 0 | 0 |
+| Squash_vine_borer | Melittia | 0 | 0 |
+
+### Domain Shift Verdict
+BIOSCAN-5M images are **specimen-style microscope photographs** with plain backgrounds, controlled lighting, and no environmental context. This is a **severe domain shift** from smartphone garden photos. **BIOSCAN is NOT useful for direct training**. It may be useful for self-supervised pre-learning of low-level insect features, but only if paired with heavy domain adaptation.
+
+### Selective Extraction
+Do NOT extract all 289K images. Use `training/selective_extract_bioscan.py` to extract only genus-matched images after verifying the target class list with the team.
 
 ---
 
