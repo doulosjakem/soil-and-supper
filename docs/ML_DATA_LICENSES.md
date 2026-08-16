@@ -127,6 +127,8 @@ Every processed image must have a manifest entry:
 - **Image Count**: 54,306
 - **Classes**: 38 (14 crop species × healthy/disease)
 - **Attribution**: "PlantVillage Dataset. CC0 1.0. https://data.mendeley.com/datasets/tywbtsjrjv/1"
+- **Acquisition Status**: ACQUIRED — Downloaded from HuggingFace (`mohanty/PlantVillage`), archive `plantvillage_hf.zip` (verified integrity), extracted to `training_data/raw/plantvillage/color/`.
+- **Verified On**: 2026-08-15
 
 ### 7.2 PlantDoc
 
@@ -141,7 +143,9 @@ Every processed image must have a manifest entry:
 - **Image Count**: 2,569 (2,572 labeled/ingested, 2,502 after deduplication)
 - **Classes**: 28 (real-world field imagery, 13 disease classes + healthy)
 - **Attribution**: "Singh et al., 2020. PlantDoc: A Dataset for Visual Plant Disease Detection. CoDS-COMAD 2020. https://doi.org/10.1145/3371158.3371196"
-- **License Evidence**:
+- **License Evidence**: Verified from primary `LICENSE.txt` in GitHub repository.
+- **Acquisition Status**: ACQUIRED — Downloaded from GitHub, extracted to `training_data/raw/plantdoc/`.
+- **Verified On**: 2026-08-14
   - LICENSE.txt fetched directly from https://raw.githubusercontent.com/pratikkayal/PlantDoc-Dataset/master/LICENSE.txt
   - GitHub repo license field: Creative Commons Attribution 4.0 International
   - Roboflow mirror: CC BY 4.0, commercial use explicitly permitted

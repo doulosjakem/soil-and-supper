@@ -32,6 +32,21 @@ def count_images(directory: Path) -> int:
     return count
 
 
+def get_class_sources(class_name: str) -> Dict[str, int]:
+    """Get source counts for a class from manifests."""
+    sources = {}
+    for mf in MANIFESTS_DIR.glob("*.jsonl"):
+        if not mf.name.startswith(("download", "acquisition", "license", "quality", "validation")):
+            stem = mf.stem
+            if stem.endswith(f"_{class_name}_manifest"):
+                source = stem.split("_")[0]
+                with open(mf, "r") as f:
+                    count = sum(1 for line in f if line.strip())
+                if count > 0:
+                    sources[source] = count
+    return sources
+
+
 def get_domain_stats(domain: str) -> Dict:
     """Get statistics for a domain."""
     domain_dir = PROCESSED_DIR / domain
@@ -42,7 +57,12 @@ def get_domain_stats(domain: str) -> Dict:
     for class_dir in domain_dir.iterdir():
         if class_dir.is_dir():
             count = count_images(class_dir)
-            stats["classes"][class_dir.name] = count
+            sources = get_class_sources(class_dir.name)
+            stats["classes"][class_dir.name] = {
+                "count": count,
+                "sources": sources,
+                "num_sources": len(sources),
+            }
             stats["total"] += count
     
     return stats
@@ -86,13 +106,15 @@ def generate_gap_report(config: Dict) -> Dict:
         }
         
         for cls in domain_config.get("classes", []):
-            count = domain_stats.get("classes", {}).get(cls, 0)
-            sources = 1 if count > 0 else 0
-            strength = classify_strength(count, sources)
+            class_info = domain_stats.get("classes", {}).get(cls, {"count": 0, "num_sources": 0})
+            count = class_info["count"]
+            num_sources = class_info["num_sources"]
+            strength = classify_strength(count, num_sources)
             
             domain_report["classes"][cls] = {
                 "approved": count,
-                "sources": sources,
+                "sources": num_sources,
+                "source_breakdown": class_info.get("sources", {}),
                 "status": strength,
             }
             
@@ -125,8 +147,10 @@ def generate_full_report(config: Dict):
             status = info["status"]
             count = info["approved"]
             sources = info["sources"]
+            source_breakdown = info.get("source_breakdown", {})
             marker = "OK" if status == "STRONG" else "..." if status == "MODERATE" else "!!" if status == "WEAK" else "XX"
-            print(f"  {marker} {cls}: {count} images, {sources} source(s) -> {status}")
+            source_str = ", ".join(f"{s}: {c}" for s, c in sorted(source_breakdown.items()))
+            print(f"  {marker} {cls}: {count} images, {sources} source(s) [{source_str}] -> {status}")
     
     print("\n" + "=" * 60)
     print("SUMMARY")

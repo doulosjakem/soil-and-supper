@@ -55,15 +55,28 @@ def ingest_images(
 ) -> int:
     """Copy and normalize validated images for a single class."""
     output_dir.mkdir(parents=True, exist_ok=True)
+    existing = count_images(output_dir)
     count = 0
     manifest_entries = []
+
+    manifest_path = MANIFESTS_DIR / f"{dataset_id}_{class_name}_manifest.jsonl"
+    ingested_sources = set()
+    if manifest_path.exists():
+        with open(manifest_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    entry = json.loads(line)
+                    ingested_sources.add(entry.get("source_path"))
 
     for img_path in image_paths:
         if not img_path.exists():
             continue
+        if str(img_path) in ingested_sources:
+            continue
         if not validate_image_file(img_path):
             continue
-        dest_name = normalize_filename(img_path, class_name, count)
+        dest_name = normalize_filename(img_path, class_name, existing + count)
         dest_path = output_dir / dest_name
         if not dest_path.exists():
             shutil.copy2(img_path, dest_path)
@@ -76,7 +89,6 @@ def ingest_images(
             count += 1
 
     if manifest_entries:
-        manifest_path = MANIFESTS_DIR / f"{dataset_id}_{class_name}_manifest.jsonl"
         with open(manifest_path, "a") as f:
             for entry in manifest_entries:
                 f.write(json.dumps(entry) + "\n")
@@ -333,15 +345,16 @@ def prepare_all(config: Dict):
         print(f"\nProcessing domain: {domain}")
         for cls in classes:
             class_dir = PROCESSED_DIR / domain / cls
+            existing = 0
             if class_dir.exists():
                 existing = count_images(class_dir)
                 if existing > 0:
-                    print(f"  {cls}: {existing} images (already prepared)")
-                    total += existing
-                    continue
+                    print(f"  {cls}: {existing} images (already prepared, checking for additional sources...)")
 
             source_image_paths: List[Path] = []
             dataset_id = None
+            class_total = 0
+            ingested_in_chain = False
 
             # Known dataset layouts with specific source structures
             if domain == "crops" and cls in [
@@ -357,16 +370,22 @@ def prepare_all(config: Dict):
                         if dataset_id is None:
                             dataset_id = ds.name
 
-            elif domain == "diseases" and cls in [
-                "Apple_scab", "Powdery_mildew", "Bacterial_spot", "Early_blight"
-            ]:
-                for ds in [RAW_DIR / "plantvillage", RAW_DIR / "plantdoc"]:
+            elif domain == "diseases":
+                datasets_to_check = [
+                    (RAW_DIR / "plantvillage", "plantvillage"),
+                    (RAW_DIR / "plantdoc", "plantdoc"),
+                ]
+                for ds, ds_name in datasets_to_check:
                     if ds.exists():
-                        found = scan_dataset_for_class(ds, cls, ds.name, mapper)
+                        found = scan_dataset_for_class(ds, cls, ds_name, mapper)
                         if found:
-                            source_image_paths.extend(found)
-                            if dataset_id is None:
-                                dataset_id = ds.name
+                            count = ingest_images(cls, found, class_dir, ds_name)
+                            class_total += count
+                            ingested_in_chain = True
+                            if count > 0:
+                                if dataset_id is None:
+                                    dataset_id = ds_name
+                                print(f"  {cls}: +{count} from {ds_name} (total: {existing + class_total})")
 
             elif domain == "weeds" and cls == "Other_weed":
                 ds = RAW_DIR / "deepweeds"
@@ -395,20 +414,29 @@ def prepare_all(config: Dict):
                 for ds_name, ds_dir in raw_datasets.items():
                     found = scan_dataset_for_class(ds_dir, cls, ds_name, mapper)
                     if found:
-                        source_image_paths.extend(found)
-                        if dataset_id is None:
-                            dataset_id = ds_name
-                        # Do not break: allow multiple datasets to contribute
+                        count = ingest_images(cls, found, class_dir, ds_name)
+                        class_total += count
+                        ingested_in_chain = True
+                        if count > 0:
+                            if dataset_id is None:
+                                dataset_id = ds_name
+                            print(f"  {cls}: +{count} from {ds_name} (total: {existing + class_total})")
 
-            if source_image_paths:
+            if source_image_paths and not ingested_in_chain:
                 count = ingest_images(cls, source_image_paths, class_dir, dataset_id or "unknown")
+                class_total += count
                 if count > 0:
-                    print(f"  {cls}: {count} images")
+                    print(f"  {cls}: +{count} images (total: {existing + class_total})")
                 else:
-                    print(f"  {cls}: 0 valid images after validation")
-                total += count
-            else:
-                print(f"  {cls}: 0 images — NO SOURCE DATA FOUND")
+                    print(f"  {cls}: 0 new valid images after validation")
+            elif not ingested_in_chain:
+                if existing > 0:
+                    print(f"  {cls}: {existing} images (no additional sources found)")
+                    class_total = existing
+                else:
+                    print(f"  {cls}: 0 images — NO SOURCE DATA FOUND")
+            
+            total += class_total
 
     # Handle datasets with no class structure
     print("\nChecking for unlabeled datasets...")

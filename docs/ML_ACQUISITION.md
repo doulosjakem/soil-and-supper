@@ -81,8 +81,8 @@ python training/pipeline.py --step acquisition_status
 
 ### PlantVillage (CC0 1.0)
 - **Primary URL**: Mendeley (often stale)
-- **Fallback URL**: Figshare `https://figshare.com/ndownloader/files/21528842?private_link=5ab5f7ea05ae4f9b88f3`
-- **If both fail**: Download manually from https://data.mendeley.com/datasets/tywbtsjrjv/1
+- **Fallback URL**: HuggingFace `https://huggingface.co/datasets/mohanty/PlantVillage/resolve/main/data.zip`
+- **Status**: ACQUIRED — Downloaded from HuggingFace, 54,303 JPG images, 38 classes. Archive: `training_data/raw/plantvillage/plantvillage_hf.zip`. Extracted to `training_data/raw/plantvillage/color/`.
 - **Expected**: 54,306 images, 38 classes
 
 ### DeepWeeds (CC BY 4.0)

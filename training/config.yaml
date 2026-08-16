@@ -173,7 +173,7 @@ quality:
   corrupt_threshold: 0.01
 
 deduplication:
-  method: "phash"
+  method: "exact"
   hash_size: 8
   similarity_threshold: 5
   prevent_leakage: true

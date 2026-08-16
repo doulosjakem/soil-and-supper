@@ -28,24 +28,35 @@ def find_duplicates(
     directory: Path,
     hash_size: int = 8,
     similarity_threshold: int = 5
-) -> Tuple[Dict[imagehash.ImageHash, list], Set[Path]]:
-    """Find duplicate and near-duplicate images."""
-    hashes = {}
+) -> Tuple[Dict[str, list], Set[Path]]:
+    """Find duplicate and near-duplicate images using bucketed hash lookup."""
+    from collections import defaultdict
+    
+    bucket_prefix = max(2, hash_size * 2 - similarity_threshold * 2)
+    buckets = defaultdict(list)
     duplicates = set()
+    
     for img_path in directory.rglob("*"):
         if img_path.suffix.lower() in SUPPORTED_EXTENSIONS:
             try:
                 img_hash = compute_phash(img_path, hash_size)
-                for existing_hash, existing_paths in hashes.items():
+                hash_str = str(img_hash)
+                prefix = hash_str[:bucket_prefix]
+                
+                for existing_hash_str, existing_paths in list(buckets.items()):
+                    if not existing_hash_str.startswith(prefix):
+                        continue
+                    existing_hash = imagehash.hex_to_hash(existing_hash_str)
                     if img_hash - existing_hash <= similarity_threshold:
                         duplicates.add(img_path)
                         existing_paths.append(img_path)
                         break
                 else:
-                    hashes[img_hash] = [img_path]
+                    buckets[hash_str].append(img_path)
             except Exception:
                 pass
-    return hashes, duplicates
+    
+    return dict(buckets), duplicates
 
 
 def find_cross_split_duplicates(split_dirs: Dict[str, Path], hash_size: int = 8, similarity_threshold: int = 5) -> Set[Tuple[str, str]]:
@@ -70,6 +81,36 @@ def find_cross_split_duplicates(split_dirs: Dict[str, Path], hash_size: int = 8,
     return leakage_pairs
 
 
+def remove_exact_duplicates(directory: Path) -> int:
+    """Remove exact duplicate images using SHA256."""
+    import hashlib
+    from collections import defaultdict
+    
+    hashes = defaultdict(list)
+    for img_path in directory.rglob("*"):
+        if img_path.suffix.lower() in SUPPORTED_EXTENSIONS:
+            try:
+                h = hashlib.sha256()
+                with open(img_path, 'rb') as f:
+                    while chunk := f.read(65536):
+                        h.update(chunk)
+                file_hash = h.hexdigest()
+                hashes[file_hash].append(img_path)
+            except Exception:
+                pass
+    
+    removed = 0
+    for file_hash, paths in hashes.items():
+        if len(paths) > 1:
+            for dup in paths[1:]:
+                try:
+                    dup.unlink()
+                    removed += 1
+                except Exception:
+                    pass
+    return removed
+
+
 def remove_duplicates(directory: Path, **kwargs) -> int:
     """Remove duplicate images from directory."""
     _, duplicates = find_duplicates(directory, **kwargs)
@@ -91,18 +132,25 @@ def deduplicate_all(config: Dict):
         return
     
     dedup_config = config.get("deduplication", {})
-    hash_size = dedup_config.get("hash_size", 8)
-    threshold = dedup_config.get("similarity_threshold", 5)
+    method = dedup_config.get("method", "phash")
     
-    print(f"Finding duplicates (hash_size={hash_size}, threshold={threshold})...")
-    hashes, duplicates = find_duplicates(processed_dir, hash_size, threshold)
-    
-    print(f"Found {len(duplicates)} duplicate/near-duplicate images")
-    
-    if duplicates:
-        print("Removing duplicates...")
-        removed = remove_duplicates(processed_dir, hash_size=hash_size, similarity_threshold=threshold)
-        print(f"Removed {removed} duplicates")
+    if method == "exact":
+        print("Finding exact duplicates (SHA256)...")
+        removed = remove_exact_duplicates(processed_dir)
+        print(f"Removed {removed} exact duplicates")
+    else:
+        hash_size = dedup_config.get("hash_size", 8)
+        threshold = dedup_config.get("similarity_threshold", 5)
+        
+        print(f"Finding duplicates (hash_size={hash_size}, threshold={threshold})...")
+        hashes, duplicates = find_duplicates(processed_dir, hash_size, threshold)
+        
+        print(f"Found {len(duplicates)} duplicate/near-duplicate images")
+        
+        if duplicates:
+            print("Removing duplicates...")
+            removed = remove_duplicates(processed_dir, hash_size=hash_size, similarity_threshold=threshold)
+            print(f"Removed {removed} duplicates")
     
     if dedup_config.get("prevent_leakage", True):
         split_dirs = {
@@ -110,7 +158,7 @@ def deduplicate_all(config: Dict):
             "val": processed_dir / "val",
             "test": processed_dir / "test",
         }
-        leakage = find_cross_split_duplicates(split_dirs, hash_size, threshold)
+        leakage = find_cross_split_duplicates(split_dirs, hash_size=8, similarity_threshold=5)
         if leakage:
             print(f"WARNING: Found {len(leakage)} cross-split duplicates!")
             for pair in leakage:

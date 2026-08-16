@@ -233,42 +233,48 @@ Train a **single GrowthStageClassifier** with 6 classes: Seedling, Vegetative, F
 
 30 disease/problem classes, organized by crop where appropriate:
 
-| # | Class | Target Crops | Priority | Est. Images | Source |
-|---|-------|-------------|----------|-------------|--------|
-| 1 | Healthy | All crops | Critical | 15,000+ | PlantVillage, PlantDoc |
-| 2 | Powdery_mildew | Many crops | High | 4,000+ | PlantVillage, PlantDoc |
-| 3 | Downy_mildew | Many crops | Medium | 2,000+ | PlantDoc |
-| 4 | Early_blight | Tomato, Potato | High | 2,000+ | PlantVillage, PlantDoc |
-| 5 | Late_blight | Tomato, Potato | High | 2,000+ | PlantVillage, PlantDoc |
-| 6 | Septoria_leaf_spot | Tomato | Medium | 1,000+ | PlantDoc |
-| 7 | Bacterial_spot | Pepper, Tomato | Medium | 1,000+ | PlantVillage |
-| 8 | Fusarium_wilt | Many crops | Medium | 1,500+ | PlantVillage |
-| 9 | Verticillium_wilt | Many crops | Medium | 1,000+ | PlantVillage |
-| 10 | Anthracnose | Many crops | Medium | 1,000+ | PlantVillage |
-| 11 | Rust | Many crops | Medium | 1,500+ | PlantVillage |
-| 12 | Leaf_spot | Many crops | Medium | 1,500+ | PlantDoc |
-| 13 | Blossom_end_rot | Tomato, Pepper | Medium | 500+ | PlantDoc, web images |
-| 14 | Nutrient_deficiency | General | Low | 500+ | Web images, extension services |
-| 15 | Sunscald | Tomato, Pepper | Low | 300+ | Web images |
-| 16 | Frost_damage | General | Low | 300+ | Web images |
-| 17 | Hail_damage | General | Low | 200+ | Web images |
-| 18 | Overwatering_stress | General | Low | 300+ | Web images |
-| 19 | Underwatering_stress | General | Low | 300+ | Web images |
-| 20 | Insect_damage | General | Low | 500+ | IP102, Bugwood |
-| 21 | Chewing_damage | General | Low | 400+ | Bugwood |
-| 22 | Leaf_miner_damage | General | Low | 300+ | Bugwood |
-| 23 | Apple_scab | Apple | Low | 500+ | PlantVillage |
-| 24 | Cedar_apple_rust | Apple | Low | 500+ | PlantVillage |
-| 25 | Grape_black_rot | Grape | Low | 500+ | PlantDoc |
-| 26 | Peach_bacterial_spot | Peach | Low | 300+ | PlantDoc |
-| 27 | Soybean_rust | Soybean | Low | 300+ | PlantVillage |
-| 28 | Squash_powdery_mildew | Squash | Low | 500+ | PlantVillage |
-| 29 | Tomato_mosaic_virus | Tomato | Low | 300+ | PlantDoc |
-| 30 | Tomato_yellow_leaf_curl | Tomato | Low | 300+ | PlantDoc |
+| # | Class | Target Crops | Priority | Actual Count | Sources | Readiness |
+|---|-------|-------------|----------|-------------|---------|-----------|
+| 1 | Healthy | All crops | Critical | 15,931 | PlantVillage, PlantDoc | NEEDS_MORE_DATA |
+| 2 | Powdery_mildew | Many crops | High | 1,052 | PlantVillage | NEEDS_MORE_DATA |
+| 3 | Downy_mildew | Many crops | Medium | 0 | None | DATASET_SEARCH_REQUIRED |
+| 4 | Early_blight | Tomato, Potato | High | 2,204 | PlantVillage, PlantDoc | NEEDS_MORE_DATA |
+| 5 | Late_blight | Tomato, Potato | High | 3,125 | PlantVillage, PlantDoc | NEEDS_MORE_DATA |
+| 6 | Septoria_leaf_spot | Tomato | Medium | 1,922 | PlantVillage, PlantDoc | NEEDS_MORE_DATA |
+| 7 | Bacterial_spot | Pepper, Tomato | Medium | 3,305 | PlantVillage, PlantDoc | NEEDS_MORE_DATA |
+| 8 | Fusarium_wilt | Many crops | Medium | 0 | None | DATASET_SEARCH_REQUIRED |
+| 9 | Verticillium_wilt | Many crops | Medium | 0 | None | DATASET_SEARCH_REQUIRED |
+| 10 | Anthracnose | Many crops | Medium | 0 | None | DATASET_SEARCH_REQUIRED |
+| 11 | Rust | Many crops | Medium | 1,308 | PlantVillage, PlantDoc | NEEDS_MORE_DATA |
+| 12 | Leaf_spot | Many crops | Medium | 13,900 | PlantVillage, PlantDoc | NEEDS_MORE_DATA |
+| 13 | Blossom_end_rot | Tomato, Pepper | Medium | 0 | None | DATASET_SEARCH_REQUIRED |
+| 14 | Nutrient_deficiency | General | Low | 0 | None | DATASET_SEARCH_REQUIRED |
+| 15 | Sunscald | Tomato, Pepper | Low | 0 | None | DATASET_SEARCH_REQUIRED |
+| 16 | Frost_damage | General | Low | 0 | None | DATASET_SEARCH_REQUIRED |
+| 17 | Hail_damage | General | Low | 0 | None | DATASET_SEARCH_REQUIRED |
+| 18 | Overwatering_stress | General | Low | 0 | None | DATASET_SEARCH_REQUIRED |
+| 19 | Underwatering_stress | General | Low | 0 | None | DATASET_SEARCH_REQUIRED |
+| 20 | Insect_damage | General | Low | 0 | None | DATASET_SEARCH_REQUIRED |
+| 21 | Chewing_damage | General | Low | 0 | None | DATASET_SEARCH_REQUIRED |
+| 22 | Leaf_miner_damage | General | Low | 0 | None | DATASET_SEARCH_REQUIRED |
+| 23 | Apple_scab | Apple | Low | 723 | PlantVillage, PlantDoc | NEEDS_MORE_DATA |
+| 24 | Cedar_apple_rust | Apple | Low | 363 | PlantVillage, PlantDoc | NEEDS_MORE_DATA |
+| 25 | Grape_black_rot | Grape | Low | 1,244 | PlantVillage, PlantDoc | NEEDS_MORE_DATA |
+| 26 | Peach_bacterial_spot | Peach | Low | 2,297 | PlantVillage | NEEDS_MORE_DATA |
+| 27 | Soybean_rust | Soybean | Low | 0 | None | DATASET_SEARCH_REQUIRED |
+| 28 | Squash_powdery_mildew | Squash | Low | 1,965 | PlantVillage, PlantDoc | NEEDS_MORE_DATA |
+| 29 | Tomato_mosaic_virus | Tomato | Low | 427 | PlantVillage, PlantDoc | NEEDS_MORE_DATA |
+| 30 | Tomato_yellow_leaf_curl | Tomato | Low | 5,432 | PlantVillage, PlantDoc | NEEDS_MORE_DATA |
 
 **Primary source**: PlantVillage (CC0 1.0) — 54,306 images, 38 classes covering 14 crop species with healthy + disease combinations. This is the single most important disease dataset.
 
 **Supplement**: PlantDoc (CC BY 4.0) — 2,569 images, 29 classes, real-world field images with natural backgrounds. Complements PlantVillage's controlled-background images.
+
+**Post-PlantVillage Readiness Summary**:
+- **TRAINABLE_NOW**: 0 classes (all classes fail one or more readiness criteria)
+- **NEEDS_MORE_DATA**: 15 classes have data but fail readiness criteria (field-vs-lab ratio, capture diversity, label consensus)
+- **DATASET_SEARCH_REQUIRED**: 117 classes have no current usable source
+- **Main blockers**: Insufficient field imagery diversity, lack of growth-stage data, no crop/weed/beneficial-insect data
 
 ### Tier 6 — Growth Stages (Separate Attribute Model)
 

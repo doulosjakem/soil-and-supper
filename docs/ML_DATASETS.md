@@ -348,11 +348,13 @@ Each dataset is evaluated against:
 | **Known Limitations** | Controlled backgrounds; not real-world garden photos; some classes have few images |
 | **Estimated Useful Images** | ~54,000 (entire dataset usable) |
 | **Recommendation** | **USE** — Primary disease dataset. CC0 makes it legally risk-free. |
+| **Acquisition Status** | **ACQUIRED** — Downloaded from HuggingFace (`mohanty/PlantVillage`), 54,303 JPG images, 38 classes. Archive: `training_data/raw/plantvillage/plantvillage_hf.zip` (verified integrity). Extracted to `training_data/raw/plantvillage/color/`. |
 
 **Notes**:
 - Original paper: Hughes & Salathé, 2015. arXiv:1511.08060
 - Available via TensorFlow Datasets: `plant_village`
 - Meta-Album confirms CC0 1.0 license.
+- Mendeley URL unreliable (403/202 errors); HuggingFace mirror used for acquisition.
 
 ---
 
@@ -365,7 +367,7 @@ Each dataset is evaluated against:
 | **License** | CC BY 4.0 |
 | **Commercial Use** | Yes, with attribution |
 | **Attribution Required** | Yes |
-| **Image Count** | 2,569 images |
+| **Image Count** | 2,579 extracted, 2,572 ingested, 2,502 training-ready after deduplication |
 | **Classes** | 29 classes (13 plant species, 17 disease types) |
 | **Relevant Classes** | Corn leaf blight, Tomato Septoria, Squash powdery mildew, Potato early/late blight, Tomato early blight, Tomato mold, Tomato bacterial spot, Tomato yellow virus, Tomato mosaic virus, Tomato two-spotted spider mites, Apple scab, Apple rust, Grape black rot, Peach leaf, Strawberry leaf, Blueberry leaf, Raspberry leaf, Soybean leaf, Bell pepper leaf spot, Cherry leaf, and more |
 | **Image Characteristics** | Real-world field photos, natural backgrounds, variable lighting, variable resolution |
@@ -374,6 +376,7 @@ Each dataset is evaluated against:
 | **Known Limitations** | Small dataset; some classes have few images; object detection format (can be converted to classification) |
 | **Estimated Useful Images** | ~2,500 |
 | **Recommendation** | **USE** — Supplement for real-world disease images with natural backgrounds. Complements PlantVillage perfectly. |
+| **Acquisition Status** | **ACQUIRED** — Downloaded from GitHub (`pratikkayal/PlantDoc-Dataset`), extracted to `training_data/raw/plantdoc/`. License verified from primary `LICENSE.txt` (CC BY 4.0). |
 
 **Notes**:
 - Published at CoDS-COMAD 2020.
