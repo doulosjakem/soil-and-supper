@@ -10,6 +10,8 @@ struct GardenView: View {
     @State private var showingAddPlant = false
     @State private var showingAddSpace = false
     @State private var showingAddSeed = false
+    @State private var showingSettings = false
+    @State private var defaultSeedState: SeedState = .own
 
     var body: some View {
         NavigationStack {
@@ -38,24 +40,80 @@ struct GardenView: View {
                     }
                 }
 
-                Section("Seed Shelf") {
-                    if seeds.isEmpty {
-                        ContentUnavailableView(
-                            "No Seeds",
-                            systemImage: "leaf",
-                            description: Text("Add seeds to track what you have and what you want.")
-                        )
+                Section("I Have") {
+                    let ownedSeeds = seeds.filter { $0.state == .own }
+                    if ownedSeeds.isEmpty {
+                        ContentUnavailableView {
+                            Label("No seeds yet", systemImage: "leaf")
+                        } description: {
+                            Text("Add seeds you have to your shelf.")
+                        } actions: {
+                            Button("Add Seeds") {
+                                showingAddSeed = true
+                                defaultSeedState = .own
+                            }
+                        }
                     } else {
-                        ForEach(seeds) { seed in
+                        ForEach(ownedSeeds) { seed in
                             NavigationLink(value: seed) {
                                 HStack {
                                     Text(seed.displayName)
                                         .font(.headline)
                                     Spacer()
-                                    Image(systemName: seed.state == .own ? "checkmark.circle.fill" : "plus.circle.fill")
-                                        .foregroundStyle(seed.state == .own ? .green : .orange)
+                                    Image(systemName: seed.state.symbolName)
+                                        .foregroundStyle(.green)
                                 }
                             }
+                        }
+                    }
+                } header: {
+                    HStack {
+                        Text("I Have")
+                        Spacer()
+                        Button {
+                            showingAddSeed = true
+                            defaultSeedState = .own
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                    }
+                }
+
+                Section("I Want") {
+                    let wantedSeeds = seeds.filter { $0.state == .want }
+                    if wantedSeeds.isEmpty {
+                        ContentUnavailableView {
+                            Label("Nothing on your list yet", systemImage: "leaf")
+                        } description: {
+                            Text("Add seeds you want to your list.")
+                        } actions: {
+                            Button("Add Seeds") {
+                                showingAddSeed = true
+                                defaultSeedState = .want
+                            }
+                        }
+                    } else {
+                        ForEach(wantedSeeds) { seed in
+                            NavigationLink(value: seed) {
+                                HStack {
+                                    Text(seed.displayName)
+                                        .font(.headline)
+                                    Spacer()
+                                    Image(systemName: seed.state.symbolName)
+                                        .foregroundStyle(.orange)
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    HStack {
+                        Text("I Want")
+                        Spacer()
+                        Button {
+                            showingAddSeed = true
+                            defaultSeedState = .want
+                        } label: {
+                            Image(systemName: "plus")
                         }
                     }
                 }
@@ -109,11 +167,19 @@ struct GardenView: View {
                         }
                         Button {
                             showingAddSeed = true
+                            defaultSeedState = .own
                         } label: {
                             Label("Add Seed", systemImage: "seedling")
                         }
                     } label: {
                         Label("Add", systemImage: "plus")
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showingSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
                     }
                 }
             }
@@ -124,7 +190,10 @@ struct GardenView: View {
                 AddEditGrowingSpaceView()
             }
             .sheet(isPresented: $showingAddSeed) {
-                AddEditSeedView()
+                AddEditSeedView(defaultState: defaultSeedState)
+            }
+            .sheet(isPresented: $showingSettings) {
+                GardenSettingsView()
             }
         }
     }

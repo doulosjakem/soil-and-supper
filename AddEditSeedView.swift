@@ -6,17 +6,19 @@ struct AddEditSeedView: View {
     @Environment(\.dismiss) private var dismiss
 
     let seed: Seed?
+    let defaultState: SeedState
 
     @State private var cropName: String
     @State private var variety: String
     @State private var state: SeedState
     @State private var notes: String
 
-    init(seed: Seed? = nil) {
+    init(seed: Seed? = nil, defaultState: SeedState = .own) {
         self.seed = seed
+        self.defaultState = defaultState
         _cropName = State(initialValue: seed?.cropName ?? "")
         _variety = State(initialValue: seed?.variety ?? "")
-        _state = State(initialValue: seed?.state ?? .own)
+        _state = State(initialValue: seed?.state ?? defaultState)
         _notes = State(initialValue: seed?.notes ?? "")
     }
 
@@ -55,19 +57,22 @@ struct AddEditSeedView: View {
         guard !trimmedCropName.isEmpty else { return }
 
         if let seed {
-            seed.cropName = trimmedCropName
-            seed.variety = variety.isEmpty ? nil : variety
-            seed.state = state
-            seed.notes = notes.isEmpty ? nil : notes
-            seed.updatedAt = Date()
-        } else {
-            let newSeed = Seed(
+            GardenService.updateSeed(
+                seed,
                 cropName: trimmedCropName,
                 variety: variety.isEmpty ? nil : variety,
                 state: state,
                 notes: notes.isEmpty ? nil : notes
             )
-            modelContext.insert(newSeed)
+        } else {
+            GardenService.addSeed(
+                cropName: trimmedCropName,
+                variety: variety.isEmpty ? nil : variety,
+                state: state,
+                notes: notes.isEmpty ? nil : notes,
+                garden: nil,
+                in: modelContext
+            )
         }
 
         dismiss()

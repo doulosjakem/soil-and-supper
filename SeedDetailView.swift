@@ -5,26 +5,57 @@ struct SeedDetailView: View {
     @Bindable var seed: Seed
     @Environment(\.modelContext) private var modelContext
     @State private var showingEdit = false
+    @State private var showingChangeState = false
 
     var body: some View {
         Form {
             Section("Seed Info") {
-                TextField("Crop Name", text: $seed.cropName)
-                TextField("Variety", text: $seed.variety ?? "")
-                Picker("State", selection: $seed.state) {
-                    ForEach(SeedState.allCases, id: \.self) { state in
-                        Text(state.displayName).tag(state)
-                    }
+                Text(seed.cropName)
+                    .font(.headline)
+
+                if let variety = seed.variety, !variety.isEmpty {
+                    Text(variety)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-                TextField("Notes", text: $seed.notes ?? "", axis: .vertical)
-                    .lineLimit(3...6)
+
+                HStack {
+                    Text("State")
+                    Spacer()
+                    HStack(spacing: 6) {
+                        Image(systemName: seed.state.symbolName)
+                        Text(seed.state.displayName)
+                    }
+                    .foregroundStyle(.secondary)
+                }
+
+                if let notes = seed.notes, !notes.isEmpty {
+                    Text(notes)
+                        .font(.body)
+                } else {
+                    Text("No notes")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
-        .navigationTitle(seed.cropName)
+        .navigationTitle(seed.displayName)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button("Edit") {
-                    showingEdit = true
+                Menu {
+                    Button {
+                        showingEdit = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+
+                    Button {
+                        showingChangeState = true
+                    } label: {
+                        Label("Change State", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                } label: {
+                    Label("Edit", systemImage: "pencil")
                 }
             }
             ToolbarItem(placement: .destructiveAction) {
@@ -35,6 +66,13 @@ struct SeedDetailView: View {
         }
         .sheet(isPresented: $showingEdit) {
             AddEditSeedView(seed: seed)
+        }
+        .confirmationDialog("Change State", isPresented: $showingChangeState) {
+            ForEach(SeedState.allCases, id: \.self) { state in
+                Button(state.displayName) {
+                    GardenService.changeSeedState(seed, to: state)
+                }
+            }
         }
     }
 }
