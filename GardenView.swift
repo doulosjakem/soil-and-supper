@@ -5,6 +5,7 @@ struct GardenView: View {
     @Query private var plants: [Plant]
     @Query private var growingSpaces: [GrowingSpace]
     @Query private var seeds: [Seed]
+    @Query private var desires: [Desire]
     @Environment(\.modelContext) private var modelContext
 
     @State private var showingAddPlant = false
@@ -12,6 +13,7 @@ struct GardenView: View {
     @State private var showingAddSeed = false
     @State private var showingSettings = false
     @State private var defaultSeedState: SeedState = .own
+    @State private var showingAddDesire = false
 
     var body: some View {
         NavigationStack {
@@ -118,6 +120,43 @@ struct GardenView: View {
                     }
                 }
 
+                Section("Want to Grow") {
+                    let activeDesires = desires.filter { !$0.isFulfilled && !$0.isCancelled && !$0.isExpired }
+                    if activeDesires.isEmpty {
+                        ContentUnavailableView {
+                            Label("Nothing on your list yet", systemImage: "leaf")
+                        } description: {
+                            Text("Add things you want to grow.")
+                        } actions: {
+                            Button("Add Desire") {
+                                showingAddDesire = true
+                            }
+                        }
+                    } else {
+                        ForEach(activeDesires) { desire in
+                            NavigationLink(value: desire) {
+                                HStack {
+                                    Text(desire.displayName)
+                                        .font(.headline)
+                                    Spacer()
+                                    Image(systemName: "heart.fill")
+                                        .foregroundStyle(.pink)
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    HStack {
+                        Text("Want to Grow")
+                        Spacer()
+                        Button {
+                            showingAddDesire = true
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                    }
+                }
+
                 Section("Plants") {
                     if plants.isEmpty {
                         ContentUnavailableView(
@@ -149,6 +188,9 @@ struct GardenView: View {
             .navigationDestination(for: Seed.self) { seed in
                 SeedDetailView(seed: seed)
             }
+            .navigationDestination(for: Desire.self) { desire in
+                DesireDetailView(desire: desire)
+            }
             .navigationDestination(for: Plant.self) { plant in
                 PlantDetailView(plant: plant)
             }
@@ -171,6 +213,11 @@ struct GardenView: View {
                         } label: {
                             Label("Add Seed", systemImage: "seedling")
                         }
+                        Button {
+                            showingAddDesire = true
+                        } label: {
+                            Label("Add Desire", systemImage: "heart")
+                        }
                     } label: {
                         Label("Add", systemImage: "plus")
                     }
@@ -192,6 +239,9 @@ struct GardenView: View {
             .sheet(isPresented: $showingAddSeed) {
                 AddEditSeedView(defaultState: defaultSeedState)
             }
+            .sheet(isPresented: $showingAddDesire) {
+                AddDesireView()
+            }
             .sheet(isPresented: $showingSettings) {
                 GardenSettingsView()
             }
@@ -202,6 +252,6 @@ struct GardenView: View {
 struct GardenView_Previews: PreviewProvider {
     static var previews: some View {
         GardenView()
-            .modelContainer(for: [Garden.self, Plant.self, GrowingSpace.self, Seed.self, Occupancy.self], inMemory: true)
+            .modelContainer(for: [Garden.self, Plant.self, GrowingSpace.self, Seed.self, Occupancy.self, Desire.self], inMemory: true)
     }
 }

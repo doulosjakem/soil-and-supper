@@ -20,6 +20,9 @@ final class Garden {
     @Relationship(deleteRule: .cascade, inverse: \Seed.garden)
     var seeds: [Seed] = []
 
+    @Relationship(deleteRule: .cascade, inverse: \Desire.garden)
+    var desires: [Desire] = []
+
     init(name: String, location: String? = nil) {
         self.id = UUID()
         self.name = name

@@ -130,4 +130,55 @@ struct GardenService {
     static func deleteOccupancy(_ occupancy: Occupancy, in context: ModelContext) {
         context.delete(occupancy)
     }
+
+    // MARK: - Desire Operations
+
+    static func createDesire(
+        cropName: String,
+        variety: String? = nil,
+        notes: String? = nil,
+        garden: Garden? = nil,
+        in context: ModelContext
+    ) -> Desire {
+        let desire = Desire(cropName: cropName, variety: variety, notes: notes, garden: garden)
+        context.insert(desire)
+        return desire
+    }
+
+    static func updateDesire(
+        _ desire: Desire,
+        cropName: String,
+        variety: String?,
+        notes: String?
+    ) {
+        desire.cropName = cropName
+        desire.variety = variety
+        desire.notes = notes
+        desire.updatedAt = Date()
+    }
+
+    static func fulfillDesire(_ desire: Desire) {
+        desire.isFulfilled = true
+        desire.isCancelled = false
+        desire.isExpired = false
+        desire.updatedAt = Date()
+    }
+
+    static func cancelDesire(_ desire: Desire) {
+        desire.isCancelled = true
+        desire.isFulfilled = false
+        desire.isExpired = false
+        desire.updatedAt = Date()
+    }
+
+    static func expireDesire(_ desire: Desire) {
+        desire.isExpired = true
+        desire.isFulfilled = false
+        desire.isCancelled = false
+        desire.updatedAt = Date()
+    }
+
+    static func deleteDesire(_ desire: Desire, in context: ModelContext) {
+        context.delete(desire)
+    }
 }
