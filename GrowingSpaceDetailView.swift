@@ -23,9 +23,8 @@ struct GrowingSpaceDetailView: View {
 
             Section("Current") {
                 ContentUnavailableView(
-                    "Nothing planted yet.",
-                    systemImage: "leaf",
-                    description: Text("Occupancy and planning features are coming soon.")
+                    "Nothing growing here yet.",
+                    systemImage: "leaf"
                 )
             }
         }
@@ -38,7 +37,7 @@ struct GrowingSpaceDetailView: View {
             }
             ToolbarItem(placement: .destructiveAction) {
                 Button("Delete", role: .destructive) {
-                    modelContext.delete(space)
+                    GardenService.deleteGrowingSpace(space, in: modelContext)
                 }
             }
         }

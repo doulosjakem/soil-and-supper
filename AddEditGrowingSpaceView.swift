@@ -45,12 +45,9 @@ struct AddEditGrowingSpaceView: View {
         guard !trimmedName.isEmpty else { return }
 
         if let space {
-            space.name = trimmedName
-            space.notes = notes.isEmpty ? nil : notes
-            space.updatedAt = Date()
+            GardenService.updateGrowingSpace(space, name: trimmedName, notes: notes.isEmpty ? nil : notes)
         } else {
-            let newSpace = GrowingSpace(name: trimmedName, notes: notes.isEmpty ? nil : notes)
-            modelContext.insert(newSpace)
+            GardenService.addGrowingSpace(name: trimmedName, notes: notes.isEmpty ? nil : notes, garden: nil, in: modelContext)
         }
 
         dismiss()
