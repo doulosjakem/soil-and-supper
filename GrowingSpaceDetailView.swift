@@ -133,7 +133,10 @@ struct GrowingSpaceDetailView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(occupancy.displayName)
                                 .font(.headline)
-                            Text(occupancy.startDate, format: .dateTime.day().month().year())
+                            Text("Growing now")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("Planted \(occupancy.startDate, format: .dateTime.day().month().year())")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -152,7 +155,7 @@ struct GrowingSpaceDetailView: View {
                 }
 
                 if !futureSuggestions.isEmpty {
-                    Section("Next") {
+                    Section {
                         if !futureBestFit.isEmpty {
                             ForEach(futureBestFit) { suggestion in
                                 SuggestionRow(suggestion: suggestion, context: .future)
@@ -164,6 +167,10 @@ struct GrowingSpaceDetailView: View {
                                 SuggestionRow(suggestion: suggestion, context: .future)
                             }
                         }
+                    } header: {
+                        Text("Next")
+                    } footer: {
+                        Text("These are recommendations for what could follow the current crop. Planting dates depend on when the space opens.")
                     }
                 }
 
@@ -249,18 +256,14 @@ struct SuggestionRow: View {
                     .clipShape(Capsule())
             }
 
-            if context == .future, let opening = suggestion.openingDate {
-                Text("When space opens ~\(opening, format: .dateTime.day().month().year())")
+            ForEach(timingLines, id: \.self) { line in
+                Text(line)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
-            Text("Plant \(suggestion.suggestedPlantingDate, format: .dateTime.day().month().year())")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
             if let harvest = suggestion.estimatedHarvestDate {
-                Text("Estimated harvest ~\(harvest, format: .dateTime.day().month().year())")
+                Text("Harvest ~\(shortDate(harvest))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -277,6 +280,40 @@ struct SuggestionRow: View {
                 }
             }
         }
+    }
+
+    /// Communicates the opening date and the actual candidate planting date
+    /// without confusing them. When a future space opens before its planting
+    /// window begins, the space-opening and planting dates are shown separately
+    /// so the recommendation is never presented as currently plantable.
+    private var timingLines: [String] {
+        let planting = shortDate(suggestion.suggestedPlantingDate)
+
+        guard context == .future, let opening = suggestion.openingDate else {
+            return ["Plant \(planting)"]
+        }
+
+        if Calendar.current.isDate(opening, inSameDayAs: suggestion.suggestedPlantingDate) {
+            return ["Plant when space opens \(planting)"]
+        }
+
+        if suggestion.suggestedPlantingDate > opening {
+            return [
+                "Space opens \(shortDate(opening))",
+                "Plant \(planting)\(windowSuffix)"
+            ]
+        }
+
+        return ["Plant \(planting)"]
+    }
+
+    private var windowSuffix: String {
+        guard let name = suggestion.plantingWindowName else { return "" }
+        return " (\(name) planting)"
+    }
+
+    private func shortDate(_ date: Date) -> String {
+        date.formatted(.dateTime.month(.abbreviated).day())
     }
 
     private var rankingLabel: String {

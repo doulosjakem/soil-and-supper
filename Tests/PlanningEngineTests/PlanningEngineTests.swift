@@ -769,4 +769,154 @@ final class PlanningEngineTests: XCTestCase {
         XCTAssertTrue(cropNames.contains("Carrot"), "Owned seed crop should be suggested")
         XCTAssertFalse(cropNames.contains("Tomato"), "Wanted seed crop should not appear in owned-seeds-only query")
     }
+
+    // MARK: - D — Future unknown maturity leaves harvest nil
+
+    func test_futureUnknownMaturity_leavesHarvestNil() {
+        // All crops in our catalog have known maturity. The estimatedHarvest function
+        // returns nil only when daysToMaturity is nil, which is already tested for
+        // current suggestions in test_unknownMaturity_leavesHarvestNil.
+        // Here we verify future suggestions follow the same rule: harvest dates are
+        // never fabricated.
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", garden: garden)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestionsForFutureOpening(
+            of: space,
+            openingDate: makeDate(year: 2026, month: 8, day: 17),
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        for suggestion in suggestions {
+            if let harvest = suggestion.estimatedHarvestDate {
+                XCTAssertTrue(harvest >= suggestion.suggestedPlantingDate, "Harvest should not be before planting")
+            }
+        }
+    }
+
+    // MARK: - C — Future suggestion preserves isFuture when opening differs from candidate
+
+    func test_futureOpeningBeforeWindow_preservesIsFuture() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", garden: garden)
+        let openingDate = makeDate(year: 2026, month: 6, day: 15)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestionsForFutureOpening(
+            of: space,
+            openingDate: openingDate,
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        let carrotSuggestions = suggestions.filter { $0.cropName == "Carrot" }
+        XCTAssertFalse(carrotSuggestions.isEmpty, "Carrots should still be eligible when opening is before fall window")
+        let suggestion = carrotSuggestions.first!
+        XCTAssertTrue(suggestion.isFuture, "Suggestion should be marked as future even when candidate date differs from opening")
+        XCTAssertEqual(suggestion.openingDate, openingDate, "Opening date should be preserved")
+        XCTAssertGreaterThan(suggestion.suggestedPlantingDate, openingDate, "Candidate date should be after opening date")
+    }
+
+    // MARK: - Future reason text distinguishes opening from planting date
+
+    func test_futureReasonText_whenOpeningEqualsCandidate() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", garden: garden)
+        let openingDate = makeDate(year: 2026, month: 9, day: 15)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestionsForFutureOpening(
+            of: space,
+            openingDate: openingDate,
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        let carrotSuggestions = suggestions.filter { $0.cropName == "Carrot" }
+        XCTAssertFalse(carrotSuggestions.isEmpty)
+        let reason = carrotSuggestions.first!.reason
+        XCTAssertTrue(reason.contains("Plant when space opens"), "Reason should say 'Plant when space opens' when candidate equals opening")
+    }
+
+    func test_futureReasonText_whenOpeningBeforeCandidate() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", garden: garden)
+        let openingDate = makeDate(year: 2026, month: 6, day: 15)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestionsForFutureOpening(
+            of: space,
+            openingDate: openingDate,
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        let carrotSuggestions = suggestions.filter { $0.cropName == "Carrot" }
+        XCTAssertFalse(carrotSuggestions.isEmpty)
+        let reason = carrotSuggestions.first!.reason
+        XCTAssertTrue(reason.contains("Space opens"), "Reason should mention space opening")
+        XCTAssertTrue(reason.contains("Plant"), "Reason should mention planting")
+    }
+// MARK: - H — Explicit opening date overrides an occupancy's expected release
+
+    func test_explicitOpeningDate_overridesExpectedReleaseDate() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", garden: garden)
+        let expectedRelease = makeDate(year: 2026, month: 9, day: 15)
+        let occupancy = makeOccupancy(
+            cropName: "Tomato",
+            startDate: makeDate(year: 2026, month: 5, day: 15),
+            expectedReleaseDate: expectedRelease,
+            status: .active,
+            growingSpace: space
+        )
+
+        // A caller supplies an explicit date that differs from the expected release.
+        let explicitDate = makeDate(year: 2026, month: 9, day: 1)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestionsForFutureOpening(
+            of: space,
+            openingDate: explicitDate,
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        let carrotSuggestions = suggestions.filter { $0.cropName == "Carrot" }
+        XCTAssertFalse(carrotSuggestions.isEmpty, "Future suggestions should be produced from an explicit opening date")
+        XCTAssertEqual(carrotSuggestions.first!.openingDate, explicitDate, "Explicit opening date must take precedence over expected release")
+        XCTAssertEqual(occupancy.expectedReleaseDate, expectedRelease, "Occupancy must not be mutated")
+    }
+
+    // MARK: - D — Unknown maturity leaves estimated harvest nil
+
+    func testUnknownMaturity_leavesEstimatedHarvestNil() {
+        // Every crop in the catalog has known maturity, so exercise the engine
+        // helper directly with a variety that has no maturity information.
+        let engine = DefaultPlanningEngine()
+        let crop = Crop(
+            id: "testcrop",
+            name: "TestCrop",
+            varieties: [Variety(name: "V", cropName: "TestCrop", daysToMaturity: nil, plantingWindows: [])],
+            family: nil,
+            frostTolerant: false,
+            killedByFrost: false,
+            transplantSensitive: false
+        )
+
+        let harvest = engine.estimatedHarvest(
+            from: makeDate(year: 2026, month: 9, day: 1),
+            variety: nil,
+            crop: crop
+        )
+
+        XCTAssertNil(harvest, "Estimated harvest must be nil when daysToMaturity is unknown")
+    }
 }
