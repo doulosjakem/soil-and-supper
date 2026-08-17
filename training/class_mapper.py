@@ -358,6 +358,48 @@ def initialize_default_mappings():
     for src, tgt in bioscan_mappings:
         mapper.add_mapping("bioscan_5m", src, tgt, "insects", confidence="medium", notes="BIOSCAN specimen-style microscope images; domain shift from garden photos. Defensible genus-level mapping only.")
 
+    # SegPPD-101 (field/outdoor disease imagery, MIT license)
+    segppd101_mappings = [
+        ("apple_healthy", "Healthy"),
+        ("apple_powdery mildew", "Powdery_mildew"),
+        ("apple_frog eye leaf spot", "Leaf_spot"),
+        ("apple_rust", "Cedar_apple_rust"),
+        ("apple_scab", "Apple_scab"),
+        ("bean_healthy", "Healthy"),
+        ("bean_angular leaf spot", "Leaf_spot"),
+        ("bean_rust", "Rust"),
+        ("corn_healthy", "Healthy"),
+        ("corn_blight", "Leaf_spot"),
+        ("corn_rust", "Rust"),
+        ("corn_gray leaf spot", "Leaf_spot"),
+        ("cucmber_healthy", "Healthy"),
+        ("cucmber_powdery mildew", "Powdery_mildew"),
+        ("cucmber_gray mold", "Leaf_spot"),
+        ("eggplant_healthy", "Healthy"),
+        ("eggplant_early blight", "Early_blight"),
+        ("eggplant_leaf mold", "Leaf_spot"),
+        ("eggplant_necrotic leaf spot", "Leaf_spot"),
+        ("eggplant_powdery mildew", "Powdery_mildew"),
+        ("grape_healthy", "Healthy"),
+        ("grape_black rot", "Grape_black_rot"),
+        ("grape_powdery mildew", "Powdery_mildew"),
+        ("grape_yellow blight", "Leaf_spot"),
+        ("okra_healthy", "Healthy"),
+        ("okra_powdery mildew", "Powdery_mildew"),
+        ("pepper_healthy", "Healthy"),
+        ("pepper_bacterial spot", "Bacterial_spot"),
+        ("strawberry_healthy", "Healthy"),
+        ("strawberry_calcium deficiency", "Nutrient_deficiency"),
+        ("strawberry_leaf scorch", "Leaf_spot"),
+        ("tomato_healthy", "Healthy"),
+        ("tomato_bacterial spot", "Bacterial_spot"),
+        ("tomato_mold", "Leaf_spot"),
+        ("tomato_late blight", "Late_blight"),
+        ("tomato_powdery mildew", "Powdery_mildew"),
+    ]
+    for src, tgt in segppd101_mappings:
+        mapper.add_mapping("segppd101", src, tgt, "diseases", confidence="high", notes="Field/outdoor imagery; MIT licensed; 256x256 RGB PNG")
+
     return mapper
 
 

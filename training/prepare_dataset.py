@@ -105,6 +105,57 @@ def count_images(directory: Path) -> int:
     )
 
 
+def discover_segppd101_classes(dataset_dir: Path) -> Dict[str, List[Path]]:
+    """Discover classes in SegPPD-101 flat structure with encoded filenames."""
+    # Look for fullname.txt in common locations
+    fullname_path = dataset_dir / "fullname.txt"
+    if not fullname_path.exists():
+        for subdir in ["extracted/SegPPD-101", "extracted", "SegPPD-101"]:
+            candidate = dataset_dir / subdir / "fullname.txt"
+            if candidate.exists():
+                fullname_path = candidate
+                break
+        else:
+            # Search recursively
+            for candidate in dataset_dir.rglob("fullname.txt"):
+                fullname_path = candidate
+                break
+    
+    if not fullname_path.exists():
+        return {}
+    
+    class_map = {}
+    with open(fullname_path, "r") as f:
+        for line in f:
+            parts = line.strip().split(" ", 1)
+            if len(parts) == 2:
+                class_id = parts[0]
+                class_name = parts[1]
+                class_map[class_id] = class_name
+    
+    # Find image directory - look for common patterns
+    image_dir = dataset_dir / "image"
+    if not image_dir.exists():
+        for subdir in ["extracted/SegPPD-101/image", "extracted/image", "SegPPD-101/image", "image"]:
+            candidate = dataset_dir / subdir
+            if candidate.exists():
+                image_dir = candidate
+                break
+        else:
+            # Use the directory containing fullname.txt
+            image_dir = fullname_path.parent
+    
+    classes = {}
+    for img_path in image_dir.iterdir():
+        if img_path.is_file() and img_path.suffix.lower() in SUPPORTED_IMAGE_EXTS:
+            class_id = img_path.stem[:3]
+            if class_id in class_map:
+                class_name = class_map[class_id]
+                classes.setdefault(class_name, []).append(img_path)
+    
+    return classes
+
+
 def discover_dataset_structure(dataset_dir: Path) -> Dict[str, List[Path]]:
     """Auto-discover class directories in common dataset layouts.
 
@@ -386,6 +437,21 @@ def prepare_all(config: Dict):
                                 if dataset_id is None:
                                     dataset_id = ds_name
                                 print(f"  {cls}: +{count} from {ds_name} (total: {existing + class_total})")
+
+                # SegPPD-101 flat structure handling
+                segppd101_dir = RAW_DIR / "segppd101"
+                if segppd101_dir.exists():
+                    segppd101_classes = discover_segppd101_classes(segppd101_dir)
+                    for source_label, paths in segppd101_classes.items():
+                        mapped_class, _ = mapper.get_target_class("segppd101", source_label)
+                        if mapped_class == cls:
+                            count = ingest_images(cls, paths, class_dir, "segppd101")
+                            class_total += count
+                            ingested_in_chain = True
+                            if count > 0:
+                                if dataset_id is None:
+                                    dataset_id = "segppd101"
+                                print(f"  {cls}: +{count} from segppd101 (total: {existing + class_total})")
 
             elif domain == "weeds" and cls == "Other_weed":
                 ds = RAW_DIR / "deepweeds"
