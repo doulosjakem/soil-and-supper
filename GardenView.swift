@@ -202,6 +202,6 @@ struct GardenView: View {
 struct GardenView_Previews: PreviewProvider {
     static var previews: some View {
         GardenView()
-            .modelContainer(for: [Garden.self, Plant.self, GrowingSpace.self, Seed.self], inMemory: true)
+            .modelContainer(for: [Garden.self, Plant.self, GrowingSpace.self, Seed.self, Occupancy.self], inMemory: true)
     }
 }

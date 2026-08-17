@@ -71,4 +71,63 @@ struct GardenService {
     static func deleteGrowingSpace(_ space: GrowingSpace, in context: ModelContext) {
         context.delete(space)
     }
+
+    // MARK: - Occupancy Operations
+
+    static func recordPlanting(
+        cropName: String,
+        variety: String? = nil,
+        startDate: Date,
+        growingSpace: GrowingSpace? = nil,
+        plant: Plant? = nil,
+        expectedHarvestDate: Date? = nil,
+        expectedReleaseDate: Date? = nil,
+        notes: String? = nil,
+        in context: ModelContext
+    ) -> Occupancy {
+        let occupancy = Occupancy(
+            cropName: cropName,
+            variety: variety,
+            startDate: startDate,
+            expectedHarvestDate: expectedHarvestDate,
+            expectedReleaseDate: expectedReleaseDate,
+            status: .active,
+            notes: notes,
+            growingSpace: growingSpace,
+            plant: plant
+        )
+        if let plant {
+            plant.occupancy = occupancy
+        }
+        context.insert(occupancy)
+        return occupancy
+    }
+
+    static func completeOccupancy(_ occupancy: Occupancy, endDate: Date? = nil) {
+        occupancy.endDate = endDate ?? Date()
+        occupancy.status = .completed
+        occupancy.updatedAt = Date()
+    }
+
+    static func updateOccupancy(
+        _ occupancy: Occupancy,
+        cropName: String,
+        variety: String?,
+        startDate: Date,
+        expectedHarvestDate: Date?,
+        expectedReleaseDate: Date?,
+        notes: String?
+    ) {
+        occupancy.cropName = cropName
+        occupancy.variety = variety
+        occupancy.startDate = startDate
+        occupancy.expectedHarvestDate = expectedHarvestDate
+        occupancy.expectedReleaseDate = expectedReleaseDate
+        occupancy.notes = notes
+        occupancy.updatedAt = Date()
+    }
+
+    static func deleteOccupancy(_ occupancy: Occupancy, in context: ModelContext) {
+        context.delete(occupancy)
+    }
 }

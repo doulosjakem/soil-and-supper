@@ -23,6 +23,9 @@ final class Plant {
     @Relationship(deleteRule: .cascade, inverse: \Harvest.plant)
     var harvests: [Harvest] = []
 
+    @Relationship(deleteRule: .nullify, inverse: \Occupancy.plant)
+    var occupancy: Occupancy?
+
     init(
         name: String,
         variety: String? = nil,
