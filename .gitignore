@@ -83,7 +83,6 @@ build/
 /data/
 /metadata/
 /splits/
-/models/
 /checkpoints/
 /output/
 /results/
