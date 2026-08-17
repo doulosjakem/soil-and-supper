@@ -95,6 +95,14 @@ protocol PlanningEngineProtocol {
         growingSpaces: [GrowingSpace],
         desires: [Desire]
     ) -> [PlantingSuggestion]
+
+    func suggestionsForFutureOpening(
+        of growingSpace: GrowingSpace,
+        openingDate: Date,
+        in garden: Garden,
+        seeds: [Seed],
+        desires: [Desire]
+    ) -> [PlantingSuggestion]
 }
 
 struct DefaultPlanningEngine: PlanningEngineProtocol {
@@ -151,7 +159,7 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
                 guard let crop = CropKnowledge.crop(named: seed.cropName) else { continue }
 
                 let variety = seed.variety.flatMap { crop.variety(named: $0) }
-                let (allowed, warnings) = canPlantNow(crop: crop, variety: variety, on: date, in: garden)
+                let (allowed, warnings, _) = canPlantNow(crop: crop, variety: variety, on: date, in: garden)
                 guard allowed else { continue }
 
                 let matchingDesire = desires.first { desire in
@@ -186,6 +194,23 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
         return allSuggestions.sorted { $0.ranking < $1.ranking }
     }
 
+    func suggestionsForFutureOpening(
+        of growingSpace: GrowingSpace,
+        openingDate: Date,
+        in garden: Garden,
+        seeds: [Seed],
+        desires: [Desire]
+    ) -> [PlantingSuggestion] {
+        return evaluateCrops(
+            for: growingSpace,
+            on: openingDate,
+            in: garden,
+            seeds: seeds,
+            desires: desires,
+            futureOpening: true
+        )
+    }
+
     // MARK: - Private
 
     private func isSpaceAvailable(_ space: GrowingSpace) -> Bool {
@@ -198,12 +223,13 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
         on date: Date,
         in garden: Garden,
         seeds: [Seed],
-        desires: [Desire]
+        desires: [Desire],
+        futureOpening: Bool = false
     ) -> [PlantingSuggestion] {
         var suggestions: [PlantingSuggestion] = []
 
         for crop in CropKnowledge.allCrops() {
-            let (allowed, warnings) = canPlantNow(crop: crop, variety: nil, on: date, in: garden)
+            let (allowed, warnings, candidateDate) = canPlantNow(crop: crop, variety: nil, on: date, in: garden, futureOpening: futureOpening)
             guard allowed else { continue }
 
             let seedAvailability = seedAvailability(for: crop.name, in: seeds)
@@ -213,13 +239,13 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
             }
             let rank = rankSuggestion(seedAvailability: seedAvailability, desire: matchingDesire)
 
-            let estimatedHarvest = estimatedHarvest(from: date, variety: nil, crop: crop)
+            let estimatedHarvest = estimatedHarvest(from: candidateDate, variety: nil, crop: crop)
             let reason = reasonText(for: crop.name, seedAvailability: seedAvailability, desire: matchingDesire)
 
             suggestions.append(PlantingSuggestion(
                 cropName: crop.name,
                 varietyName: nil,
-                suggestedPlantingDate: date,
+                suggestedPlantingDate: candidateDate,
                 estimatedHarvestDate: estimatedHarvest,
                 growingSpace: space,
                 seedAvailability: seedAvailability,
@@ -232,37 +258,81 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
         return suggestions.sorted { $0.ranking < $1.ranking }
     }
 
-    private func canPlantNow(crop: Crop, variety: Variety?, on date: Date, in garden: Garden) -> (allowed: Bool, warnings: [String]) {
+    private func canPlantNow(crop: Crop, variety: Variety?, on date: Date, in garden: Garden, futureOpening: Bool = false) -> (allowed: Bool, warnings: [String], candidateDate: Date) {
         var warnings: [String] = []
 
         let currentMonth = Calendar.current.component(.month, from: date)
         let windows = variety?.plantingWindows ?? crop.varieties.flatMap { $0.plantingWindows }
 
-        let inWindow = windows.contains { window in
-            if window.startMonth <= window.endMonth {
-                return currentMonth >= window.startMonth && currentMonth <= window.endMonth
-            } else {
-                return currentMonth >= window.startMonth || currentMonth <= window.endMonth
+        let inWindow: Bool
+        let candidateDate: Date
+
+        if futureOpening {
+            let validWindow = windows.first { window in
+                if window.startMonth <= window.endMonth {
+                    return date.month <= window.endMonth
+                } else {
+                    return date.month >= window.startMonth || date.month <= window.endMonth
+                }
             }
+
+            guard let window = validWindow else {
+                return (false, ["Planting window has closed for this crop."], date)
+            }
+
+            inWindow = true
+            candidateDate = earliestDate(in: window, after: date)
+        } else {
+            inWindow = windows.contains { window in
+                if window.startMonth <= window.endMonth {
+                    return currentMonth >= window.startMonth && currentMonth <= window.endMonth
+                } else {
+                    return currentMonth >= window.startMonth || currentMonth <= window.endMonth
+                }
+            }
+            candidateDate = date
         }
 
         if !inWindow {
-            return (false, ["Planting window has closed for this crop."])
+            return (false, ["Planting window has closed for this crop."], date)
         }
 
-        if crop.killedByFrost, let lastFrost = garden.averageLastFrostDate, date < lastFrost {
-            return (false, ["This crop is killed by frost. Wait until after the average last frost."])
+        if crop.killedByFrost, let lastFrost = garden.averageLastFrostDate, candidateDate < lastFrost {
+            return (false, ["This crop is killed by frost. Wait until after the average last frost."], candidateDate)
         }
 
         if let firstFrost = garden.averageFirstFrostDate,
            let daysToMaturity = variety?.daysToMaturity ?? crop.defaultVariety?.daysToMaturity {
-            let daysRemaining = Calendar.current.dateComponents([.day], from: date, to: firstFrost).day ?? 0
+            let daysRemaining = Calendar.current.dateComponents([.day], from: candidateDate, to: firstFrost).day ?? 0
             if daysRemaining < daysToMaturity {
-                return (false, ["Too little season remaining. Needs \(daysToMaturity) days but only \(daysRemaining) days until first frost."])
+                if crop.frostTolerant {
+                    warnings.append("Frost-tolerant crop may survive light frost after \(daysToMaturity) days.")
+                } else {
+                    return (false, ["Too little season remaining. Needs \(daysToMaturity) days but only \(daysRemaining) days until first frost."], candidateDate)
+                }
             }
         }
 
-        return (true, warnings)
+        return (true, warnings, candidateDate)
+    }
+
+    private func earliestDate(in window: PlantingWindow, after date: Date) -> Date {
+        let calendar = Calendar.current
+        let currentMonth = calendar.component(.month, from: date)
+
+        var targetMonth: Int
+        if window.startMonth <= window.endMonth {
+            targetMonth = max(currentMonth, window.startMonth)
+        } else {
+            targetMonth = currentMonth >= window.startMonth ? currentMonth : window.startMonth
+        }
+
+        var components = calendar.dateComponents([.year, .month], from: date)
+        components.month = targetMonth
+        components.day = 1
+
+        guard let targetDate = calendar.date(from: components) else { return date }
+        return max(targetDate, date)
     }
 
     private func seedAvailability(for cropName: String, in seeds: [Seed]) -> SeedAvailability {
@@ -313,5 +383,11 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
                 lhs.ranking < rhs.ranking
             }
         }.sorted { $0.ranking < $1.ranking }
+    }
+}
+
+extension Date {
+    var month: Int {
+        Calendar.current.component(.month, from: self)
     }
 }

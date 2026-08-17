@@ -45,6 +45,29 @@ struct GrowingSpaceDetailView: View {
         suggestions.filter { $0.ranking == .alsoGood }
     }
 
+    private var futureSuggestions: [PlantingSuggestion] {
+        guard let garden,
+              let expectedRelease = activeOccupancies.compactMap(\.expectedReleaseDate).first else {
+            return []
+        }
+        let engine = DefaultPlanningEngine()
+        return engine.suggestionsForFutureOpening(
+            of: space,
+            openingDate: expectedRelease,
+            in: garden,
+            seeds: seeds,
+            desires: desires
+        )
+    }
+
+    private var futureBestFit: [PlantingSuggestion] {
+        futureSuggestions.filter { $0.ranking == .bestFit }
+    }
+
+    private var futureAlsoGood: [PlantingSuggestion] {
+        futureSuggestions.filter { $0.ranking == .alsoGood }
+    }
+
     var body: some View {
         Form {
             Section("Details") {
@@ -147,6 +170,85 @@ struct GrowingSpaceDetailView: View {
                             Text(occupancy.startDate, format: .dateTime.day().month().year())
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                if let expectedRelease = activeOccupancies.compactMap(\.expectedReleaseDate).first {
+                    Section {
+                        HStack {
+                            Image(systemName: "clock.arrow.circlepath")
+                            Text("Expected opening ~\(expectedRelease, format: .dateTime.day().month().year())")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                if !futureSuggestions.isEmpty {
+                    Section("Next") {
+                        if !futureBestFit.isEmpty {
+                            ForEach(futureBestFit) { suggestion in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        Text(suggestion.cropName)
+                                            .font(.headline)
+                                        if let variety = suggestion.varietyName, !variety.isEmpty {
+                                            Text(variety)
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        Spacer()
+                                        Text("Best fit")
+                                            .font(.caption)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(.green.opacity(0.2))
+                                            .foregroundStyle(.green)
+                                            .clipShape(Capsule())
+                                    }
+                                    Text(suggestion.reason)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    if let harvest = suggestion.estimatedHarvestDate {
+                                        Text("Estimated harvest: \(harvest, format: .dateTime.day().month().year())")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                        }
+
+                        if !futureAlsoGood.isEmpty {
+                            ForEach(futureAlsoGood) { suggestion in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        Text(suggestion.cropName)
+                                            .font(.headline)
+                                        if let variety = suggestion.varietyName, !variety.isEmpty {
+                                            Text(variety)
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        Spacer()
+                                        Text("Also good")
+                                            .font(.caption)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(.blue.opacity(0.2))
+                                            .foregroundStyle(.blue)
+                                            .clipShape(Capsule())
+                                    }
+                                    Text(suggestion.reason)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    if let harvest = suggestion.estimatedHarvestDate {
+                                        Text("Estimated harvest: \(harvest, format: .dateTime.day().month().year())")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
