@@ -400,6 +400,33 @@ def initialize_default_mappings():
     for src, tgt in segppd101_mappings:
         mapper.add_mapping("segppd101", src, tgt, "diseases", confidence="high", notes="Field/outdoor imagery; MIT licensed; 256x256 RGB PNG")
 
+    # Irish Potato Imagery Dataset (Zenodo, CC BY 4.0)
+    irish_potato_mappings = [
+        ("earlyblt", "Early_blight"),
+        ("lateblt", "Late_blight"),
+        ("healthy", "Healthy"),
+    ]
+    for src, tgt in irish_potato_mappings:
+        mapper.add_mapping("irish_potato", src, tgt, "diseases", confidence="high", notes="Smartphone field images from Tanzania; CC BY 4.0; early/late blight on potato")
+
+    # Common Beans Imagery Dataset (Zenodo, CC BY 4.0)
+    common_beans_mappings = [
+        ("rust", "Rust"),
+        ("anthra", "Anthracnose"),
+        ("healthy", "Healthy"),
+    ]
+    for src, tgt in common_beans_mappings:
+        mapper.add_mapping("common_beans", src, tgt, "diseases", confidence="medium", notes="Smartphone field images from Tanzania; CC BY 4.0; bean-specific rust and anthracnose mapped to general taxonomy")
+
+    # Grapevine Leaves RGB (Zenodo, CC BY 4.0)
+    grapevine_mappings = [
+        ("Downy Mildew", "Downy_mildew"),
+        ("Powdery Mildew", "Powdery_mildew"),
+        ("Healthy", "Healthy"),
+    ]
+    for src, tgt in grapevine_mappings:
+        mapper.add_mapping("grapevine", src, tgt, "diseases", confidence="high", notes="Smartphone field images from Portuguese vineyards; CC BY 4.0; 1024x1024 resized JPG")
+
     return mapper
 
 

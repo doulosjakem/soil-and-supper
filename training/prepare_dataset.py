@@ -156,6 +156,64 @@ def discover_segppd101_classes(dataset_dir: Path) -> Dict[str, List[Path]]:
     return classes
 
 
+def discover_irish_potato_classes(dataset_dir: Path) -> Dict[str, List[Path]]:
+    """Discover classes in Irish Potato dataset flat structure."""
+    classes = {}
+    for class_dir in dataset_dir.iterdir():
+        if class_dir.is_dir():
+            class_name = class_dir.name
+            images = [
+                p for p in class_dir.rglob("*")
+                if p.is_file() and p.suffix.lower() in SUPPORTED_IMAGE_EXTS
+            ]
+            if images:
+                classes[class_name] = images
+    return classes
+
+
+def discover_common_beans_classes(dataset_dir: Path) -> Dict[str, List[Path]]:
+    """Discover classes in Common Beans dataset flat structure."""
+    classes = {}
+    for class_dir in dataset_dir.iterdir():
+        if class_dir.is_dir():
+            class_name = class_dir.name
+            images = [
+                p for p in class_dir.rglob("*")
+                if p.is_file() and p.suffix.lower() in SUPPORTED_IMAGE_EXTS
+            ]
+            if images:
+                classes[class_name] = images
+    return classes
+
+
+def discover_grapevine_classes(dataset_dir: Path) -> Dict[str, List[Path]]:
+    """Discover classes in Grapevine dataset nested structure."""
+    classes = {}
+    # Look for resized directory
+    resized_dir = dataset_dir / "resized"
+    if not resized_dir.exists():
+        # Try to find the actual image directory
+        for subdir in dataset_dir.iterdir():
+            if subdir.is_dir():
+                resized_dir = subdir
+                break
+    
+    if not resized_dir.exists():
+        return {}
+    
+    for class_dir in resized_dir.iterdir():
+        if class_dir.is_dir():
+            class_name = class_dir.name
+            images = [
+                p for p in class_dir.rglob("*")
+                if p.is_file() and p.suffix.lower() in SUPPORTED_IMAGE_EXTS
+            ]
+            if images:
+                classes[class_name] = images
+    
+    return classes
+
+
 def discover_dataset_structure(dataset_dir: Path) -> Dict[str, List[Path]]:
     """Auto-discover class directories in common dataset layouts.
 
@@ -452,6 +510,51 @@ def prepare_all(config: Dict):
                                 if dataset_id is None:
                                     dataset_id = "segppd101"
                                 print(f"  {cls}: +{count} from segppd101 (total: {existing + class_total})")
+
+                # Irish Potato dataset handling
+                irish_potato_dir = RAW_DIR / "irish_potato"
+                if irish_potato_dir.exists():
+                    irish_potato_classes = discover_irish_potato_classes(irish_potato_dir)
+                    for source_label, paths in irish_potato_classes.items():
+                        mapped_class, _ = mapper.get_target_class("irish_potato", source_label)
+                        if mapped_class == cls:
+                            count = ingest_images(cls, paths, class_dir, "irish_potato")
+                            class_total += count
+                            ingested_in_chain = True
+                            if count > 0:
+                                if dataset_id is None:
+                                    dataset_id = "irish_potato"
+                                print(f"  {cls}: +{count} from irish_potato (total: {existing + class_total})")
+
+                # Common Beans dataset handling
+                common_beans_dir = RAW_DIR / "common_beans"
+                if common_beans_dir.exists():
+                    common_beans_classes = discover_common_beans_classes(common_beans_dir)
+                    for source_label, paths in common_beans_classes.items():
+                        mapped_class, _ = mapper.get_target_class("common_beans", source_label)
+                        if mapped_class == cls:
+                            count = ingest_images(cls, paths, class_dir, "common_beans")
+                            class_total += count
+                            ingested_in_chain = True
+                            if count > 0:
+                                if dataset_id is None:
+                                    dataset_id = "common_beans"
+                                print(f"  {cls}: +{count} from common_beans (total: {existing + class_total})")
+
+                # Grapevine dataset handling
+                grapevine_dir = RAW_DIR / "grapevine"
+                if grapevine_dir.exists():
+                    grapevine_classes = discover_grapevine_classes(grapevine_dir)
+                    for source_label, paths in grapevine_classes.items():
+                        mapped_class, _ = mapper.get_target_class("grapevine", source_label)
+                        if mapped_class == cls:
+                            count = ingest_images(cls, paths, class_dir, "grapevine")
+                            class_total += count
+                            ingested_in_chain = True
+                            if count > 0:
+                                if dataset_id is None:
+                                    dataset_id = "grapevine"
+                                print(f"  {cls}: +{count} from grapevine (total: {existing + class_total})")
 
             elif domain == "weeds" and cls == "Other_weed":
                 ds = RAW_DIR / "deepweeds"

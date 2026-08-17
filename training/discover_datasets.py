@@ -187,6 +187,51 @@ APPROVED_DATASETS = {
         "image_count": 2263,
         "notes": "Field/outdoor imagery; MIT licensed; 256x256 RGB PNG; 36 classes mapped to our taxonomy, 65 excluded",
     },
+    "irish_potato": {
+        "name": "Irish Potato Imagery Dataset for Early Detection of Crop Diseases",
+        "url": "https://zenodo.org/records/8286529",
+        "download_url": "https://zenodo.org/api/records/8286529/files/earlyblt.zip/content",
+        "license": "CC BY 4.0",
+        "commercial_ok": True,
+        "domain": "diseases",
+        "priority": 1,
+        "status": "ACQUIRED",
+        "classes": [
+            "earlyblt", "lateblt", "healthy"
+        ],
+        "image_count": 117418,
+        "notes": "Smartphone field images from Tanzania; CC BY 4.0; 3 zip files (earlyblt 1.86GB, lateblt 2.43GB, healthy 2.54GB); earlyblt->Early_blight, lateblt->Late_blight",
+    },
+    "common_beans": {
+        "name": "Common Beans Imagery Dataset for Early Detection of Crop Diseases",
+        "url": "https://zenodo.org/records/8286126",
+        "download_url": "https://zenodo.org/api/records/8286126/files/rust.zip/content",
+        "license": "CC BY 4.0",
+        "commercial_ok": True,
+        "domain": "diseases",
+        "priority": 2,
+        "status": "ACQUIRED",
+        "classes": [
+            "rust", "anthra", "healthy"
+        ],
+        "image_count": 118142,
+        "notes": "Smartphone field images from Tanzania; CC BY 4.0; 3 zip files (rust 2.18GB, anthra 1.64GB, healthy 2.54GB); rust->Rust, anthra->Anthracnose",
+    },
+    "grapevine": {
+        "name": "Grapevine Leaves RGB Images of Disease Symptoms",
+        "url": "https://zenodo.org/records/17343474",
+        "download_url": "https://zenodo.org/api/records/17343474/files/Resized%201024%20%C3%97%201024.zip/content",
+        "license": "CC BY 4.0",
+        "commercial_ok": True,
+        "domain": "diseases",
+        "priority": 3,
+        "status": "ACQUIRED",
+        "classes": [
+            "Downy Mildew", "Powdery Mildew", "Esca", "Erineum Mite", "Healthy"
+        ],
+        "image_count": 5267,
+        "notes": "Smartphone field images from Portuguese vineyards; CC BY 4.0; 734MB resized 1024x1024 JPG; Downy Mildew->Downy_mildew, Powdery Mildew->Powdery_mildew",
+    },
     "crop_disease_hf": {
         "name": "Crop Disease Image Dataset (HuggingFace)",
         "url": "https://huggingface.co/datasets/ipartzix/Crop_Disease_Image_Dataset",
