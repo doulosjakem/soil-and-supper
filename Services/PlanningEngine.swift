@@ -44,6 +44,10 @@ struct PlantingSuggestion: Identifiable, Equatable {
     let ranking: SuggestionRank
     let warnings: [String]
     let reason: String
+    let isFuture: Bool
+    let openingDate: Date?
+    let plantingWindowName: String?
+    let hasActiveDesire: Bool
 
     init(
         id: UUID = UUID(),
@@ -56,7 +60,11 @@ struct PlantingSuggestion: Identifiable, Equatable {
         seedAvailability: SeedAvailability = .notTracked,
         ranking: SuggestionRank = .alsoGood,
         warnings: [String] = [],
-        reason: String = ""
+        reason: String = "",
+        isFuture: Bool = false,
+        openingDate: Date? = nil,
+        plantingWindowName: String? = nil,
+        hasActiveDesire: Bool = false
     ) {
         self.id = id
         self.cropName = cropName
@@ -69,6 +77,10 @@ struct PlantingSuggestion: Identifiable, Equatable {
         self.ranking = ranking
         self.warnings = warnings
         self.reason = reason
+        self.isFuture = isFuture
+        self.openingDate = openingDate
+        self.plantingWindowName = plantingWindowName
+        self.hasActiveDesire = hasActiveDesire
     }
 }
 
@@ -175,7 +187,7 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
                 }
 
                 let estimatedHarvest = estimatedHarvest(from: date, variety: variety, crop: crop)
-                let reason = reasonText(for: seed.cropName, seedAvailability: .owned, desire: matchingDesire)
+                let reason = reasonText(for: seed.cropName, seedAvailability: .owned, desire: matchingDesire, futureOpening: false, openingDate: nil, windowName: nil)
 
                 allSuggestions.append(PlantingSuggestion(
                     cropName: crop.name,
@@ -186,7 +198,11 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
                     seedAvailability: .owned,
                     ranking: rank,
                     warnings: warnings,
-                    reason: reason
+                    reason: reason,
+                    isFuture: false,
+                    openingDate: nil,
+                    plantingWindowName: nil,
+                    hasActiveDesire: matchingDesire != nil
                 ))
             }
         }
@@ -207,7 +223,8 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
             in: garden,
             seeds: seeds,
             desires: desires,
-            futureOpening: true
+            futureOpening: true,
+            openingDate: openingDate
         )
     }
 
@@ -224,12 +241,13 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
         in garden: Garden,
         seeds: [Seed],
         desires: [Desire],
-        futureOpening: Bool = false
+        futureOpening: Bool = false,
+        openingDate: Date? = nil
     ) -> [PlantingSuggestion] {
         var suggestions: [PlantingSuggestion] = []
 
         for crop in CropKnowledge.allCrops() {
-            let (allowed, warnings, candidateDate) = canPlantNow(crop: crop, variety: nil, on: date, in: garden, futureOpening: futureOpening)
+            let (allowed, warnings, candidateDate, windowName) = canPlantNow(crop: crop, variety: nil, on: date, in: garden, futureOpening: futureOpening)
             guard allowed else { continue }
 
             let seedAvailability = seedAvailability(for: crop.name, in: seeds)
@@ -240,7 +258,7 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
             let rank = rankSuggestion(seedAvailability: seedAvailability, desire: matchingDesire)
 
             let estimatedHarvest = estimatedHarvest(from: candidateDate, variety: nil, crop: crop)
-            let reason = reasonText(for: crop.name, seedAvailability: seedAvailability, desire: matchingDesire)
+            let reason = reasonText(for: crop.name, seedAvailability: seedAvailability, desire: matchingDesire, futureOpening: futureOpening, openingDate: openingDate, windowName: windowName)
 
             suggestions.append(PlantingSuggestion(
                 cropName: crop.name,
@@ -251,14 +269,18 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
                 seedAvailability: seedAvailability,
                 ranking: rank,
                 warnings: warnings,
-                reason: reason
+                reason: reason,
+                isFuture: futureOpening,
+                openingDate: openingDate,
+                plantingWindowName: windowName,
+                hasActiveDesire: matchingDesire != nil
             ))
         }
 
         return suggestions.sorted { $0.ranking < $1.ranking }
     }
 
-    private func canPlantNow(crop: Crop, variety: Variety?, on date: Date, in garden: Garden, futureOpening: Bool = false) -> (allowed: Bool, warnings: [String], candidateDate: Date) {
+    private func canPlantNow(crop: Crop, variety: Variety?, on date: Date, in garden: Garden, futureOpening: Bool = false) -> (allowed: Bool, warnings: [String], candidateDate: Date, windowName: String?) {
         var warnings: [String] = []
 
         let currentMonth = Calendar.current.component(.month, from: date)
@@ -266,6 +288,7 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
 
         let inWindow: Bool
         let candidateDate: Date
+        let windowName: String?
 
         if futureOpening {
             let validWindow = windows.first { window in
@@ -277,28 +300,32 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
             }
 
             guard let window = validWindow else {
-                return (false, ["Planting window has closed for this crop."], date)
+                return (false, ["Planting window has closed for this crop."], date, nil)
             }
 
             inWindow = true
             candidateDate = earliestDate(in: window, after: date)
+            windowName = window.name
         } else {
-            inWindow = windows.contains { window in
+            let matchedWindow = windows.first { window in
                 if window.startMonth <= window.endMonth {
                     return currentMonth >= window.startMonth && currentMonth <= window.endMonth
                 } else {
                     return currentMonth >= window.startMonth || currentMonth <= window.endMonth
                 }
             }
+
+            inWindow = matchedWindow != nil
             candidateDate = date
+            windowName = matchedWindow?.name
         }
 
         if !inWindow {
-            return (false, ["Planting window has closed for this crop."], date)
+            return (false, ["Planting window has closed for this crop."], date, nil)
         }
 
         if crop.killedByFrost, let lastFrost = garden.averageLastFrostDate, candidateDate < lastFrost {
-            return (false, ["This crop is killed by frost. Wait until after the average last frost."], candidateDate)
+            return (false, ["This crop is killed by frost. Wait until after the average last frost."], candidateDate, windowName)
         }
 
         if let firstFrost = garden.averageFirstFrostDate,
@@ -308,12 +335,12 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
                 if crop.frostTolerant {
                     warnings.append("Frost-tolerant crop may survive light frost after \(daysToMaturity) days.")
                 } else {
-                    return (false, ["Too little season remaining. Needs \(daysToMaturity) days but only \(daysRemaining) days until first frost."], candidateDate)
+                    return (false, ["Too little season remaining. Needs \(daysToMaturity) days but only \(daysRemaining) days until first frost."], candidateDate, windowName)
                 }
             }
         }
 
-        return (true, warnings, candidateDate)
+        return (true, warnings, candidateDate, windowName)
     }
 
     private func earliestDate(in window: PlantingWindow, after date: Date) -> Date {
@@ -363,17 +390,35 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
         return Calendar.current.date(byAdding: .day, value: daysToMaturity, to: date)
     }
 
-    private func reasonText(for cropName: String, seedAvailability: SeedAvailability, desire: Desire?) -> String {
+    private func reasonText(for cropName: String, seedAvailability: SeedAvailability, desire: Desire?, futureOpening: Bool, openingDate: Date?, windowName: String?) -> String {
+        var parts: [String] = []
+
         if seedAvailability == .owned {
-            return "You have seeds for this."
+            parts.append("You have seeds for this.")
+        } else if seedAvailability == .wanted {
+            parts.append("You want these seeds.")
         }
-        if seedAvailability == .wanted {
-            return "You want these seeds."
-        }
+
         if desire != nil {
-            return "This matches a desire."
+            parts.append("This matches a desire.")
         }
-        return "Fits the current season."
+
+        if futureOpening, let opening = openingDate {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d"
+            let openingStr = formatter.string(from: opening)
+            if let window = windowName {
+                parts.append("\(window) planting after \(openingStr).")
+            } else {
+                parts.append("Plant after \(openingStr).")
+            }
+        } else if let window = windowName {
+            parts.append("\(window) planting.")
+        } else {
+            parts.append("Fits the current season.")
+        }
+
+        return parts.joined(separator: " ")
     }
 
     private func deduplicateAndRank(_ suggestions: [PlantingSuggestion]) -> [PlantingSuggestion] {

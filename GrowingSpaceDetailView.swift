@@ -98,65 +98,13 @@ struct GrowingSpaceDetailView: View {
                     Section("Suggestions") {
                         if !bestFitSuggestions.isEmpty {
                             ForEach(bestFitSuggestions) { suggestion in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack {
-                                        Text(suggestion.cropName)
-                                            .font(.headline)
-                                        if let variety = suggestion.varietyName, !variety.isEmpty {
-                                            Text(variety)
-                                                .font(.subheadline)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        Spacer()
-                                        Text("Best fit")
-                                            .font(.caption)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(.green.opacity(0.2))
-                                            .foregroundStyle(.green)
-                                            .clipShape(Capsule())
-                                    }
-                                    Text(suggestion.reason)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                    if let harvest = suggestion.estimatedHarvestDate {
-                                        Text("Estimated harvest: \(harvest, format: .dateTime.day().month().year())")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
+                                SuggestionRow(suggestion: suggestion, context: .current)
                             }
                         }
 
                         if !alsoGoodSuggestions.isEmpty {
                             ForEach(alsoGoodSuggestions) { suggestion in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack {
-                                        Text(suggestion.cropName)
-                                            .font(.headline)
-                                        if let variety = suggestion.varietyName, !variety.isEmpty {
-                                            Text(variety)
-                                                .font(.subheadline)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        Spacer()
-                                        Text("Also good")
-                                            .font(.caption)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(.blue.opacity(0.2))
-                                            .foregroundStyle(.blue)
-                                            .clipShape(Capsule())
-                                    }
-                                    Text(suggestion.reason)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                    if let harvest = suggestion.estimatedHarvestDate {
-                                        Text("Estimated harvest: \(harvest, format: .dateTime.day().month().year())")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
+                                SuggestionRow(suggestion: suggestion, context: .current)
                             }
                         }
                     }
@@ -189,65 +137,13 @@ struct GrowingSpaceDetailView: View {
                     Section("Next") {
                         if !futureBestFit.isEmpty {
                             ForEach(futureBestFit) { suggestion in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack {
-                                        Text(suggestion.cropName)
-                                            .font(.headline)
-                                        if let variety = suggestion.varietyName, !variety.isEmpty {
-                                            Text(variety)
-                                                .font(.subheadline)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        Spacer()
-                                        Text("Best fit")
-                                            .font(.caption)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(.green.opacity(0.2))
-                                            .foregroundStyle(.green)
-                                            .clipShape(Capsule())
-                                    }
-                                    Text(suggestion.reason)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                    if let harvest = suggestion.estimatedHarvestDate {
-                                        Text("Estimated harvest: \(harvest, format: .dateTime.day().month().year())")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
+                                SuggestionRow(suggestion: suggestion, context: .future)
                             }
                         }
 
                         if !futureAlsoGood.isEmpty {
                             ForEach(futureAlsoGood) { suggestion in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack {
-                                        Text(suggestion.cropName)
-                                            .font(.headline)
-                                        if let variety = suggestion.varietyName, !variety.isEmpty {
-                                            Text(variety)
-                                                .font(.subheadline)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        Spacer()
-                                        Text("Also good")
-                                            .font(.caption)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(.blue.opacity(0.2))
-                                            .foregroundStyle(.blue)
-                                            .clipShape(Capsule())
-                                    }
-                                    Text(suggestion.reason)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                    if let harvest = suggestion.estimatedHarvestDate {
-                                        Text("Estimated harvest: \(harvest, format: .dateTime.day().month().year())")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
+                                SuggestionRow(suggestion: suggestion, context: .future)
                             }
                         }
                     }
@@ -303,6 +199,78 @@ struct GrowingSpaceDetailView: View {
             return "\(start) – \(end.formatted(date: .abbreviated, time: .omitted))"
         }
         return start
+    }
+}
+
+struct SuggestionRow: View {
+    let suggestion: PlantingSuggestion
+    let context: SuggestionContext
+
+    enum SuggestionContext {
+        case current
+        case future
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(suggestion.cropName)
+                    .font(.headline)
+                if let variety = suggestion.varietyName, !variety.isEmpty {
+                    Text(variety)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text(rankingLabel)
+                    .font(.caption)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(rankingColor.opacity(0.2))
+                    .foregroundStyle(rankingColor)
+                    .clipShape(Capsule())
+            }
+
+            if context == .future, let opening = suggestion.openingDate {
+                Text("When space opens ~\(opening, format: .dateTime.day().month().year())")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Text("Plant \(suggestion.suggestedPlantingDate, format: .dateTime.day().month().year())")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if let harvest = suggestion.estimatedHarvestDate {
+                Text("Estimated harvest ~\(harvest, format: .dateTime.day().month().year())")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Text(suggestion.reason)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            if !suggestion.warnings.isEmpty {
+                ForEach(suggestion.warnings, id: \.self) { warning in
+                    Text(warning)
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            }
+        }
+    }
+
+    private var rankingLabel: String {
+        suggestion.ranking.label
+    }
+
+    private var rankingColor: Color {
+        switch suggestion.ranking {
+        case .bestFit: return .green
+        case .alsoGood: return .blue
+        case .notRecommended: return .orange
+        }
     }
 }
 
