@@ -49,10 +49,13 @@ struct GardenService {
     static func addGrowingSpace(
         name: String,
         notes: String? = nil,
+        spaceType: SpaceType? = nil,
+        width: Double? = nil,
+        length: Double? = nil,
         garden: Garden? = nil,
         in context: ModelContext
     ) -> GrowingSpace {
-        let space = GrowingSpace(name: name, notes: notes)
+        let space = GrowingSpace(name: name, notes: notes, spaceType: spaceType, width: width, length: length)
         space.garden = garden
         context.insert(space)
         return space
@@ -61,10 +64,16 @@ struct GardenService {
     static func updateGrowingSpace(
         _ space: GrowingSpace,
         name: String,
-        notes: String?
+        notes: String?,
+        spaceType: SpaceType?,
+        width: Double?,
+        length: Double?
     ) {
         space.name = name
         space.notes = notes
+        space.spaceType = spaceType
+        space.width = width
+        space.length = length
         space.updatedAt = Date()
     }
 

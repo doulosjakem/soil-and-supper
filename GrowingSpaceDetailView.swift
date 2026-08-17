@@ -73,6 +73,24 @@ struct GrowingSpaceDetailView: View {
             Section("Details") {
                 Text(space.name)
                     .font(.headline)
+                if let spaceType = space.spaceType {
+                    Text(spaceType.displayName)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                if let width = space.width, let length = space.length {
+                    Text("\(width, specifier: "%.1f") ft × \(length, specifier: "%.1f") ft")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else if let width = space.width {
+                    Text("Width: \(width, specifier: "%.1f") ft")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else if let length = space.length {
+                    Text("Length: \(length, specifier: "%.1f") ft")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
                 if let notes = space.notes, !notes.isEmpty {
                     Text(notes)
                         .font(.body)

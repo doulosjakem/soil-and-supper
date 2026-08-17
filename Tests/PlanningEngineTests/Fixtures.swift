@@ -38,11 +38,14 @@ func makeGarden(
 func makeGrowingSpace(
     name: String,
     notes: String? = nil,
+    spaceType: SpaceType? = nil,
+    width: Double? = nil,
+    length: Double? = nil,
     occupancies: [Occupancy] = [],
     plannedPlantings: [PlannedPlanting] = [],
     garden: Garden? = nil
 ) -> GrowingSpace {
-    let space = GrowingSpace(name: name, notes: notes)
+    let space = GrowingSpace(name: name, notes: notes, spaceType: spaceType, width: width, length: length)
     space.garden = garden
     space.occupancies = occupancies
     for occupancy in occupancies {
