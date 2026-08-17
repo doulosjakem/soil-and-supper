@@ -105,7 +105,7 @@ final class PlanningEngineTests: XCTestCase {
     func test_futureOpeningBeforeWindow_setsCandidateToWindowStart() {
         let garden = makeGarden()
         let space = makeGrowingSpace(name: "Bed 1", garden: garden)
-        let openingDate = makeDate(year: 2026, month: 8, day: 20)
+        let openingDate = makeDate(year: 2026, month: 6, day: 15)
 
         let engine = DefaultPlanningEngine()
         let suggestions = engine.suggestionsForFutureOpening(
@@ -119,7 +119,7 @@ final class PlanningEngineTests: XCTestCase {
         let carrotSuggestions = suggestions.filter { $0.cropName == "Carrot" }
         XCTAssertFalse(carrotSuggestions.isEmpty, "Carrots should still be eligible when opening is before fall window")
         let candidate = carrotSuggestions.first!.suggestedPlantingDate
-        XCTAssertEqual(Calendar.current.component(.month, from: candidate), 9, "Candidate date should be in September (fall window start)")
+        XCTAssertEqual(testCalendar.component(.month, from: candidate), 7, "Candidate date should be in July (fall window start)")
         XCTAssertFalse(candidate < openingDate, "Candidate date should not be before the opening date")
     }
 
@@ -163,6 +163,27 @@ final class PlanningEngineTests: XCTestCase {
         XCTAssertFalse(carrotSuggestions.isEmpty)
         XCTAssertEqual(carrotSuggestions.first?.openingDate, explicitDate)
         XCTAssertEqual(carrotSuggestions.first?.suggestedPlantingDate, explicitDate)
+    }
+
+    // MARK: - G1 — Explicit opening date takes precedence over expectedReleaseDate
+
+    func test_explicitOpeningDate_precedenceOverExpectedRelease() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", garden: garden)
+        let expectedRelease = makeDate(year: 2026, month: 9, day: 15)
+        let explicitDate = makeDate(year: 2026, month: 8, day: 20)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestionsForFutureOpening(
+            of: space,
+            openingDate: explicitDate,
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        XCTAssertFalse(suggestions.isEmpty, "Engine should use explicit opening date")
+        XCTAssertEqual(suggestions.first?.openingDate, explicitDate, "Opening date should be the explicit caller-supplied date, not the occupancy's expectedReleaseDate")
     }
 
     // MARK: - H — Expected release date drives future suggestions
@@ -270,7 +291,7 @@ final class PlanningEngineTests: XCTestCase {
         XCTAssertFalse(radishSuggestions.isEmpty)
         let harvest = radishSuggestions.first!.estimatedHarvestDate
         XCTAssertNotNil(harvest, "Known maturity should produce harvest estimate")
-        let days = Calendar.current.dateComponents([.day], from: plantingDate, to: harvest!).day!
+        let days = testCalendar.dateComponents([.day], from: plantingDate, to: harvest!).day!
         XCTAssertEqual(days, 22, "Harvest should be 22 days after planting for Cherry Belle radish")
     }
 
@@ -522,7 +543,7 @@ final class PlanningEngineTests: XCTestCase {
         )
         let carrotSep1 = suggestionsSep1.first { $0.cropName == "Carrot" }
         XCTAssertNotNil(carrotSep1)
-        XCTAssertEqual(Calendar.current.component(.month, from: carrotSep1!.suggestedPlantingDate), 9)
+        XCTAssertEqual(testCalendar.component(.month, from: carrotSep1!.suggestedPlantingDate), 9)
 
         // Opening exactly on carrot fall window end (Sep 30)
         let sep30 = makeDate(year: 2026, month: 9, day: 30)
