@@ -20,22 +20,26 @@ An offline-first native iOS garden companion built with SwiftUI.
    - **Bundle Identifier:** `com.soilandsupper.app`
 4. Save the project in this repository directory: `D:\soil-and-supper\soil-and-supper\SoilAndSupper.xcodeproj`
 5. **Important:** After creating the project, delete the auto-generated `ContentView.swift` that Xcode creates. The `ContentView.swift` in this repository is the one you want.
-6. Drag the following files/folders from this repository into your Xcode project (choose **Copy items if needed**):
-   - `SoilAndSupperApp.swift`
-   - `ContentView.swift`
-   - `GardenView.swift`
-   - `HarvestView.swift`
-   - `IdentifyView.swift`
-   - `GardenToTableView.swift`
-   - `AddPlantView.swift`
-   - `PlantDetailView.swift`
-   - `JournalEntryView.swift`
-   - `AddEditHarvestView.swift`
-   - `PhotoStore.swift`
-   - `Services/` (entire folder)
-   - `Models/` (entire folder)
-   - `Info.plist`
-   - `Assets.xcassets/` (entire folder)
+ 6. Drag the following files/folders from this repository into your Xcode project (choose **Copy items if needed**):
+    - `SoilAndSupperApp.swift`
+    - `ContentView.swift`
+    - `GardenView.swift`
+    - `HarvestView.swift`
+    - `IdentifyView.swift`
+    - `GardenToTableView.swift`
+    - `AddPlantView.swift`
+    - `PlantDetailView.swift`
+    - `JournalEntryView.swift`
+    - `AddEditHarvestView.swift`
+    - `PhotoStore.swift`
+    - `GrowingSpaceDetailView.swift`
+    - `AddEditGrowingSpaceView.swift`
+    - `SeedDetailView.swift`
+    - `AddEditSeedView.swift`
+    - `Services/` (entire folder)
+    - `Models/` (entire folder)
+    - `Info.plist`
+    - `Assets.xcassets/` (entire folder)
 7. In Xcode project settings, set **iOS Deployment Target** to `17.0` or higher.
 8. Build and run on the iOS Simulator.
 
@@ -45,7 +49,7 @@ An offline-first native iOS garden companion built with SwiftUI.
 SoilAndSupper/
 ├── SoilAndSupperApp.swift   # App entry point with SwiftData + MockPlantIdentifier
 ├── ContentView.swift        # Root TabView
-├── GardenView.swift         # Plant list with add/delete
+├── GardenView.swift         # Garden hub: growing spaces, seed shelf, plants
 ├── PlantDetailView.swift    # Edit plant details + photos + journal + harvests
 ├── AddPlantView.swift       # Add new plant form
 ├── JournalEntryView.swift   # Add/edit journal entry sheet
@@ -54,6 +58,10 @@ SoilAndSupper/
 ├── PhotoStore.swift         # Local photo file management
 ├── IdentifyView.swift       # Plant identification UI with mock pipeline
 ├── GardenToTableView.swift  # Placeholder
+├── GrowingSpaceDetailView.swift  # Growing space detail view
+├── AddEditGrowingSpaceView.swift # Add/edit growing space form
+├── SeedDetailView.swift     # Seed detail view
+├── AddEditSeedView.swift    # Add/edit seed form
 ├── Info.plist
 ├── Assets.xcassets/
 │   └── AppIcon.appiconset/
@@ -62,10 +70,12 @@ SoilAndSupper/
 │   └── MockPlantIdentifier.swift # Mock implementation for Phase 1
 └── Models/
     ├── Garden.swift
+    ├── GrowingSpace.swift
     ├── Plant.swift
     ├── PlantPhoto.swift
     ├── JournalEntry.swift
-    └── Harvest.swift
+    ├── Harvest.swift
+    └── Seed.swift
 ```
 
 ### What Changed in Milestone 6 Phase 1
@@ -80,6 +90,17 @@ SoilAndSupper/
   - Allows confirming the result.
   - Allows correcting the result and saving the corrected name.
   - If confirmed/corrected, creates a new Plant or updates an existing linked Plant.
+
+### What Changed — Garden Planning Foundation (Phase 1)
+
+- Added `GrowingSpace` model for beds, pots, rows, containers, and other growing locations.
+- Added `Seed` and `SeedState` models for the Seed Shelf (OWN / WANT).
+- Extended `Garden` with optional climate settings: `climateZone`, `averageLastFrostDate`, `averageFirstFrostDate`.
+- Extended `GardenView` to show three sections: Growing Spaces, Seed Shelf, and Plants.
+- Added `GrowingSpaceDetailView` and `AddEditGrowingSpaceView` for space CRUD.
+- Added `SeedDetailView` and `AddEditSeedView` for seed CRUD.
+- Updated `SoilAndSupperApp` ModelContainer to include `GrowingSpace` and `Seed`.
+- Existing Plant, PlantPhoto, JournalEntry, and Harvest functionality remains unchanged.
 
 ### Next Steps (Phase 2 — NOT YET IMPLEMENTED)
 
