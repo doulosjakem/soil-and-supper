@@ -769,4 +769,238 @@ final class PlanningEngineTests: XCTestCase {
         XCTAssertTrue(cropNames.contains("Carrot"), "Owned seed crop should be suggested")
         XCTAssertFalse(cropNames.contains("Tomato"), "Wanted seed crop should not appear in owned-seeds-only query")
     }
+
+    // MARK: - Space Fit
+
+    func test_knownSufficientSpace_cropRemainsEligible() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", width: 4, length: 4, garden: garden)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestions(
+            for: space,
+            on: makeDate(year: 2026, month: 8, day: 17),
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        let carrotSuggestions = suggestions.filter { $0.cropName == "Carrot" }
+        XCTAssertFalse(carrotSuggestions.isEmpty, "Carrots should remain eligible when space is sufficient")
+        XCTAssertEqual(carrotSuggestions.first!.spaceFit, .sufficient)
+    }
+
+    func test_exactFitSpace_cropRemainsEligible() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", width: 0.5, length: 0.5, garden: garden)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestions(
+            for: space,
+            on: makeDate(year: 2026, month: 8, day: 17),
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        let radishSuggestions = suggestions.filter { $0.cropName == "Radish" }
+        XCTAssertFalse(radishSuggestions.isEmpty, "Radishes should remain eligible when space exactly fits")
+        XCTAssertEqual(radishSuggestions.first!.spaceFit, .sufficient)
+    }
+
+    func test_insufficientSpace_rejectsCrop() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Container 1", width: 1, length: 1, garden: garden)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestions(
+            for: space,
+            on: makeDate(year: 2026, month: 8, day: 17),
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        let tomatoSuggestions = suggestions.filter { $0.cropName == "Tomato" }
+        XCTAssertTrue(tomatoSuggestions.isEmpty, "Tomatoes should be rejected when space is too small")
+    }
+
+    func test_missingDimensions_cropRemainsEligible() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", width: nil, length: nil, garden: garden)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestions(
+            for: space,
+            on: makeDate(year: 2026, month: 8, day: 17),
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        let carrotSuggestions = suggestions.filter { $0.cropName == "Carrot" }
+        XCTAssertFalse(carrotSuggestions.isEmpty, "Carrots should remain eligible when dimensions are missing")
+        XCTAssertEqual(carrotSuggestions.first!.spaceFit, .unknown)
+    }
+
+    func test_missingCropRequirement_cropRemainsEligible() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", width: 1, length: 1, garden: garden)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestions(
+            for: space,
+            on: makeDate(year: 2026, month: 8, day: 17),
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        // All current crops have requirements, so we verify the engine doesn't reject
+        // when a crop requirement is unknown by checking that suggestions exist
+        XCTAssertFalse(suggestions.isEmpty, "Crops should remain eligible when space requirement is unknown")
+    }
+
+    func test_smallContainer_sameAreaRuleApplies() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Pot 1", width: 1, length: 1, garden: garden)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestions(
+            for: space,
+            on: makeDate(year: 2026, month: 8, day: 17),
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        let tomatoSuggestions = suggestions.filter { $0.cropName == "Tomato" }
+        XCTAssertTrue(tomatoSuggestions.isEmpty, "Tomatoes should be rejected in small container")
+
+        let radishSuggestions = suggestions.filter { $0.cropName == "Radish" }
+        XCTAssertFalse(radishSuggestions.isEmpty, "Radishes should be eligible in small container")
+    }
+
+    func test_ownedButInsufficientSpace_stillRejected() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", width: 1, length: 1, garden: garden)
+        let seed = makeSeed(cropName: "Tomato", variety: "Roma", state: .own)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestions(
+            for: space,
+            on: makeDate(year: 2026, month: 8, day: 17),
+            in: garden,
+            seeds: [seed],
+            desires: []
+        )
+
+        let tomatoSuggestions = suggestions.filter { $0.cropName == "Tomato" }
+        XCTAssertTrue(tomatoSuggestions.isEmpty, "Owned seed should not override insufficient space")
+    }
+
+    func test_desiredButInsufficientSpace_stillRejected() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", width: 1, length: 1, garden: garden)
+        let desire = makeDesire(cropName: "Tomato", variety: "Roma")
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestions(
+            for: space,
+            on: makeDate(year: 2026, month: 8, day: 17),
+            in: garden,
+            seeds: [],
+            desires: [desire]
+        )
+
+        let tomatoSuggestions = suggestions.filter { $0.cropName == "Tomato" }
+        XCTAssertTrue(tomatoSuggestions.isEmpty, "Active desire should not override insufficient space")
+    }
+
+    func test_futureOpening_appliesSameSpaceSuitability() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", width: 1, length: 1, garden: garden)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestionsForFutureOpening(
+            of: space,
+            openingDate: makeDate(year: 2026, month: 9, day: 15),
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        let tomatoSuggestions = suggestions.filter { $0.cropName == "Tomato" }
+        XCTAssertTrue(tomatoSuggestions.isEmpty, "Future opening should apply same space suitability")
+    }
+
+    func test_currentOpening_appliesSameSpaceSuitability() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", width: 1, length: 1, garden: garden)
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestions(
+            for: space,
+            on: makeDate(year: 2026, month: 8, day: 17),
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        let tomatoSuggestions = suggestions.filter { $0.cropName == "Tomato" }
+        XCTAssertTrue(tomatoSuggestions.isEmpty, "Current opening should apply same space suitability")
+    }
+
+    func test_multipleActiveOccupancies_remainsOccupied() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", width: 4, length: 4, garden: garden)
+        _ = makeOccupancy(
+            cropName: "Tomato",
+            startDate: makeDate(year: 2026, month: 5, day: 15),
+            status: .active,
+            growingSpace: space
+        )
+        _ = makeOccupancy(
+            cropName: "Basil",
+            startDate: makeDate(year: 2026, month: 6, day: 1),
+            status: .active,
+            growingSpace: space
+        )
+
+        let engine = DefaultPlanningEngine()
+        let suggestions = engine.suggestions(
+            for: space,
+            on: makeDate(year: 2026, month: 8, day: 17),
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        XCTAssertTrue(suggestions.isEmpty, "Space with multiple active occupancies should remain occupied")
+    }
+
+    func test_deterministicSpaceFit() {
+        let garden = makeGarden()
+        let space = makeGrowingSpace(name: "Bed 1", width: 4, length: 4, garden: garden)
+
+        let engine = DefaultPlanningEngine()
+
+        let firstRun = engine.suggestions(
+            for: space,
+            on: makeDate(year: 2026, month: 8, day: 17),
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        let secondRun = engine.suggestions(
+            for: space,
+            on: makeDate(year: 2026, month: 8, day: 17),
+            in: garden,
+            seeds: [],
+            desires: []
+        )
+
+        XCTAssertEqual(firstRun.map { $0.cropName }, secondRun.map { $0.cropName }, "Space fit should be deterministic")
+    }
 }

@@ -8,6 +8,7 @@ struct Crop: Identifiable, Equatable {
     let frostTolerant: Bool
     let killedByFrost: Bool
     let transplantSensitive: Bool
+    let approximateAreaPerPlantSqFt: Double?
 
     var defaultVariety: Variety? {
         varieties.first

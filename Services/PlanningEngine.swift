@@ -32,6 +32,20 @@ enum SuggestionRank: Int, Comparable {
     }
 }
 
+enum SpaceFit {
+    case sufficient
+    case insufficient
+    case unknown
+
+    var label: String {
+        switch self {
+        case .sufficient: return "Space is large enough"
+        case .insufficient: return "Space may be too small"
+        case .unknown: return "Space size unknown"
+        }
+    }
+}
+
 struct PlantingSuggestion: Identifiable, Equatable {
     let id: UUID
     let cropName: String
@@ -48,6 +62,7 @@ struct PlantingSuggestion: Identifiable, Equatable {
     let openingDate: Date?
     let plantingWindowName: String?
     let hasActiveDesire: Bool
+    let spaceFit: SpaceFit
 
     init(
         id: UUID = UUID(),
@@ -64,7 +79,8 @@ struct PlantingSuggestion: Identifiable, Equatable {
         isFuture: Bool = false,
         openingDate: Date? = nil,
         plantingWindowName: String? = nil,
-        hasActiveDesire: Bool = false
+        hasActiveDesire: Bool = false,
+        spaceFit: SpaceFit = .unknown
     ) {
         self.id = id
         self.cropName = cropName
@@ -81,6 +97,7 @@ struct PlantingSuggestion: Identifiable, Equatable {
         self.openingDate = openingDate
         self.plantingWindowName = plantingWindowName
         self.hasActiveDesire = hasActiveDesire
+        self.spaceFit = spaceFit
     }
 }
 
@@ -174,6 +191,11 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
                 let (allowed, warnings, _) = canPlantNow(crop: crop, variety: variety, on: date, in: garden)
                 guard allowed else { continue }
 
+                let fit = spaceFit(for: crop, in: space)
+                if fit == .insufficient {
+                    continue
+                }
+
                 let matchingDesire = desires.first { desire in
                     desire.cropName.localizedCaseInsensitiveCompare(seed.cropName) == .orderedSame
                     && !desire.isFulfilled && !desire.isCancelled && !desire.isExpired
@@ -187,7 +209,7 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
                 }
 
                 let estimatedHarvest = estimatedHarvest(from: date, variety: variety, crop: crop)
-                let reason = reasonText(for: seed.cropName, seedAvailability: .owned, desire: matchingDesire, futureOpening: false, openingDate: nil, windowName: nil)
+                let reason = reasonText(for: seed.cropName, seedAvailability: .owned, desire: matchingDesire, futureOpening: false, openingDate: nil, windowName: nil, spaceFit: fit)
 
                 allSuggestions.append(PlantingSuggestion(
                     cropName: crop.name,
@@ -202,7 +224,8 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
                     isFuture: false,
                     openingDate: nil,
                     plantingWindowName: nil,
-                    hasActiveDesire: matchingDesire != nil
+                    hasActiveDesire: matchingDesire != nil,
+                    spaceFit: fit
                 ))
             }
         }
@@ -250,6 +273,11 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
             let (allowed, warnings, candidateDate, windowName) = canPlantNow(crop: crop, variety: nil, on: date, in: garden, futureOpening: futureOpening)
             guard allowed else { continue }
 
+            let fit = spaceFit(for: crop, in: space)
+            if fit == .insufficient {
+                continue
+            }
+
             let seedAvailability = seedAvailability(for: crop.name, in: seeds)
             let matchingDesire = desires.first { desire in
                 desire.cropName.localizedCaseInsensitiveCompare(crop.name) == .orderedSame
@@ -258,7 +286,7 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
             let rank = rankSuggestion(seedAvailability: seedAvailability, desire: matchingDesire)
 
             let estimatedHarvest = estimatedHarvest(from: candidateDate, variety: nil, crop: crop)
-            let reason = reasonText(for: crop.name, seedAvailability: seedAvailability, desire: matchingDesire, futureOpening: futureOpening, openingDate: openingDate, windowName: windowName)
+            let reason = reasonText(for: crop.name, seedAvailability: seedAvailability, desire: matchingDesire, futureOpening: futureOpening, openingDate: openingDate, windowName: windowName, spaceFit: fit)
 
             suggestions.append(PlantingSuggestion(
                 cropName: crop.name,
@@ -273,7 +301,8 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
                 isFuture: futureOpening,
                 openingDate: openingDate,
                 plantingWindowName: windowName,
-                hasActiveDesire: matchingDesire != nil
+                hasActiveDesire: matchingDesire != nil,
+                spaceFit: fit
             ))
         }
 
@@ -416,6 +445,56 @@ struct DefaultPlanningEngine: PlanningEngineProtocol {
             parts.append("\(window) planting.")
         } else {
             parts.append("Fits the current season.")
+        }
+
+        return parts.joined(separator: " ")
+    }
+
+    private func spaceFit(for crop: Crop, in space: GrowingSpace) -> SpaceFit {
+        guard let requiredArea = crop.approximateAreaPerPlantSqFt,
+              let width = space.width,
+              let length = space.length,
+              width > 0,
+              length > 0 else {
+            return .unknown
+        }
+        let spaceArea = width * length
+        if spaceArea >= requiredArea {
+            return .sufficient
+        }
+        return .insufficient
+    }
+
+    private func reasonText(for cropName: String, seedAvailability: SeedAvailability, desire: Desire?, futureOpening: Bool, openingDate: Date?, windowName: String?, spaceFit: SpaceFit) -> String {
+        var parts: [String] = []
+
+        if seedAvailability == .owned {
+            parts.append("You have seeds for this.")
+        } else if seedAvailability == .wanted {
+            parts.append("You want these seeds.")
+        }
+
+        if desire != nil {
+            parts.append("This matches a desire.")
+        }
+
+        if futureOpening, let opening = openingDate {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d"
+            let openingStr = formatter.string(from: opening)
+            if let window = windowName {
+                parts.append("\(window) planting after \(openingStr).")
+            } else {
+                parts.append("Plant after \(openingStr).")
+            }
+        } else if let window = windowName {
+            parts.append("\(window) planting.")
+        } else {
+            parts.append("Fits the current season.")
+        }
+
+        if spaceFit == .unknown {
+            parts.append("Space size unknown.")
         }
 
         return parts.joined(separator: " ")

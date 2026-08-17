@@ -239,14 +239,16 @@ struct SuggestionRow: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
-                Spacer()
-                Text(rankingLabel)
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(rankingColor.opacity(0.2))
-                    .foregroundStyle(rankingColor)
-                    .clipShape(Capsule())
+                if suggestion.spaceFit == .sufficient {
+                    Spacer()
+                    Text(rankingLabel)
+                        .font(.caption)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(rankingColor.opacity(0.2))
+                        .foregroundStyle(rankingColor)
+                        .clipShape(Capsule())
+                }
             }
 
             if context == .future, let opening = suggestion.openingDate {

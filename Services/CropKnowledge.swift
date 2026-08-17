@@ -83,7 +83,8 @@ enum CropKnowledge {
             family: "Apiaceae",
             frostTolerant: true,
             killedByFrost: false,
-            transplantSensitive: true
+            transplantSensitive: true,
+            approximateAreaPerPlantSqFt: 0.25
         ),
         Crop(
             id: "radish",
@@ -101,7 +102,8 @@ enum CropKnowledge {
             family: "Brassicaceae",
             frostTolerant: true,
             killedByFrost: false,
-            transplantSensitive: true
+            transplantSensitive: true,
+            approximateAreaPerPlantSqFt: 0.1
         ),
         Crop(
             id: "lettuce",
@@ -124,7 +126,8 @@ enum CropKnowledge {
             family: "Asteraceae",
             frostTolerant: true,
             killedByFrost: false,
-            transplantSensitive: false
+            transplantSensitive: false,
+            approximateAreaPerPlantSqFt: 0.5
         ),
         Crop(
             id: "spinach",
@@ -143,7 +146,8 @@ enum CropKnowledge {
             family: "Amaranthaceae",
             frostTolerant: true,
             killedByFrost: false,
-            transplantSensitive: true
+            transplantSensitive: true,
+            approximateAreaPerPlantSqFt: 0.25
         ),
         Crop(
             id: "bush-bean",
@@ -161,7 +165,8 @@ enum CropKnowledge {
             family: "Fabaceae",
             frostTolerant: false,
             killedByFrost: true,
-            transplantSensitive: true
+            transplantSensitive: true,
+            approximateAreaPerPlantSqFt: 0.5
         ),
         Crop(
             id: "broccoli",
@@ -179,7 +184,8 @@ enum CropKnowledge {
             family: "Brassicaceae",
             frostTolerant: true,
             killedByFrost: false,
-            transplantSensitive: false
+            transplantSensitive: false,
+            approximateAreaPerPlantSqFt: 1.5
         ),
         Crop(
             id: "tomato",
@@ -198,7 +204,8 @@ enum CropKnowledge {
             family: "Solanaceae",
             frostTolerant: false,
             killedByFrost: true,
-            transplantSensitive: false
+            transplantSensitive: false,
+            approximateAreaPerPlantSqFt: 3.0
         ),
         Crop(
             id: "cucumber",
@@ -216,7 +223,8 @@ enum CropKnowledge {
             family: "Cucurbitaceae",
             frostTolerant: false,
             killedByFrost: true,
-            transplantSensitive: true
+            transplantSensitive: true,
+            approximateAreaPerPlantSqFt: 2.0
         ),
         Crop(
             id: "potato",
@@ -232,7 +240,8 @@ enum CropKnowledge {
             family: "Solanaceae",
             frostTolerant: false,
             killedByFrost: false,
-            transplantSensitive: false
+            transplantSensitive: false,
+            approximateAreaPerPlantSqFt: 0.5
         ),
         Crop(
             id: "garlic",
@@ -249,7 +258,8 @@ enum CropKnowledge {
             family: "Amaryllidaceae",
             frostTolerant: true,
             killedByFrost: false,
-            transplantSensitive: false
+            transplantSensitive: false,
+            approximateAreaPerPlantSqFt: 0.1
         )
     ]
 }

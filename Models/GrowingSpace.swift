@@ -46,4 +46,11 @@ final class GrowingSpace {
         self.createdAt = Date()
         self.updatedAt = Date()
     }
+
+    var area: Double? {
+        guard let width = width, let length = length, width > 0, length > 0 else {
+            return nil
+        }
+        return width * length
+    }
 }
