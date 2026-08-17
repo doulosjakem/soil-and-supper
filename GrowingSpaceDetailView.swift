@@ -4,6 +4,8 @@ import SwiftData
 struct GrowingSpaceDetailView: View {
     @Bindable var space: GrowingSpace
     @Environment(\.modelContext) private var modelContext
+    @Query private var seeds: [Seed]
+    @Query private var desires: [Desire]
     @State private var showingEdit = false
     @State private var showingRecordPlanting = false
 
@@ -17,6 +19,30 @@ struct GrowingSpaceDetailView: View {
         space.occupancies
             .filter { $0.status != .active }
             .sorted { $0.startDate > $1.startDate }
+    }
+
+    private var garden: Garden? {
+        space.garden
+    }
+
+    private var suggestions: [PlantingSuggestion] {
+        guard let garden else { return [] }
+        let engine = DefaultPlanningEngine()
+        return engine.suggestions(
+            for: space,
+            on: Date(),
+            in: garden,
+            seeds: seeds,
+            desires: desires
+        )
+    }
+
+    private var bestFitSuggestions: [PlantingSuggestion] {
+        suggestions.filter { $0.ranking == .bestFit }
+    }
+
+    private var alsoGoodSuggestions: [PlantingSuggestion] {
+        suggestions.filter { $0.ranking == .alsoGood }
     }
 
     var body: some View {
@@ -41,6 +67,74 @@ struct GrowingSpaceDetailView: View {
                     } actions: {
                         Button("Plant something") {
                             showingRecordPlanting = true
+                        }
+                    }
+                }
+
+                if !suggestions.isEmpty {
+                    Section("Suggestions") {
+                        if !bestFitSuggestions.isEmpty {
+                            ForEach(bestFitSuggestions) { suggestion in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        Text(suggestion.cropName)
+                                            .font(.headline)
+                                        if let variety = suggestion.varietyName, !variety.isEmpty {
+                                            Text(variety)
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        Spacer()
+                                        Text("Best fit")
+                                            .font(.caption)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(.green.opacity(0.2))
+                                            .foregroundStyle(.green)
+                                            .clipShape(Capsule())
+                                    }
+                                    Text(suggestion.reason)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    if let harvest = suggestion.estimatedHarvestDate {
+                                        Text("Estimated harvest: \(harvest, format: .dateTime.day().month().year())")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                        }
+
+                        if !alsoGoodSuggestions.isEmpty {
+                            ForEach(alsoGoodSuggestions) { suggestion in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack {
+                                        Text(suggestion.cropName)
+                                            .font(.headline)
+                                        if let variety = suggestion.varietyName, !variety.isEmpty {
+                                            Text(variety)
+                                                .font(.subheadline)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        Spacer()
+                                        Text("Also good")
+                                            .font(.caption)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(.blue.opacity(0.2))
+                                            .foregroundStyle(.blue)
+                                            .clipShape(Capsule())
+                                    }
+                                    Text(suggestion.reason)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    if let harvest = suggestion.estimatedHarvestDate {
+                                        Text("Estimated harvest: \(harvest, format: .dateTime.day().month().year())")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -113,5 +207,6 @@ struct GrowingSpaceDetailView: View {
 struct GrowingSpaceDetailView_Previews: PreviewProvider {
     static var previews: some View {
         GrowingSpaceDetailView(space: GrowingSpace(name: "Bed 1"))
+            .modelContainer(for: [GrowingSpace.self, Occupancy.self, Seed.self, Desire.self, PlannedPlanting.self, Garden.self], inMemory: true)
     }
 }
