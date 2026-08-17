@@ -181,4 +181,93 @@ struct GardenService {
     static func deleteDesire(_ desire: Desire, in context: ModelContext) {
         context.delete(desire)
     }
+
+    // MARK: - Planned Planting Operations
+
+    static func createPlannedPlanting(
+        cropName: String,
+        variety: String? = nil,
+        plannedDate: Date? = nil,
+        growingSpace: GrowingSpace? = nil,
+        desire: Desire? = nil,
+        seed: Seed? = nil,
+        notes: String? = nil,
+        garden: Garden? = nil,
+        in context: ModelContext
+    ) -> PlannedPlanting {
+        let plan = PlannedPlanting(
+            cropName: cropName,
+            variety: variety,
+            plannedDate: plannedDate,
+            status: .planned,
+            notes: notes,
+            garden: garden,
+            growingSpace: growingSpace,
+            desire: desire,
+            seed: seed
+        )
+        context.insert(plan)
+        return plan
+    }
+
+    static func updatePlannedPlanting(
+        _ plan: PlannedPlanting,
+        cropName: String,
+        variety: String?,
+        plannedDate: Date?,
+        growingSpace: GrowingSpace?,
+        desire: Desire?,
+        seed: Seed?,
+        notes: String?
+    ) {
+        plan.cropName = cropName
+        plan.variety = variety
+        plan.plannedDate = plannedDate
+        plan.growingSpace = growingSpace
+        plan.desire = desire
+        plan.seed = seed
+        plan.notes = notes
+        plan.updatedAt = Date()
+    }
+
+    static func cancelPlannedPlanting(_ plan: PlannedPlanting) {
+        plan.status = .cancelled
+        plan.updatedAt = Date()
+    }
+
+    static func completePlannedPlanting(
+        _ plan: PlannedPlanting,
+        actualStartDate: Date? = nil,
+        cropName: String? = nil,
+        variety: String? = nil,
+        growingSpace: GrowingSpace? = nil,
+        notes: String? = nil,
+        in context: ModelContext
+    ) -> Occupancy {
+        let actualDate = actualStartDate ?? Date()
+        let actualCropName = cropName ?? plan.cropName
+        let actualVariety = variety ?? plan.variety
+        let actualSpace = growingSpace ?? plan.growingSpace
+
+        let occupancy = Occupancy(
+            cropName: actualCropName,
+            variety: actualVariety,
+            startDate: actualDate,
+            status: .active,
+            notes: notes,
+            growingSpace: actualSpace
+        )
+
+        plan.occupancy = occupancy
+        plan.status = .planted
+        plan.actualDate = actualDate
+        plan.updatedAt = Date()
+
+        context.insert(occupancy)
+        return occupancy
+    }
+
+    static func deletePlannedPlanting(_ plan: PlannedPlanting, in context: ModelContext) {
+        context.delete(plan)
+    }
 }

@@ -20,6 +20,9 @@ final class Occupancy {
     @Relationship(deleteRule: .nullify, inverse: \Plant.occupancy)
     var plant: Plant?
 
+    @Relationship(deleteRule: .nullify, inverse: \PlannedPlanting.occupancy)
+    var plannedPlanting: PlannedPlanting?
+
     init(
         cropName: String,
         variety: String? = nil,

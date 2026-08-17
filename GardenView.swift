@@ -6,6 +6,7 @@ struct GardenView: View {
     @Query private var growingSpaces: [GrowingSpace]
     @Query private var seeds: [Seed]
     @Query private var desires: [Desire]
+    @Query private var plannedPlantings: [PlannedPlanting]
     @Environment(\.modelContext) private var modelContext
 
     @State private var showingAddPlant = false
@@ -14,6 +15,7 @@ struct GardenView: View {
     @State private var showingSettings = false
     @State private var defaultSeedState: SeedState = .own
     @State private var showingAddDesire = false
+    @State private var showingAddPlan = false
 
     var body: some View {
         NavigationStack {
@@ -157,6 +159,53 @@ struct GardenView: View {
                     }
                 }
 
+                Section("Planned") {
+                    let activePlans = plannedPlantings.filter { $0.status == .planned }
+                    if activePlans.isEmpty {
+                        ContentUnavailableView {
+                            Label("No plans yet", systemImage: "leaf")
+                        } description: {
+                            Text("Add plans for upcoming plantings.")
+                        } actions: {
+                            Button("Add Plan") {
+                                showingAddPlan = true
+                            }
+                        }
+                    } else {
+                        ForEach(activePlans) { plan in
+                            NavigationLink(value: plan) {
+                                HStack {
+                                    Text(plan.displayName)
+                                        .font(.headline)
+                                    Spacer()
+                                    Group {
+                                        if let space = plan.growingSpace {
+                                            Text(space.name)
+                                        } else {
+                                            Text("Unassigned")
+                                        }
+                                    }
+                                    .foregroundStyle(.secondary)
+                                    if let date = plan.plannedDate {
+                                        Text(date, format: .dateTime.day().month().year())
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } header: {
+                    HStack {
+                        Text("Planned")
+                        Spacer()
+                        Button {
+                            showingAddPlan = true
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                    }
+                }
+
                 Section("Plants") {
                     if plants.isEmpty {
                         ContentUnavailableView(
@@ -191,6 +240,9 @@ struct GardenView: View {
             .navigationDestination(for: Desire.self) { desire in
                 DesireDetailView(desire: desire)
             }
+            .navigationDestination(for: PlannedPlanting.self) { plan in
+                PlannedPlantingDetailView(plan: plan)
+            }
             .navigationDestination(for: Plant.self) { plant in
                 PlantDetailView(plant: plant)
             }
@@ -218,6 +270,11 @@ struct GardenView: View {
                         } label: {
                             Label("Add Desire", systemImage: "heart")
                         }
+                        Button {
+                            showingAddPlan = true
+                        } label: {
+                            Label("Plan a Planting", systemImage: "calendar")
+                        }
                     } label: {
                         Label("Add", systemImage: "plus")
                     }
@@ -242,6 +299,9 @@ struct GardenView: View {
             .sheet(isPresented: $showingAddDesire) {
                 AddDesireView()
             }
+            .sheet(isPresented: $showingAddPlan) {
+                AddPlannedPlantingView()
+            }
             .sheet(isPresented: $showingSettings) {
                 GardenSettingsView()
             }
@@ -252,6 +312,6 @@ struct GardenView: View {
 struct GardenView_Previews: PreviewProvider {
     static var previews: some View {
         GardenView()
-            .modelContainer(for: [Garden.self, Plant.self, GrowingSpace.self, Seed.self, Occupancy.self, Desire.self], inMemory: true)
+            .modelContainer(for: [Garden.self, Plant.self, GrowingSpace.self, Seed.self, Occupancy.self, Desire.self, PlannedPlanting.self], inMemory: true)
     }
 }

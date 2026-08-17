@@ -14,6 +14,9 @@ final class GrowingSpace {
     @Relationship(deleteRule: .cascade, inverse: \Occupancy.growingSpace)
     var occupancies: [Occupancy] = []
 
+    @Relationship(deleteRule: .cascade, inverse: \PlannedPlanting.growingSpace)
+    var plannedPlantings: [PlannedPlanting] = []
+
     init(name: String, notes: String? = nil) {
         self.id = UUID()
         self.name = name

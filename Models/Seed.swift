@@ -13,6 +13,9 @@ final class Seed {
     @Relationship(deleteRule: .nullify, inverse: \Garden.seeds)
     var garden: Garden?
 
+    @Relationship(deleteRule: .nullify, inverse: \PlannedPlanting.seed)
+    var plannedPlantings: [PlannedPlanting] = []
+
     init(cropName: String, variety: String? = nil, state: SeedState = .own, notes: String? = nil) {
         self.id = UUID()
         self.cropName = cropName

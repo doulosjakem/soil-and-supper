@@ -15,6 +15,9 @@ final class Desire {
     @Relationship(deleteRule: .cascade, inverse: \Garden.desires)
     var garden: Garden?
 
+    @Relationship(deleteRule: .nullify, inverse: \PlannedPlanting.desire)
+    var plannedPlantings: [PlannedPlanting] = []
+
     init(
         cropName: String,
         variety: String? = nil,
