@@ -314,6 +314,7 @@ Replace the old "≥200 images = trainable" heuristic with the following framewo
 | Source diversity | Required | ≥2 independent sources | Prevents overfitting to one dataset's artifacts |
 | Image diversity | Required | ≥3 capture conditions | Lab + field + smartphone, or multiple lighting/angles |
 | Label quality | Required | ≥90% consensus or expert-verified | Noisy labels destroy training |
+| Commercial license compatibility | Required | All sources must permit commercial ML training | Soil & Supper is a commercial product; non-commercial datasets cannot be used |
 | Field-vs-lab ratio | Strongly preferred | ≥30% field imagery | Domain match to garden photos |
 | Near-duplicate rate | Strongly preferred | ≤5% | Prevents inflated validation scores |
 | Class confusion risk | Review | Expert review of edge cases | Some classes may need merging |
@@ -329,6 +330,8 @@ Replace the old "≥200 images = trainable" heuristic with the following framewo
 | **LICENSE_BLOCKED** | License is non-commercial or unclear |
 | **DATASET_SEARCH_REQUIRED** | Does not meet minimum image count |
 | **DEFERRED** | Low priority; can wait for later phases |
+
+**Commercial License Gate**: A class cannot be marked TRAINABLE_NOW unless every image source in its proposed training set has a verified commercial-compatible license (CC0, CC BY, MIT, Public Domain, or equivalent). Sources with CC BY-NC, CC BY-SA (if incompatible with proprietary app), or unclear commercial status must be excluded or replaced before training eligibility can be considered.
 
 ## 2.6 External Evaluation Strategy
 
