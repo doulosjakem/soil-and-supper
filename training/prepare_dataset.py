@@ -189,10 +189,9 @@ def discover_common_beans_classes(dataset_dir: Path) -> Dict[str, List[Path]]:
 def discover_grapevine_classes(dataset_dir: Path) -> Dict[str, List[Path]]:
     """Discover classes in Grapevine dataset nested structure."""
     classes = {}
-    # Look for resized directory
+    # Look for resized directory - may be nested
     resized_dir = dataset_dir / "resized"
     if not resized_dir.exists():
-        # Try to find the actual image directory
         for subdir in dataset_dir.iterdir():
             if subdir.is_dir():
                 resized_dir = subdir
@@ -200,6 +199,11 @@ def discover_grapevine_classes(dataset_dir: Path) -> Dict[str, List[Path]]:
     
     if not resized_dir.exists():
         return {}
+    
+    # Check if there's a nested resized directory
+    nested = resized_dir / "resized"
+    if nested.exists() and nested.is_dir():
+        resized_dir = nested
     
     for class_dir in resized_dir.iterdir():
         if class_dir.is_dir():
