@@ -10,15 +10,12 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.util.Calendar
+import com.soilandsupper.util.epochMillis
 
 class DefaultPlanningEngineTest {
 
     private fun makeDate(year: Int, month: Int, day: Int): Long {
-        val calendar = Calendar.getInstance()
-        calendar.set(year, month - 1, day, 12, 0, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        return calendar.timeInMillis
+        return epochMillis(year, month, day, 12, 0, 0)
     }
 
     @Test
@@ -139,11 +136,6 @@ class DefaultPlanningEngineTest {
     }
 
     private fun daysBetween(start: Long, end: Long): Int {
-        val calendar1 = Calendar.getInstance()
-        calendar1.timeInMillis = start
-        val calendar2 = Calendar.getInstance()
-        calendar2.timeInMillis = end
-        val diff = calendar2.timeInMillis - calendar1.timeInMillis
-        return (diff / (1000 * 60 * 60 * 24)).toInt()
+        return ((end - start) / (1000 * 60 * 60 * 24)).toInt()
     }
 }

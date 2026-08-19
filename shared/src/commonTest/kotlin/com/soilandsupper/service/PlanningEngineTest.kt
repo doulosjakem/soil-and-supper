@@ -12,31 +12,29 @@ import com.soilandsupper.shared.domain.model.SeedAvailability
 import com.soilandsupper.shared.domain.model.SeedState
 import com.soilandsupper.shared.domain.model.SuggestionRank
 import com.soilandsupper.shared.domain.model.Variety
+import com.soilandsupper.util.epochMillis
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.util.Calendar
 import java.util.Locale
-import java.util.TimeZone
 
 class PlanningEngineTest {
 
     companion object {
         init {
-            TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
             Locale.setDefault(Locale.US)
         }
     }
 
     private fun makeDate(year: Int, month: Int, day: Int): Long {
-        val c = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
-            clear()
-            set(year, month - 1, day, 12, 0, 0)
-        }
-        return c.timeInMillis
+        return epochMillis(year, month, day, 12, 0, 0)
     }
 
     private fun makeGarden(lastFrost: Long? = null, firstFrost: Long? = null): Garden =
@@ -72,15 +70,12 @@ class PlanningEngineTest {
     private fun makeDesire(cropName: String): Desire = Desire(cropName = cropName)
 
     private fun monthOf(millis: Long): Int {
-        val c = Calendar.getInstance()
-        c.timeInMillis = millis
-        return c.get(Calendar.MONTH) + 1
+        val instant = Instant.fromEpochMilliseconds(millis)
+        return instant.toLocalDateTime(TimeZone.UTC).monthNumber
     }
 
     private fun daysBetween(start: Long, end: Long): Int {
-        val c1 = Calendar.getInstance().apply { timeInMillis = start }
-        val c2 = Calendar.getInstance().apply { timeInMillis = end }
-        return ((c2.timeInMillis - c1.timeInMillis) / (1000L * 60 * 60 * 24)).toInt()
+        return ((end - start) / (1000L * 60 * 60 * 24)).toInt()
     }
 
     @Test

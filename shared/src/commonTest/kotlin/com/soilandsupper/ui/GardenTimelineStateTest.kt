@@ -16,15 +16,12 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.util.Calendar
+import com.soilandsupper.util.epochMillis
 
 class GardenTimelineStateTest {
 
     private fun makeDate(year: Int, month: Int, day: Int): Long {
-        val calendar = Calendar.getInstance()
-        calendar.set(year, month - 1, day, 12, 0, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        return calendar.timeInMillis
+        return epochMillis(year, month, day, 12, 0, 0)
     }
 
     @Test
