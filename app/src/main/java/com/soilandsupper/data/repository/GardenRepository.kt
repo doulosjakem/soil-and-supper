@@ -21,7 +21,7 @@ import com.soilandsupper.domain.model.PlantPhoto
 import com.soilandsupper.domain.model.PlannedPlanting
 import com.soilandsupper.domain.model.Seed
 import com.soilandsupper.repository.GardenRepository
-import com.soilandsupper.repository.PlantRepository
+import com.soilandsupper.repository.PlantRepository as SharedPlantRepository
 import com.soilandsupper.shared.domain.model.Desire as SharedDesire
 import com.soilandsupper.shared.domain.model.Garden as SharedGarden
 import com.soilandsupper.shared.domain.model.GrowingSpace as SharedGrowingSpace
@@ -46,7 +46,7 @@ class GardenRepository(
     private val seedDao: SeedDao,
     private val desireDao: DesireDao,
     private val plannedPlantingDao: PlannedPlantingDao
-) : GardenRepository, PlantRepository {
+) : GardenRepository, SharedPlantRepository {
     override fun getAllGardens(): Flow<List<SharedGarden>> =
         gardenDao.getAllGardens().map { list -> list.map { it.toShared() } }
 

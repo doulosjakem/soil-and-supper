@@ -1,13 +1,15 @@
 package com.soilandsupper.ui
 
-import com.soilandsupper.domain.model.Desire
-import com.soilandsupper.domain.model.Garden
-import com.soilandsupper.domain.model.GrowingSpace
-import com.soilandsupper.domain.model.Occupancy
-import com.soilandsupper.domain.model.OccupancyStatus
-import com.soilandsupper.domain.model.PlantingSuggestion
-import com.soilandsupper.domain.model.Seed
-import com.soilandsupper.domain.model.SeedState
+import com.soilandsupper.gardentimeline.CropTimelinePhase
+import com.soilandsupper.gardentimeline.buildTimelineSpaces
+import com.soilandsupper.shared.domain.model.Desire
+import com.soilandsupper.shared.domain.model.Garden
+import com.soilandsupper.shared.domain.model.GrowingSpace
+import com.soilandsupper.shared.domain.model.Occupancy
+import com.soilandsupper.shared.domain.model.OccupancyStatus
+import com.soilandsupper.shared.domain.model.PlantingSuggestion
+import com.soilandsupper.shared.domain.model.Seed
+import com.soilandsupper.shared.domain.model.SeedState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull

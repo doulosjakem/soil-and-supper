@@ -50,9 +50,10 @@ fun GrowingSpaceTimelineRow(
                         text = spaceModel.space.name,
                         style = MaterialTheme.typography.titleMedium
                     )
-                    if (!spaceModel.space.notes.isNullOrBlank()) {
+                    val notes = spaceModel.space.notes
+                    if (notes != null && notes.isNotBlank()) {
                         Text(
-                            text = spaceModel.space.notes,
+                            text = notes,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -78,13 +79,17 @@ fun GrowingSpaceTimelineRow(
 
             if (spaceModel.isAvailable) {
                 AvailableSpaceDetails(spaceModel = spaceModel)
-            } else if (spaceModel.occupancy != null) {
-                OccupancyDetails(occupancyModel = spaceModel.occupancy)
+            } else {
+                spaceModel.occupancy?.let { occupancy ->
+                    OccupancyDetails(occupancyModel = occupancy)
+                }
             }
 
-            if (spaceModel.futureSuggestions != null && spaceModel.futureSuggestions.suggestions.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                FutureSuggestions(model = spaceModel.futureSuggestions)
+            spaceModel.futureSuggestions?.let { future ->
+                if (future.suggestions.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FutureSuggestions(model = future)
+                }
             }
         }
     }
@@ -92,7 +97,8 @@ fun GrowingSpaceTimelineRow(
 
 @Composable
 private fun AvailableSpaceDetails(spaceModel: GrowingSpaceTimelineModel) {
-    if (spaceModel.currentSuggestions != null && spaceModel.currentSuggestions.suggestions.isNotEmpty()) {
+    val current = spaceModel.currentSuggestions
+    if (current != null && current.suggestions.isNotEmpty()) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 text = "What you can plant now",
@@ -100,7 +106,7 @@ private fun AvailableSpaceDetails(spaceModel: GrowingSpaceTimelineModel) {
                 color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(4.dp))
-            spaceModel.currentSuggestions.suggestions.take(3).forEach { suggestion ->
+            current.suggestions.take(3).forEach { suggestion ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -110,9 +116,10 @@ private fun AvailableSpaceDetails(spaceModel: GrowingSpaceTimelineModel) {
                             text = suggestion.cropName,
                             style = MaterialTheme.typography.bodyMedium
                         )
-                        if (!suggestion.varietyName.isNullOrBlank()) {
+                        val varietyName = suggestion.varietyName
+                        if (varietyName != null && varietyName.isNotBlank()) {
                             Text(
-                                text = suggestion.varietyName,
+                                text = varietyName,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -171,32 +178,40 @@ private fun OccupancyDetails(occupancyModel: OccupancyTimelineModel) {
             )
         }
 
-        if (occupancyModel.daysUntilHarvest != null && occupancyModel.daysUntilHarvest > 0) {
+        val daysUntilHarvest = occupancyModel.daysUntilHarvest
+        if (daysUntilHarvest != null && daysUntilHarvest > 0) {
             Text(
-                text = "Harvest expected in ${occupancyModel.daysUntilHarvest} days",
+                text = "Harvest expected in $daysUntilHarvest days",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        } else if (occupancyModel.occupancy.expectedHarvestDate != null) {
-            Text(
-                text = "Harvest ~${dateFormat.format(occupancyModel.occupancy.expectedHarvestDate)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        } else {
+            val expectedHarvest = occupancyModel.occupancy.expectedHarvestDate
+            if (expectedHarvest != null) {
+                Text(
+                    text = "Harvest ~${dateFormat.format(expectedHarvest)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
-        if (occupancyModel.daysUntilRelease != null && occupancyModel.daysUntilRelease > 0) {
+        val daysUntilRelease = occupancyModel.daysUntilRelease
+        if (daysUntilRelease != null && daysUntilRelease > 0) {
             Text(
-                text = "Space opens in ${occupancyModel.daysUntilRelease} days",
+                text = "Space opens in $daysUntilRelease days",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        } else if (occupancyModel.occupancy.expectedReleaseDate != null) {
-            Text(
-                text = "Expected opening ~${dateFormat.format(occupancyModel.occupancy.expectedReleaseDate)}",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        } else {
+            val expectedRelease = occupancyModel.occupancy.expectedReleaseDate
+            if (expectedRelease != null) {
+                Text(
+                    text = "Expected opening ~${dateFormat.format(expectedRelease)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -228,9 +243,10 @@ private fun FutureSuggestions(model: FutureSuggestionsTimelineModel) {
                         text = suggestion.cropName,
                         style = MaterialTheme.typography.bodyMedium
                     )
-                    if (!suggestion.varietyName.isNullOrBlank()) {
+                    val varietyName = suggestion.varietyName
+                    if (varietyName != null && varietyName.isNotBlank()) {
                         Text(
-                            text = suggestion.varietyName,
+                            text = varietyName,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

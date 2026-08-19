@@ -17,7 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.soilandsupper.data.repository.GardenRepository
-import com.soilandsupper.domain.model.Plant
+import com.soilandsupper.shared.domain.model.Plant
 import kotlinx.coroutines.launch
 
 @Composable

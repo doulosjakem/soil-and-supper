@@ -26,7 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.soilandsupper.data.repository.GardenRepository
-import com.soilandsupper.domain.model.Harvest
+import com.soilandsupper.shared.domain.model.Harvest
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date

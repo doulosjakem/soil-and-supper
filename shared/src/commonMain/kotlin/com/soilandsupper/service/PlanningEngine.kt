@@ -305,10 +305,17 @@ class DefaultPlanningEngine : PlanningEngine {
         val localDateTime = instant.toLocalDateTime(TimeZone.UTC)
         val year = localDateTime.year
 
-        val targetDate = LocalDate(year, targetMonth, 1)
-        val targetInstant = Instant.fromEpochMilliseconds(targetDate.toEpochDay() * 86400000L)
+        val calendar = java.util.Calendar.getInstance()
+        calendar.timeInMillis = date
+        calendar.set(java.util.Calendar.MONTH, targetMonth - 1)
+        calendar.set(java.util.Calendar.DAY_OF_MONTH, 1)
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        calendar.set(java.util.Calendar.MINUTE, 0)
+        calendar.set(java.util.Calendar.SECOND, 0)
+        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        val startOfMonth = calendar.timeInMillis
 
-        return maxOf(targetInstant.toEpochMilliseconds(), date)
+        return maxOf(startOfMonth, date)
     }
 
     private fun seedAvailability(forCropName: String, inSeeds: List<Seed>): SeedAvailability {

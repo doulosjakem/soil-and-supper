@@ -1,9 +1,9 @@
 package com.soilandsupper.repository
 
-import com.soilandsupper.domain.model.Harvest
-import com.soilandsupper.domain.model.JournalEntry
-import com.soilandsupper.domain.model.Plant
-import com.soilandsupper.domain.model.PlantPhoto
+import com.soilandsupper.shared.domain.model.Harvest
+import com.soilandsupper.shared.domain.model.JournalEntry
+import com.soilandsupper.shared.domain.model.Plant
+import com.soilandsupper.shared.domain.model.PlantPhoto
 import kotlinx.coroutines.flow.Flow
 
 interface PlantRepository {

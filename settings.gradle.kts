@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "SoilAndSupper"
 include(":app")
+include(":shared")

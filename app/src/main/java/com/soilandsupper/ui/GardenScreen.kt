@@ -19,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.soilandsupper.gardentimeline.buildTimelineSpaces
 import com.soilandsupper.repository.GardenRepository
 import com.soilandsupper.shared.domain.model.Desire
 import com.soilandsupper.shared.domain.model.GrowingSpace
@@ -29,7 +30,6 @@ fun GardenScreen(
     onPlantClick: (Long) -> Unit,
     repository: GardenRepository
 ) {
-    val plants by repository.getAllPlants().collectAsState(initial = emptyList())
     val growingSpaces by repository.getAllGrowingSpaces().collectAsState(initial = emptyList())
     val occupancies by repository.getAllOccupancies().collectAsState(initial = emptyList())
     val gardens by repository.getAllGardens().collectAsState(initial = emptyList())

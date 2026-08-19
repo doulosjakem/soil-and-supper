@@ -1,10 +1,10 @@
 package com.soilandsupper.service
 
-import com.soilandsupper.domain.model.Garden
-import com.soilandsupper.domain.model.GrowingSpace
-import com.soilandsupper.domain.model.Occupancy
-import com.soilandsupper.domain.model.OccupancyStatus
-import com.soilandsupper.domain.model.PlantingSuggestion
+import com.soilandsupper.shared.domain.model.Garden
+import com.soilandsupper.shared.domain.model.GrowingSpace
+import com.soilandsupper.shared.domain.model.Occupancy
+import com.soilandsupper.shared.domain.model.OccupancyStatus
+import com.soilandsupper.shared.domain.model.PlantingSuggestion
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
