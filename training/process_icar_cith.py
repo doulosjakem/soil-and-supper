@@ -324,6 +324,7 @@ def main():
             "status": "BLOCKED",
             "error": f"Directory does not exist: {dataset_dir}",
             "message": "Waiting for manual acquisition via Mendeley.",
+            "next_command": f"python training/dataset_intake.py {dataset_dir}",
             "total_images": 0,
             "valid_images": 0,
             "classes": {},
@@ -345,6 +346,7 @@ def main():
         else:
             print(f"ERROR: Directory does not exist: {dataset_dir}")
             print("Waiting for manual acquisition via Mendeley.")
+            print(f"Next: {error_report['next_command']}")
         sys.exit(1)
 
     report = generate_intake_report(dataset_dir)

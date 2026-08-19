@@ -1,9 +1,9 @@
-# Soil & Supper — ML Acquisition Queue (Updated Phase 30)
+# Soil & Supper — ML Acquisition Queue (Updated Phase 32)
 
 **Date**: 2026-08-19  
-**Phase**: P0 Acquisition Resolution — Phase 30 Intake Path Ready  
+**Phase**: P0 Acquisition Blocker + Re-entry Readiness  
 **Scope**: ML/DATA ONLY  
-**Status**: 1 ACQUIRED, 3 BLOCKED (2 placeholder archives on disk), intake infrastructure complete
+**Status**: P0 HUMAN-BLOCKED — Intake infrastructure complete, awaiting manual acquisition
 
 ---
 
@@ -42,7 +42,7 @@
 
 ---
 
-### BLOCKED — REQUIRES MANUAL AUTH
+### P0 — HUMAN-BLOCKED (NOT YET ACQUIRED)
 
 #### 1. Plant Pathology Challenge 2020
 
@@ -50,12 +50,14 @@
 |-------|-------|
 | **Dataset** | Plant Pathology Challenge 2020 |
 | **URL** | https://www.kaggle.com/c/plant-pathology-2020-fgvc7 |
-| **License** | CC BY 4.0 |
-| **Status** | BLOCKED — MANUAL AUTH REQUIRED |
-| **Blocker** | No Kaggle credentials available |
+| **License** | CC BY 4.0 (claimed; primary Cornell source does not explicitly state) |
+| **Status** | HUMAN-BLOCKED — KAGGLE AUTH REQUIRED |
+| **Blocker** | No Kaggle credentials available in this environment |
+| **Auth Required** | Yes — free Kaggle account |
+| **Disk State** | Directory does not exist: `training_data/raw/plant_pathology_2020/` |
 | **Est. Useful Images** | 2,600 |
-| **Auth Required** | Free Kaggle account |
-| **Action Required** | Human creates Kaggle account, downloads, places in `training_data/raw/plant_pathology_2020/` |
+| **Action Required** | Human creates Kaggle account, downloads train.csv + images, places in `training_data/raw/plant_pathology_2020/` |
+| **Next Command** | `python training/dataset_intake.py training_data/raw/plant_pathology_2020/` |
 
 #### 2. Multi-Crop Disease Dataset
 
@@ -63,15 +65,14 @@
 |-------|-------|
 | **Dataset** | Multi-Crop Disease Dataset |
 | **URL** | https://data.mendeley.com/datasets/6243z8r6t6 |
-| **License** | CC BY 4.0 |
-| **Status** | BLOCKED — MANUAL AUTH REQUIRED |
-| **Blocker** | Mendeley returns HTTP 403 Forbidden |
+| **License** | CC BY 4.0 (claimed) |
+| **Status** | HUMAN-BLOCKED — MENDELEY AUTH REQUIRED |
+| **Blocker** | Mendeley returns HTTP 403 Forbidden without session cookies |
+| **Auth Required** | Yes — free Mendeley account |
+| **Disk State** | `training_data/raw/multi_crop_disease/multi_crop_disease.zip` (102 KB, HTML error placeholder) — NOT valid data |
 | **Est. Useful Images** | 5,000 |
-| **Auth Required** | Mendeley account |
-| **Action Required** | Human creates Mendeley account, downloads, places in `training_data/raw/multi_crop_disease/` |
-| **Current Disk State** | Placeholder archive only (102 KB HTML error file) |
-
-**Alternative**: Zenodo "Web sourced dataset for plant disease detection" (14051480) — CC BY 4.0, 538.8 MB. Download stalled in this environment. Human can attempt direct download.
+| **Action Required** | Human creates Mendeley account, downloads dataset, removes placeholder ZIP, places real data in `training_data/raw/multi_crop_disease/` |
+| **Next Command** | `python training/dataset_intake.py training_data/raw/multi_crop_disease/` |
 
 #### 3. Apple Leaf Diseases ICAR-CITH
 
@@ -79,15 +80,14 @@
 |-------|-------|
 | **Dataset** | Apple Leaf Diseases Image Dataset of ICAR-CITH |
 | **URL** | https://data.mendeley.com/datasets/gm6mfz8fz6 |
-| **License** | CC BY 4.0 |
-| **Status** | BLOCKED — MANUAL AUTH REQUIRED |
-| **Blocker** | Mendeley returns HTTP 403 Forbidden |
+| **License** | CC BY 4.0 (claimed) |
+| **Status** | HUMAN-BLOCKED — MENDELEY AUTH REQUIRED |
+| **Blocker** | Mendeley returns HTTP 403 Forbidden without session cookies |
+| **Auth Required** | Yes — free Mendeley account |
+| **Disk State** | `training_data/raw/icar_apple/icar_apple.zip` (102 KB, HTML error placeholder) — NOT valid data |
 | **Est. Useful Images** | 800 |
-| **Auth Required** | Mendeley account |
-| **Action Required** | Human creates Mendeley account, downloads, places in `training_data/raw/icar_apple/` |
-| **Current Disk State** | Placeholder archive only (102 KB HTML error file) |
-
-**Alternative**: AppleLeaf9-Enhanced Edition (figshare 23606010) — CC BY 4.0, 26,755 images, 2.28 GB. Download stalled. Contains synthetic/augmented images.
+| **Action Required** | Human creates Mendeley account, downloads dataset, removes placeholder ZIP, places real data in `training_data/raw/icar_apple/` |
+| **Next Command** | `python training/dataset_intake.py training_data/raw/icar_apple/` |
 
 ---
 
@@ -101,7 +101,45 @@
 
 ---
 
-## 3. Phase 30 Intake Infrastructure
+## 3. Re-entry Conditions
+
+### When Does the ML Agent Resume?
+
+The ML agent resumes autonomous processing **only when** a P0 dataset's destination directory contains actual image/data files that the intake scanner recognizes as valid.
+
+### Valid Acquisition Indicators
+- `dataset_intake.py` reports `total_images > 0`
+- `dataset_intake.py` reports `valid_images > 0`
+- Archive is valid ZIP/TAR with image files inside
+- Directory contains readable image files (`.jpg`, `.jpeg`, `.png`, `.webp`)
+
+### Invalid Acquisition Indicators (DO NOT count as acquired)
+- HTML error pages or login screens
+- ZIP files containing only HTML/error responses
+- Empty directories
+- Directories containing only non-image files (PDFs, text files, etc.)
+- The existing 102 KB placeholder files in `multi_crop_disease/` and `icar_apple/`
+
+### Re-entry Behavior
+Once valid data is detected, the agent will automatically:
+
+1. Run `python training/dataset_intake.py <path>`
+2. Run `python training/process_<dataset_id>.py`
+3. Verify license from primary source
+4. Perform taxonomy audit
+5. Perform duplicate audit
+6. Perform quality audit
+7. Determine USE / EXCLUDE / REVIEW / UNKNOWN
+8. Generate manifests only for approved data
+9. Update commercial class audit
+10. Update P0 report
+
+### Partial Acquisition
+If one or two datasets are acquired but not all three, the agent will process whatever is available and continue waiting for the remaining datasets. P0 is not considered complete until all three are processed.
+
+---
+
+## 4. Phase 30/31 Intake Infrastructure
 
 ### Completed
 
@@ -132,7 +170,7 @@ For every manually acquired dataset:
 | `training_data/raw/icar_apple/` | `icar_apple.zip` (102 KB) | HTML error — not valid data |
 | `training_data/raw/plant_pathology_2020/` | *missing* | Awaiting manual acquisition |
 
-## 4. Rejected / Blocked Candidates
+## 5. Rejected / Blocked Candidates
 
 | Dataset | Status | Reason |
 |---------|--------|--------|
@@ -149,7 +187,7 @@ For every manually acquired dataset:
 
 ---
 
-## 4. Exact Next Human Decision Required
+## 6. Exact Next Human Decision Required
 
 **Acquire these 3 datasets manually:**
 
@@ -163,18 +201,27 @@ For every manually acquired dataset:
    - Creates free account at mendeley.com
    - Goes to dataset page
    - Clicks "Download All"
-   - Places in `training_data/raw/multi_crop_disease/`
+   - **Removes** the 102 KB HTML placeholder at `training_data/raw/multi_crop_disease/multi_crop_disease.zip`
+   - Places real data in `training_data/raw/multi_crop_disease/`
 
 3. **Apple Leaf Diseases ICAR-CITH** via Mendeley
    - Uses same Mendeley account
    - Goes to dataset page
    - Clicks "Download All"
-   - Places in `training_data/raw/icar_apple/`
+   - **Removes** the 102 KB HTML placeholder at `training_data/raw/icar_apple/icar_apple.zip`
+   - Places real data in `training_data/raw/icar_apple/`
 
 **Do not acquire P1 datasets until P0 is complete.**
+
+After placement, run:
+```bash
+python training/dataset_intake.py training_data/raw/plant_pathology_2020/
+python training/dataset_intake.py training_data/raw/multi_crop_disease/
+python training/dataset_intake.py training_data/raw/icar_apple/
+```
 
 ---
 
 *Acquisition queue updated: 2026-08-19*  
-*Phase: P0 Acquisition Resolution*  
+*Phase: P0 Acquisition Blocker + Re-entry Readiness*  
 *Workstream: ML / DATA ONLY*

@@ -444,8 +444,68 @@ After these are acquired, the P0 corpus will have ~110,000+ images with material
 
 ---
 
+## 12. Final P0 Status (Phase 32)
+
+| Component | Status |
+|-----------|--------|
+| P0 DATA ACQUISITION | **BLOCKED** |
+| P0 INTAKE INFRASTRUCTURE | **COMPLETE** |
+| P0 COMMERCIAL READINESS | **INCOMPLETE** — pending acquisition |
+| MODEL TRAINING | **BLOCKED** |
+| P1 ACQUISITION | **BLOCKED** |
+
+### P0 Data Acquisition: BLOCKED
+
+All three P0 datasets remain inaccessible without manual human acquisition:
+- Plant Pathology Challenge 2020: directory does not exist
+- Multi-Crop Disease Dataset: 102 KB HTML error placeholder
+- Apple Leaf Diseases ICAR-CITH: 102 KB HTML error placeholder
+
+### P0 Intake Infrastructure: COMPLETE
+
+The following scripts are ready and deterministic:
+- `training/dataset_intake.py` — generic intake scanner
+- `training/process_plant_pathology_2020.py` — Kaggle template
+- `training/process_multi_crop_disease.py` — class-directory template
+- `training/process_icar_cith.py` — class-directory template with synthetic flag
+
+### P0 Commercial Readiness: INCOMPLETE
+
+No new data has been incorporated. Commercial-ready counts remain unchanged:
+- USE: 109,127 images
+- EXCLUDE: 36,675 images
+- REVIEW: 817 images
+- New P0 images: 0
+
+### Model Training: BLOCKED
+
+Training is deferred until P0 is complete and the commercial readiness gate is passed.
+
+### P1 Acquisition: BLOCKED
+
+P1 does not proceed until P0 is genuinely complete.
+
+---
+
+## 13. Re-entry Conditions
+
+The ML agent resumes autonomous processing when a P0 dataset's destination contains actual image/data files recognized as valid by the intake scanner.
+
+**Valid**: `dataset_intake.py` reports `total_images > 0` and `valid_images > 0`
+
+**Invalid**: HTML error pages, login screens, empty directories, the existing 102 KB placeholders
+
+**Re-entry command after acquisition**:
+```bash
+python training/dataset_intake.py training_data/raw/<dataset_id>/
+python training/process_<dataset_id>.py
+```
+
+---
+
 *Report generated: 2026-08-19*  
-*Phase: P0 Acquisition Resolution & Dataset Gap Closure — Phase 30 Intake Path Ready*  
+*Phase: P0 Acquisition Blocker + Re-entry Readiness*  
 *Workstream: ML / DATA ONLY*  
 *No model training occurred during this phase.*  
-*No Android/Kotlin files were modified.*
+*No Android/Kotlin/Compose/Swift files were modified.*  
+*P0 remains BLOCKED pending manual human acquisition.*
