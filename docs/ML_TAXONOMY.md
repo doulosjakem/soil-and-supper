@@ -907,38 +907,38 @@ Each class is classified by current data availability and commercial-license sta
 
 ### Diseases
 
-| Class | Status | Est. Images | Primary Source | Notes |
-|-------|--------|-------------|----------------|-------|
-| Healthy | TRAINABLE_NOW | 15,000+ | PlantVillage + PlantDoc | Excellent coverage |
-| Powdery_mildew | TRAINABLE_NOW | 4,000+ | PlantVillage + PlantDoc | Strong multi-crop coverage |
-| Downy_mildew | NEEDS_MORE_DATA | 1,500+ | PlantVillage + PlantDoc | Limited |
-| Early_blight | TRAINABLE_NOW | 2,000+ | PlantVillage + PlantDoc | Good tomato/potato coverage |
-| Late_blight | TRAINABLE_NOW | 2,000+ | PlantVillage + PlantDoc | Good tomato/potato coverage |
-| Septoria_leaf_spot | NEEDS_MORE_DATA | 1,000+ | PlantVillage + PlantDoc | Tomato-specific |
-| Bacterial_spot | NEEDS_MORE_DATA | 1,000+ | PlantVillage + PlantDoc | Pepper/tomato |
-| Fusarium_wilt | NEEDS_MORE_DATA | 1,500+ | PlantVillage | Multiple crops |
-| Verticillium_wilt | NEEDS_MORE_DATA | 1,000+ | PlantVillage | Multiple crops |
-| Anthracnose | NEEDS_MORE_DATA | 1,000+ | PlantVillage + PlantDoc | Multiple crops |
-| Rust | NEEDS_MORE_DATA | 1,500+ | PlantVillage | Multiple crops |
-| Leaf_spot | NEEDS_MORE_DATA | 1,500+ | PlantDoc + web images | Generic; may overlap with other classes |
-| Blossom_end_rot | DATASET_SEARCH_REQUIRED | 300+ | PlantDoc (partial) + web images | Very limited |
-| Nutrient_deficiency | DATASET_SEARCH_REQUIRED | 200+ | Web images | Very limited; hard to distinguish from disease |
-| Sunscald | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
-| Frost_damage | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
-| Hail_damage | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
-| Overwatering_stress | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
-| Underwatering_stress | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
-| Insect_damage | DATASET_SEARCH_REQUIRED | 200+ | IP102 (blocked) + web images | Hard to distinguish from disease |
-| Chewing_damage | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
-| Leaf_miner_damage | DATASET_SEARCH_REQUIRED | 100+ | Web images | Very limited |
-| Apple_scab | NEEDS_MORE_DATA | 500+ | PlantVillage + PlantDoc | Limited |
-| Cedar_apple_rust | NEEDS_MORE_DATA | 500+ | PlantVillage + PlantDoc | Limited |
-| Grape_black_rot | NEEDS_MORE_DATA | 500+ | PlantVillage + PlantDoc | Limited |
-| Peach_bacterial_spot | NEEDS_MORE_DATA | 300+ | PlantDoc | Limited |
-| Soybean_rust | NEEDS_MORE_DATA | 300+ | PlantVillage | Limited |
-| Squash_powdery_mildew | NEEDS_MORE_DATA | 500+ | PlantVillage | Limited |
-| Tomato_mosaic_virus | NEEDS_MORE_DATA | 300+ | PlantDoc | Limited |
-| Tomato_yellow_leaf_curl | NEEDS_MORE_DATA | 300+ | PlantDoc | Limited |
+| Class | Status | Commercial Count | Sources | Primary Source(s) |
+|-------|--------|-----------------:|---------|-------------------|
+| Healthy | TRAINABLE_NOW | 36,342 | 4 | PlantVillage, Irish Potato, PlantDoc, Grapevine |
+| Powdery_mildew | TRAINABLE_NOW | 2,178 | 2 | PlantVillage, Grapevine |
+| Downy_mildew | NEEDS_MORE_DATA | 1,002 | 1 | Grapevine |
+| Early_blight | TRAINABLE_NOW | 8,421 | 3 | Irish Potato, PlantVillage, PlantDoc |
+| Late_blight | TRAINABLE_NOW | 16,141 | 3 | Irish Potato, PlantVillage, PlantDoc |
+| Septoria_leaf_spot | NEEDS_MORE_DATA | 1,920 | 2 | PlantVillage, PlantDoc |
+| Bacterial_spot | NEEDS_MORE_DATA | 3,305 | 2 | PlantVillage, PlantDoc |
+| Fusarium_wilt | DATASET_SEARCH_REQUIRED | 0 | 0 | None (commercial) |
+| Verticillium_wilt | DATASET_SEARCH_REQUIRED | 0 | 0 | None (commercial) |
+| Anthracnose | DATASET_SEARCH_REQUIRED | 0 | 0 | Common Beans only (EXCLUDE) |
+| Rust | NEEDS_MORE_DATA | 1,308 | 2 | PlantVillage, PlantDoc |
+| Leaf_spot | NEEDS_MORE_DATA | 13,897 | 2 | PlantVillage, PlantDoc |
+| Blossom_end_rot | DATASET_SEARCH_REQUIRED | 0 | 0 | None (commercial) |
+| Nutrient_deficiency | DATASET_SEARCH_REQUIRED | 0 | 0 | SegPPD-101 only (REVIEW) |
+| Sunscald | DATASET_SEARCH_REQUIRED | 0 | 0 | None (commercial) |
+| Frost_damage | DATASET_SEARCH_REQUIRED | 0 | 0 | None (commercial) |
+| Hail_damage | DATASET_SEARCH_REQUIRED | 0 | 0 | None (commercial) |
+| Overwatering_stress | DATASET_SEARCH_REQUIRED | 0 | 0 | None (commercial) |
+| Underwatering_stress | DATASET_SEARCH_REQUIRED | 0 | 0 | None (commercial) |
+| Insect_damage | DATASET_SEARCH_REQUIRED | 0 | 0 | None (commercial) |
+| Chewing_damage | DATASET_SEARCH_REQUIRED | 0 | 0 | None (commercial) |
+| Leaf_miner_damage | DATASET_SEARCH_REQUIRED | 0 | 0 | None (commercial) |
+| Apple_scab | NEEDS_MORE_DATA | 723 | 2 | PlantVillage, PlantDoc |
+| Cedar_apple_rust | NEEDS_MORE_DATA | 362 | 2 | PlantVillage, PlantDoc |
+| Grape_black_rot | NEEDS_MORE_DATA | 1,244 | 2 | PlantVillage, PlantDoc |
+| Peach_bacterial_spot | NEEDS_MORE_DATA | 2,297 | 1 | PlantVillage |
+| Soybean_rust | DATASET_SEARCH_REQUIRED | 0 | 0 | None (commercial) |
+| Squash_powdery_mildew | NEEDS_MORE_DATA | 1,965 | 2 | PlantVillage, PlantDoc |
+| Tomato_mosaic_virus | NEEDS_MORE_DATA | 427 | 2 | PlantVillage, PlantDoc |
+| Tomato_yellow_leaf_curl | NEEDS_MORE_DATA | 5,432 | 2 | PlantVillage, PlantDoc |
 
 ### Growth Stages
 
@@ -1053,3 +1053,52 @@ InsectClassifier v2 (after Bugwood approval + web curation):
 
 **Do not train a classifier on a class unless you have ≥200 verified, labeled, license-compatible images.**
 If a class cannot reach this threshold with currently available datasets, classify it as DEFERRED or DATASET_SEARCH_REQUIRED rather than manufacturing weak training data.
+
+## 14. External Generalization Test Set
+
+### Purpose
+
+The commercial training core (98,642 images) and Strategy A split provide a sound foundation for model development. However, because train/validation/test share the same source datasets, they cannot provide a trustworthy estimate of generalization to real-world garden photographs.
+
+Soil & Supper requires an **external generalization test set**: an independently sourced collection of plant images that is never included in training or ordinary validation.
+
+### Distinction from Development Splits
+
+| Data Set | Purpose | Source Overlap | Used for Tuning |
+|----------|---------|----------------|-----------------|
+| Training | Model weight updates | No (within split) | Yes |
+| Validation | Development monitoring | Yes (commercial core) | Yes |
+| Test (Strategy A) | Held-out commercial eval | Yes (commercial core) | No |
+| External Generalization Test | Real-world generalization | **No — must be independent** | **No — immutable** |
+
+### Current Status (Phase 27 — 2026-08-18)
+
+**NO_APPROVED_EXTERNAL_TEST_SET**
+
+License verification passed for two candidates:
+- **DiaMOS Plant Dataset** (Zenodo 5557313): CC BY 4.0 verified. 3,505 pear images (Italy). Only 1 mappable class (Healthy). Acquisition blocked by 13.1 GB file size.
+- **FieldPlant** (Roboflow/IEEE Access 2023): CC BY 4.0 verified. 5,170 field images (Cameroon). 10+ mappable classes. Acquisition blocked by authentication barriers.
+
+**Selected candidate**: FieldPlant (superior taxonomic coverage)
+**Acquisition status**: FAILED — no dataset successfully downloaded
+**Blockers**: Roboflow API authentication required; Kaggle JavaScript crash; Zenodo browser verification for DiaMOS
+
+See `training_data/reports/external_test_audit.json` for full audit.
+
+### Next Steps
+
+1. Resolve FieldPlant download authentication (obtain Roboflow API key or Kaggle access)
+2. Search for FieldPlant mirrors on alternative platforms (Hugging Face Datasets, academic repositories)
+3. If FieldPlant remains inaccessible, search for DiaMOS subset or alternative smaller dataset
+4. Evaluate PlantCLEF or other plant pathology challenge datasets with CC licensing
+5. Contact FieldPlant authors directly for dataset access
+
+### Protocol
+
+See `docs/EXTERNAL_TEST_SET_PROTOCOL.md` for:
+- Acceptance criteria
+- Taxonomy mapping rules
+- Immutability and versioning requirements
+- Overlap check procedure
+- Evaluation methodology
+- Open-set considerations

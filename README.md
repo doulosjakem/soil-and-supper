@@ -1,116 +1,70 @@
 # Soil & Supper
 
-An offline-first native iOS garden companion built with SwiftUI.
+An offline-first Android garden companion built with **Kotlin** and **Jetpack Compose**.
 
-## Milestone 6 Phase 1 — Plant Identification Architecture
+> **Canonical application stack:** Android · Kotlin · Jetpack Compose · Room (offline persistence) · Gradle.
+> The original iOS/SwiftUI prototype has been superseded and is retained only as a historical/migration reference (see [Migration status](#migration-status)). See `DESIGN.md` for the current product design.
 
-### Prerequisites
+## Product Direction
 
-- Xcode 15+ (for iOS 17+)
-- macOS with Xcode installed
+> "The gardener should not have to manage the complexity. The app should reason about the garden and surface simple decisions."
 
-### Setup
+The primary UI direction is the **Garden Timeline**:
 
-1. Open Xcode.
-2. Choose **Create New Project** → **iOS** → **App**.
-3. Configure:
-   - **Product Name:** `SoilAndSupper`
-   - **Interface:** `SwiftUI`
-   - **Language:** `Swift`
-   - **Bundle Identifier:** `com.soilandsupper.app`
-4. Save the project in this repository directory: `D:\soil-and-supper\soil-and-supper\SoilAndSupper.xcodeproj`
-5. **Important:** After creating the project, delete the auto-generated `ContentView.swift` that Xcode creates. The `ContentView.swift` in this repository is the one you want.
- 6. Drag the following files/folders from this repository into your Xcode project (choose **Copy items if needed**):
-    - `SoilAndSupperApp.swift`
-    - `ContentView.swift`
-    - `GardenView.swift`
-    - `HarvestView.swift`
-    - `IdentifyView.swift`
-    - `GardenToTableView.swift`
-    - `AddPlantView.swift`
-    - `PlantDetailView.swift`
-    - `JournalEntryView.swift`
-    - `AddEditHarvestView.swift`
-    - `PhotoStore.swift`
-    - `GrowingSpaceDetailView.swift`
-    - `AddEditGrowingSpaceView.swift`
-    - `SeedDetailView.swift`
-    - `AddEditSeedView.swift`
-    - `Services/` (entire folder)
-    - `Models/` (entire folder)
-    - `Info.plist`
-    - `Assets.xcassets/` (entire folder)
-7. In Xcode project settings, set **iOS Deployment Target** to `17.0` or higher.
-8. Build and run on the iOS Simulator.
+- Garden beds/growing spaces are the primary visual object.
+- A lightweight date scrubber lets the gardener move through time; the garden visualization changes with the selected date.
+- Plant lifecycle is communicated visually (not as arbitrary percentages).
+- Expected production and projected space availability are visible.
+- Future succession suggestions appear naturally (no separate Planning / Succession / Timeline modes).
 
-### Project Structure (Milestone 6 Phase 1)
+## Architecture
 
 ```
-SoilAndSupper/
-├── SoilAndSupperApp.swift   # App entry point with SwiftData + MockPlantIdentifier
-├── ContentView.swift        # Root TabView
-├── GardenView.swift         # Garden hub: growing spaces, seed shelf, plants
-├── PlantDetailView.swift    # Edit plant details + photos + journal + harvests
-├── AddPlantView.swift       # Add new plant form
-├── JournalEntryView.swift   # Add/edit journal entry sheet
-├── AddEditHarvestView.swift # Add/edit harvest entry sheet
-├── HarvestView.swift        # Harvest inventory view
-├── PhotoStore.swift         # Local photo file management
-├── IdentifyView.swift       # Plant identification UI with mock pipeline
-├── GardenToTableView.swift  # Placeholder
-├── GrowingSpaceDetailView.swift  # Growing space detail view
-├── AddEditGrowingSpaceView.swift # Add/edit growing space form
-├── SeedDetailView.swift     # Seed detail view
-├── AddEditSeedView.swift    # Add/edit seed form
-├── Info.plist
-├── Assets.xcassets/
-│   └── AppIcon.appiconset/
-├── Services/
-│   ├── PlantIdentifier.swift    # Protocol + result model
-│   └── MockPlantIdentifier.swift # Mock implementation for Phase 1
-└── Models/
-    ├── Garden.swift
-    ├── GrowingSpace.swift
-    ├── Plant.swift
-    ├── PlantPhoto.swift
-    ├── JournalEntry.swift
-    ├── Harvest.swift
-    └── Seed.swift
+Garden data (Room)
+    ↓
+GardenRepository / GardenService
+    ↓
+Read-only PlanningEngine
+    ↓
+ViewModel / derived UI state
+    ↓
+Jetpack Compose UI
 ```
 
-### What Changed in Milestone 6 Phase 1
+`PlanningEngine` is **read-only and deterministic**. It must never mutate garden state, never automatically mark spaces open, never auto-create succession plans or fulfill Desires, and never invoke AI or weather APIs. Planning suggestions are **derived** output, never persisted as authoritative garden facts.
 
-- Added `PlantIdentifier` protocol with `identify(image:) async throws -> PlantIdentification`.
-- Added `PlantIdentification` result model with `cropName`, `variety`, and `confidence`.
-- Added `MockPlantIdentifier` that returns simulated predictions after a short delay.
-- Replaced the `IdentifyView` placeholder with a full identification UI:
-  - Lists existing plant photos.
-  - Runs selected photo through the mock identifier.
-  - Displays predicted name, optional variety, and confidence.
-  - Allows confirming the result.
-  - Allows correcting the result and saving the corrected name.
-  - If confirmed/corrected, creates a new Plant or updates an existing linked Plant.
+## Project Layout
 
-### What Changed — Garden Planning Foundation (Phase 1)
+```
+app/                              # Canonical Android application
+  src/main/java/com/soilandsupper/
+    data/local/                   # Room database + DAOs
+    data/repository/              # GardenRepository, PlantRepository
+    domain/model/                 # Garden, GrowingSpace, Occupancy, Crop, Plant,
+                                  # Harvest, PlantPhoto, JournalEntry, Seed, Desire,
+                                  # PlannedPlanting, PlantingSuggestion, ...
+    service/                      # GardenService, CropKnowledge, PlanningEngine
+    ui/                           # Compose screens (Garden, Garden Timeline, Harvest,
+                                  # Identify, Garden-to-Table) + theme + navigation
+training/ training_data/ docs/    # Python ML/data pipeline + documentation (independent
+                                  # of the Android app)
+```
 
-- Added `GrowingSpace` model for beds, pots, rows, containers, and other growing locations.
-- Added `Seed` and `SeedState` models for the Seed Shelf (OWN / WANT).
-- Extended `Garden` with optional climate settings: `climateZone`, `averageLastFrostDate`, `averageFirstFrostDate`.
-- Extended `GardenView` to show three sections: Growing Spaces, Seed Shelf, and Plants.
-- Added `GrowingSpaceDetailView` and `AddEditGrowingSpaceView` for space CRUD.
-- Added `SeedDetailView` and `AddEditSeedView` for seed CRUD.
-- Updated `SoilAndSupperApp` ModelContainer to include `GrowingSpace` and `Seed`.
-- Existing Plant, PlantPhoto, JournalEntry, and Harvest functionality remains unchanged.
+## ML Boundary
 
-### Next Steps (Phase 2 — NOT YET IMPLEMENTED)
+The ML recognition/data-acquisition workstream is **Python-based and independent** of the Android application. It lives under `training/`, `training_data/`, `raw/`, `curated/`, `data/`, `metadata/`, and `splits/`, and is documented under `docs/` (`ML_*`, `PHASE*`). Do not modify ML dataset manifests, license records, or acquisition data as part of Android app work.
 
-- Determine plant dataset and species classes for MVP.
-- Evaluate Create ML training pipeline and base model choice.
-- Train, convert, and bundle a real Core ML model.
-- Replace `MockPlantIdentifier` with a Core ML + Vision implementation.
+## Building
 
-### Notes
+Prerequisites: Android SDK, JDK 17+, Gradle 8.7+ (the AGP version in `build.gradle.kts` requires Gradle 8.7 or newer).
 
-- No third-party ML dependencies are used in Phase 1.
-- No Core ML model is bundled yet.
-- The architecture keeps the model behind the `PlantIdentifier` protocol so the real implementation can be swapped in later without changing the UI.
+```bash
+gradle :app:assembleDebug
+gradle :app:testDebugUnitTest
+```
+
+Open the repository root in Android Studio and the `app` module is the runnable application.
+
+## Migration Status
+
+An earlier Swift/SwiftUI/iOS prototype lives at the repository root (`Package.swift`, `Models/`, `Services/`, `*.swift`, `Tests/`). It is **obsolete** and is retained only as a reference while the Kotlin port is completed and verified. The Kotlin equivalents are largely in place; the remaining work is to finish and verify the Kotlin planning layer (see the architecture inventory in the phase notes) and then retire the Swift implementation. `MVP-design-doc.md` is the historical iOS design document; `DESIGN.md` is the current, Android-canonical design.
