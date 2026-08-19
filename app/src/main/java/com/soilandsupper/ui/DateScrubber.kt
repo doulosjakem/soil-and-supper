@@ -1,28 +1,22 @@
 package com.soilandsupper.ui
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column  // <--- added
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DateScrubber(
     selectedDate: Long,
@@ -55,9 +49,6 @@ fun DateScrubber(
 
     val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
     val monthFormat = remember { SimpleDateFormat("MMM", Locale.getDefault()) }
-
-    var dragStartX by remember { mutableStateOf(0f) }
-    var dragStartDate by remember { mutableStateOf(selectedDate) }
 
     val totalDays = ((endOfYear - startOfYear) / (1000 * 60 * 60 * 24)).toFloat()
 
@@ -98,6 +89,15 @@ fun DateScrubber(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Button(onClick = { onDateSelected(System.currentTimeMillis()) }) {
+                Text("Today")
+            }
         }
     }
 }

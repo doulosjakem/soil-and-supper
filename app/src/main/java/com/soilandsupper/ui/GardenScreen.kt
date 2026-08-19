@@ -7,14 +7,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Scaffold
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -25,7 +25,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.soilandsupper.data.repository.GardenRepository
+import com.soilandsupper.domain.model.Desire
 import com.soilandsupper.domain.model.GrowingSpace
+import com.soilandsupper.domain.model.Seed
 
 @Composable
 fun GardenScreen(
@@ -37,20 +39,22 @@ fun GardenScreen(
     val growingSpaces by repository.getAllGrowingSpaces().collectAsState(initial = emptyList())
     val occupancies by repository.getAllOccupancies().collectAsState(initial = emptyList())
     val gardens by repository.getAllGardens().collectAsState(initial = emptyList())
+    val seeds by repository.getAllSeeds().collectAsState(initial = emptyList())
+    val desires by repository.getAllDesires().collectAsState(initial = emptyList())
 
     var selectedDate by remember { mutableStateOf(System.currentTimeMillis()) }
 
     val garden = gardens.firstOrNull()
 
-    val timelineSpaces = remember(growingSpaces, occupancies, selectedDate, garden) {
-        buildTimelineSpaces(growingSpaces, occupancies, selectedDate, garden)
+    val timelineSpaces = remember(growingSpaces, occupancies, selectedDate, garden, seeds, desires) {
+        buildTimelineSpaces(growingSpaces, occupancies, selectedDate, garden, seeds, desires)
     }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = onAddPlantClick) {
                 Icon(
-                                        imageVector = Icons.Default.Add,
+                    imageVector = Icons.Default.Add,
                     contentDescription = "Add plant"
                 )
             }
@@ -84,6 +88,12 @@ fun GardenScreen(
                         Text(
                             text = "No growing spaces yet",
                             style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            text = "Add a bed, pot, or row to start tracking your garden.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 8.dp)
                         )
                     }
                 }

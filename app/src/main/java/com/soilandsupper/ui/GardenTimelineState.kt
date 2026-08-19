@@ -1,14 +1,18 @@
 package com.soilandsupper.ui
 
+import com.soilandsupper.domain.model.Desire
+import com.soilandsupper.domain.model.Garden
 import com.soilandsupper.domain.model.GrowingSpace
 import com.soilandsupper.domain.model.Occupancy
 import com.soilandsupper.domain.model.OccupancyStatus
 import com.soilandsupper.domain.model.PlantingSuggestion
+import com.soilandsupper.domain.model.Seed
 import com.soilandsupper.service.DefaultPlanningEngine
 import java.util.Calendar
 
 enum class CropTimelinePhase {
     NOT_PLANTED,
+    ESTABLISHING,
     GROWING,
     PRODUCING,
     NEARING_RELEASE,
@@ -17,6 +21,7 @@ enum class CropTimelinePhase {
     val displayName: String
         get() = when (this) {
             NOT_PLANTED -> "Not planted"
+            ESTABLISHING -> "Establishing"
             GROWING -> "Growing"
             PRODUCING -> "Producing"
             NEARING_RELEASE -> "Space opening soon"
@@ -36,11 +41,16 @@ data class FutureSuggestionsTimelineModel(
     val openingDate: Long
 )
 
+data class CurrentSuggestionsTimelineModel(
+    val suggestions: List<PlantingSuggestion>
+)
+
 data class GrowingSpaceTimelineModel(
     val space: GrowingSpace,
     val occupancy: OccupancyTimelineModel?,
     val pastOccupancies: List<Occupancy>,
     val futureSuggestions: FutureSuggestionsTimelineModel?,
+    val currentSuggestions: CurrentSuggestionsTimelineModel?,
     val isAvailable: Boolean
 )
 
@@ -53,19 +63,25 @@ fun buildTimelineSpaces(
     growingSpaces: List<GrowingSpace>,
     occupancies: List<Occupancy>,
     selectedDate: Long,
-    garden: com.soilandsupper.domain.model.Garden?
+    garden: com.soilandsupper.domain.model.Garden?,
+    seeds: List<Seed> = emptyList(),
+    desires: List<Desire> = emptyList()
 ): List<GrowingSpaceTimelineModel> {
     val engine = DefaultPlanningEngine()
 
     return growingSpaces.map { space ->
         val spaceOccupancies = occupancies.filter { it.growingSpaceId == space.id }
         val activeOccupancy = spaceOccupancies.firstOrNull { occupancy ->
-            occupancy.status == OccupancyStatus.ACTIVE.name && occupancy.startDate <= selectedDate
+            occupancy.status == OccupancyStatus.ACTIVE.name &&
+                occupancy.startDate <= selectedDate &&
+                (occupancy.endDate == null || selectedDate < occupancy.endDate)
         }
 
         val otherOccupancies = spaceOccupancies.filter { it != activeOccupancy }
         val pastOccupancies = otherOccupancies.filter { occupancy ->
-            occupancy.status != OccupancyStatus.ACTIVE.name || occupancy.startDate > selectedDate
+            occupancy.status != OccupancyStatus.ACTIVE.name ||
+                occupancy.startDate > selectedDate ||
+                (occupancy.endDate != null && selectedDate >= occupancy.endDate)
         }
 
         val occupancyModel: OccupancyTimelineModel? = activeOccupancy?.let { occupancy ->
@@ -80,35 +96,60 @@ fun buildTimelineSpaces(
             )
         }
 
-        val futureModel: FutureSuggestionsTimelineModel? = activeOccupancy?.let { occupancy ->
-            val expectedRelease = occupancy.expectedReleaseDate
-            if (expectedRelease != null && selectedDate < expectedRelease) {
-                val effectiveGarden = garden ?: com.soilandsupper.domain.model.Garden(name = "Default")
-                val suggestions = engine.suggestionsForFutureOpening(
-                    ofGrowingSpace = space,
-                    openingDate = expectedRelease,
-                    inGarden = effectiveGarden,
-                    seeds = emptyList(),
-                    desires = emptyList()
-                )
-                FutureSuggestionsTimelineModel(
-                    suggestions = suggestions,
-                    openingDate = expectedRelease
-                )
-            } else null
-        }
+        // Future suggestions are gardener-driven: they only appear when the gardener has
+        // expressed intent (seeds and/or desires). With no seeds and no desires there is no
+        // actionable future recommendation for this space.
+        val futureModel: FutureSuggestionsTimelineModel? =
+            if (seeds.isEmpty() && desires.isEmpty()) null
+            else activeOccupancy?.let { occupancy ->
+                val expectedRelease = occupancy.expectedReleaseDate
+                if (expectedRelease != null && selectedDate < expectedRelease) {
+                    val effectiveGarden = garden ?: com.soilandsupper.domain.model.Garden(name = "Default")
+                    val suggestions = engine.suggestionsForFutureOpening(
+                        ofGrowingSpace = space,
+                        openingDate = expectedRelease,
+                        inGarden = effectiveGarden,
+                        seeds = seeds,
+                        desires = desires
+                    )
+                    FutureSuggestionsTimelineModel(
+                        suggestions = suggestions,
+                        openingDate = expectedRelease
+                    )
+                } else null
+            }
 
-        val isAvailable = activeOccupancy == null && spaceOccupancies.all { it.status != OccupancyStatus.ACTIVE.name || it.startDate > selectedDate }
+        val currentModel: CurrentSuggestionsTimelineModel? = if (activeOccupancy == null) {
+            val effectiveGarden = garden ?: com.soilandsupper.domain.model.Garden(name = "Default")
+            val suggestions = engine.suggestions(
+                forGrowingSpace = space,
+                activeOccupancies = emptyList(),
+                onDate = selectedDate,
+                inGarden = effectiveGarden,
+                seeds = seeds,
+                desires = desires
+            )
+            CurrentSuggestionsTimelineModel(suggestions = suggestions)
+        } else null
+
+        val isAvailable = activeOccupancy == null && spaceOccupancies.all { occ ->
+            occ.status != OccupancyStatus.ACTIVE.name ||
+                occ.startDate > selectedDate ||
+                (occ.endDate != null && selectedDate >= occ.endDate)
+        }
 
         GrowingSpaceTimelineModel(
             space = space,
             occupancy = occupancyModel,
             pastOccupancies = pastOccupancies,
             futureSuggestions = futureModel,
+            currentSuggestions = currentModel,
             isAvailable = isAvailable
         )
     }
 }
+
+private const val ESTABLISHING_WINDOW_DAYS = 21
 
 private fun timelinePhaseFor(occupancy: Occupancy, date: Long): CropTimelinePhase {
     if (occupancy.status != OccupancyStatus.ACTIVE.name || occupancy.startDate > date) {
@@ -122,6 +163,10 @@ private fun timelinePhaseFor(occupancy: Occupancy, date: Long): CropTimelinePhas
     }
     if (occupancy.expectedHarvestDate != null && date >= occupancy.expectedHarvestDate) {
         return CropTimelinePhase.PRODUCING
+    }
+    val daysSincePlanting = daysBetween(occupancy.startDate, date)
+    if (daysSincePlanting != null && daysSincePlanting < ESTABLISHING_WINDOW_DAYS) {
+        return CropTimelinePhase.ESTABLISHING
     }
     return CropTimelinePhase.GROWING
 }

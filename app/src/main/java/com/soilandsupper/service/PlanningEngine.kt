@@ -127,7 +127,6 @@ class DefaultPlanningEngine : PlanningEngine {
                 val rank = SuggestionRank.BEST_FIT
                 val estimatedHarvest = estimatedHarvest(date = onDate, variety = variety, crop = crop)
                 val reason = reasonText(
-                    forCropName = seed.cropName,
                     seedAvailability = SeedAvailability.OWNED,
                     desire = matchingDesire,
                     futureOpening = false,
@@ -190,7 +189,6 @@ class DefaultPlanningEngine : PlanningEngine {
             val rank = rankSuggestion(seedAvailability, matchingDesire)
             val estimatedHarvest = estimatedHarvest(date = candidateDate, variety = null, crop = crop)
             val reason = reasonText(
-                forCropName = crop.name,
                 seedAvailability = seedAvailability,
                 desire = matchingDesire,
                 futureOpening = futureOpening,
@@ -348,7 +346,6 @@ class DefaultPlanningEngine : PlanningEngine {
     }
 
     private fun reasonText(
-        forCropName: String,
         seedAvailability: SeedAvailability,
         desire: Desire?,
         futureOpening: Boolean,
