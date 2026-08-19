@@ -94,7 +94,36 @@ The proposed Phase 34B taxonomy expands both to cover the full range of common h
 
 ---
 
-## 2. Recommended Tier 1 Taxonomy — 50 Classes
+## 1.5 Exact Class Count Verification
+
+### Programmatic Count
+
+| Tier | Documented Count | Actually Listed | Discrepancy |
+|------|-----------------|-----------------|-------------|
+| Tier 1 | 51 | 51 | None |
+| Tier 2 | 12 | 12 | None |
+| Deferred | 7 | 7 | None |
+
+### Tier 1 Breakdown
+
+| Section | Listed Classes | Count |
+|---------|---------------|-------|
+| Vegetables | Tomato, Pepper, Eggplant, Potato, Cucumber, Summer Squash/Zucchini, Winter Squash/Pumpkin, Corn, Bean, Pea, Carrot, Beet, Radish, Turnip, Onion, Garlic, Leek, Broccoli, Cabbage, Cauliflower, Brussels Sprouts, Kale, Lettuce, Spinach, Swiss Chard, Sweet Potato, Watermelon, Cantaloupe | 28 |
+| Berries | Strawberry, Raspberry/Blackberry, Blueberry, Grape | 4 |
+| Fruit Trees | Apple, Pear, Peach, Cherry, Plum, Apricot, Nectarine | 7 |
+| Herbs | Basil, Cilantro, Parsley, Dill, Chives, Mint, Rosemary, Thyme | 8 |
+| Other | Asparagus, Rhubarb, Hops, Sunflower | 4 |
+| **Total** | | **51** |
+
+### Noted Discrepancies
+
+1. **Herbs section header** originally stated "7 classes" while listing 8 classes. Corrected to "8 classes."
+2. **Oregano and Sage** appear in the existing taxonomy mapping table as Tier 1 "Exact" mappings, and in the Deferred section as "Moved to Tier 1," but are **not listed in the Tier 1 taxonomy tables.** This is a documentation inconsistency. The mapping table intent is that they belong in Tier 1, but the authoritative class count of 51 does not include them.
+3. **Recommendation:** Resolve Oregano/Sage placement before finalizing the taxonomy. Either add them to the Tier 1 tables (bringing the count to 53) or move them to Tier 2 / Deferred.
+
+### Status
+
+This is a **recommended taxonomy — pending final human approval.** No classes have been committed to training. Data acquisition should proceed for the 51 listed classes while the Oregano/Sage discrepancy is resolved.
 
 ### Vegetables (28 classes)
 
@@ -150,7 +179,7 @@ The proposed Phase 34B taxonomy expands both to cover the full range of common h
 | 38 | Apricot | — | NEW | Common fruit tree |
 | 39 | Nectarine | — | NEW | Common fruit tree |
 
-### Herbs (7 classes)
+### Herbs (8 classes)
 
 | # | Proposed Class | Canonical Class | Mapping Type | Rationale |
 |---|---------------|----------------|-------------|-----------|
@@ -176,7 +205,7 @@ The proposed Phase 34B taxonomy expands both to cover the full range of common h
 
 ---
 
-## 3. Recommended Tier 2 Taxonomy — 12 Classes
+## 4. Recommended Tier 2 Taxonomy — 12 Classes
 
 Tier 2 contains useful but non-essential classes. These are either less common in home gardens, have very limited training data, or require additional data acquisition beyond the immediate gaps.
 
@@ -201,7 +230,7 @@ Tier 2 contains useful but non-essential classes. These are either less common i
 
 ---
 
-## 4. Deferred Classes
+## 5. Deferred Classes
 
 The following classes from the existing 50-class taxonomy are intentionally deferred to post-v1:
 
@@ -219,7 +248,7 @@ The following classes from the existing 50-class taxonomy are intentionally defe
 
 ---
 
-## 5. Intentionally Excluded Classes
+## 6. Intentionally Excluded Classes
 
 The following were considered but excluded from Tier 1 and Tier 2:
 
@@ -237,7 +266,7 @@ The following were considered but excluded from Tier 1 and Tier 2:
 
 ---
 
-## 6. Classes Intentionally Merged
+## 7. Classes Intentionally Merged
 
 | Merged Classes | Proposed Unified Class | Rationale |
 |---------------|----------------------|-----------|
@@ -248,7 +277,7 @@ The following were considered but excluded from Tier 1 and Tier 2:
 
 ---
 
-## 7. Existing Taxonomy Mapping
+## 8. Existing Taxonomy Mapping
 
 ### Mapping to Canonical ML Taxonomy (training/config.yaml)
 
@@ -336,7 +365,7 @@ The following were considered but excluded from Tier 1 and Tier 2:
 
 ---
 
-## 8. Commercial Data Coverage
+## 9. Commercial Data Coverage
 
 ### Verified Commercial Sources (Auto-Downloadable)
 
@@ -369,7 +398,7 @@ The following were considered but excluded from Tier 1 and Tier 2:
 
 ---
 
-## 9. Data Coverage Matrix
+## 10. Data Coverage Matrix
 
 | Class | Tier | Existing USE | Candidate Sources | License | Field/Garden Images | Estimated Gap | Status |
 |-------|------|-------------|-------------------|---------|---------------------|---------------|--------|
@@ -427,7 +456,7 @@ The following were considered but excluded from Tier 1 and Tier 2:
 
 ---
 
-## 10. Dataset Acquisition Plan
+## 11. Dataset Acquisition Plan
 
 ### Priority 1: Verified Manual Downloads (5 datasets)
 
@@ -475,7 +504,7 @@ For classes with no known commercial dataset:
 
 ---
 
-## 11. Licensing / Provenance Assessment
+## 12. Licensing / Provenance Assessment
 
 ### Approved for Commercial Use
 
@@ -514,7 +543,7 @@ For classes with no known commercial dataset:
 
 ---
 
-## 12. Recommended Acquisition Sequence
+## 13. Recommended Acquisition Sequence
 
 ### Phase 1: Immediate (Manual Download)
 1. Bangladesh Vegetables
@@ -548,25 +577,27 @@ For classes with no known commercial dataset:
 
 ---
 
-## 13. Recommended Next Phase
+## 14. Recommended Next Phase
 
-### Decision: "Ready for human data acquisition"
+### Decision: "Recommended taxonomy — pending final human approval"
 
-The recommended Tier 1 taxonomy is **51 classes** covering the most common home-garden vegetables, berries, fruit trees, herbs, and specialty crops. This is a practical, commercially defensible set that:
+The proposed Tier 1 taxonomy is **51 classes** covering the most common home-garden vegetables, berries, fruit trees, herbs, and specialty crops. This is a practical, commercially defensible set that:
 
 - Maps cleanly onto the existing 50-class ML taxonomy (with merges and renames)
 - Covers all 10 crops in the app's CropKnowledge catalog
-- Can be trained with commercially approved data for 21 classes from auto-downloadable sources
-- Requires manual acquisition of 5 datasets for 15 more classes
-- Has 15 classes with no known commercial dataset (REVIEW or MISSING)
+- Can be trained with commercially approved data for 11 classes from auto-downloadable sources
+- Requires manual acquisition of 5 datasets for 10 more classes
+- Has 19 classes with unverified CC0 claims (REVIEW)
+- Has 10 classes with no known commercial dataset (MISSING)
 
 ### Specific decisions requiring human approval (from Section 0):
 
-1. **Tier 1 size:** 50 classes (recommended) vs. 60+ classes
+1. **Tier 1 size:** 50-51 classes (recommended) vs. 60+ classes
 2. **Fruit tree scope:** Include all 7 (recommended) vs. defer some
-3. **Herb scope:** Include all 10 (recommended) vs. defer some
+3. **Herb scope:** Include all 8 (recommended) vs. defer some
 4. **Missing-data strategy:** Train partial model now (recommended) vs. wait for all data
 5. **images.cv / Kaggle pursuit:** Pursue with REVIEW status (recommended) vs. exclude
+6. **Oregano/Sage placement:** Add to Tier 1 tables (53 classes) or move to Tier 2/Deferred
 
 ### If the taxonomy is approved:
 
@@ -579,19 +610,17 @@ The next phase should:
 
 ---
 
-## 14. Decision Format
+## 15. Decision Format
 
-RECOMMENDED TIER 1: **51 classes**
+EXACT TIER 1 CLASS COUNT: **51 classes** (as listed in taxonomy tables)
 
-RECOMMENDED TIER 2: **12 classes**
-
-DEFERRED: **7 classes**
+EXACT TIER 2 CLASS COUNT: **12 classes**
 
 CURRENTLY DATA-SUFFICIENT (auto-downloadable): **11 classes** (Tomato, Pepper, Corn, Potato, Strawberry, Blueberry, Grape, Apple, Peach, Cherry, Summer Squash)
 
-REQUIRES DATA ACQUISITION (manual download, CC BY 4.0): **15 classes** (Eggplant, Cucumber, Bean, Carrot, Radish, Onion, Broccoli, Cabbage, Leek, Winter Squash/Pumpkin, etc.)
+REQUIRES DATA ACQUISITION (manual download, CC BY 4.0): **10 classes** (Eggplant, Cucumber, Bean, Carrot, Radish, Onion, Broccoli, Cabbage, Leek, Winter Squash/Pumpkin)
 
-REQUIRES LICENSE REVIEW (unverified CC0 claims): **15 classes** (Pea, Beet, Garlic, Lettuce, Spinach, Cauliflower, Turnip, Sweet Potato, Watermelon, Cantaloupe, Asparagus, Basil, Cilantro, Parsley, Dill, Chives, Mint, Rosemary, Thyme)
+REQUIRES LICENSE REVIEW (unverified CC0 claims): **19 classes** (Pea, Beet, Garlic, Lettuce, Spinach, Cauliflower, Turnip, Sweet Potato, Watermelon, Cantaloupe, Asparagus, Basil, Cilantro, Parsley, Dill, Chives, Mint, Rosemary, Thyme)
 
 REQUIRES ADDITIONAL DATASET SEARCH: **10 classes** (Pear, Plum, Apricot, Nectarine, Brussels Sprouts, Kale, Swiss Chard, Hops, Rhubarb, Sunflower)
 
@@ -599,12 +628,12 @@ ESTIMATED TOTAL COMMERCIAL TRAINING IMAGES AFTER PRIORITY 1 ACQUISITION: **~115,
 
 ESTIMATED TOTAL COMMERCIAL TRAINING IMAGES AFTER PRIORITY 1 + 2 ACQUISITION: **~200,000+** (adding ~96,000 from verified CC0 datasets)
 
-**Recommendation: Ready for human data acquisition**
+**Recommendation: Recommended taxonomy — pending final human approval**
 
-The taxonomy is well-defined, grounded in home-gardener use, and has a clear data path for 40+ of 51 Tier 1 classes. The remaining 10-15 gap classes are identified with specific acquisition strategies. Human approval is needed on 5 product decisions (Section 0), but none of them block beginning dataset acquisition.
+The taxonomy is well-defined, grounded in home-gardener use, and has a clear data path for 21 of 51 Tier 1 classes from verified commercial sources. The remaining 30 gap classes are identified with specific acquisition strategies. Human approval is needed on 6 product decisions (Section 0 + Oregano/Sage placement), but none of them block beginning Priority 1 dataset acquisition.
 
 ---
 
-## 15. Git / Repository Hygiene
+## 16. Git / Repository Hygiene
 
 This phase is research and documentation only. No Android, CMP, iOS, Garden UI, or disease P0 files were modified. No datasets were downloaded. No commercial manifests were altered. Only this document was created.
