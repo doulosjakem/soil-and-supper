@@ -35,7 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
-import com.soilandsupper.data.repository.PlantRepository
+import com.soilandsupper.data.repository.GardenRepository
 import com.soilandsupper.domain.model.Harvest
 import com.soilandsupper.domain.model.JournalEntry
 import com.soilandsupper.domain.model.Plant
@@ -49,7 +49,7 @@ import java.util.Locale
 fun PlantDetailScreen(
     plantId: Long,
     onBack: () -> Unit,
-    repository: PlantRepository
+    repository: GardenRepository
 ) {
     var plant by remember { mutableStateOf<Plant?>(null) }
     var photos by remember { mutableStateOf<List<PlantPhoto>>(emptyList()) }
@@ -295,12 +295,13 @@ fun PlantDetailScreen(
 
 @Composable
 fun PhotoThumbnail(uriString: String, onDelete: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var bitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
 
     LaunchedEffect(uriString) {
         launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
-                val contentResolver = androidx.compose.ui.platform.LocalContext.current.contentResolver
+                val contentResolver = context.contentResolver
                 val inputStream = contentResolver.openInputStream(Uri.parse(uriString))
                 bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
                 inputStream?.close()
@@ -368,29 +369,6 @@ fun JournalEntryItem(entry: JournalEntry, onDelete: () -> Unit) {
             Icon(
                 imageVector = Icons.Default.Delete,
                 contentDescription = "Delete entry"
-            )
-        }
-    }
-}
-
-@Composable
-fun HarvestItem(harvest: Harvest, onDelete: () -> Unit) {
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(text = dateFormat.format(Date(harvest.date)))
-            Text(text = "${harvest.cropName}: ${harvest.quantity} ${harvest.unit}")
-            if (harvest.notes.isNotBlank()) {
-                Text(text = harvest.notes)
-            }
-        }
-        IconButton(onClick = onDelete) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Delete harvest"
             )
         }
     }

@@ -12,18 +12,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.soilandsupper.data.repository.PlantRepository
+import com.soilandsupper.data.repository.GardenRepository
 import com.soilandsupper.domain.model.Plant
+import kotlinx.coroutines.launch
 
 @Composable
 fun AddPlantScreen(
     onPlantSaved: () -> Unit,
     onCancel: () -> Unit,
-    repository: PlantRepository
+    repository: GardenRepository
 ) {
+    val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf("") }
     var variety by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
@@ -67,7 +70,9 @@ fun AddPlantScreen(
                     location = location,
                     notes = notes
                 )
-                repository.insertPlant(plant)
+                                scope.launch {
+                    repository.insertPlant(plant)
+                }
                 onPlantSaved()
             },
             modifier = Modifier.fillMaxWidth(),

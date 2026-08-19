@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun IdentifyScreen(plantIdentifier: MockPlantIdentifier) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var selectedBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     var identification by remember { mutableStateOf<PlantIdentification?>(null) }
     var isLoading by remember { mutableStateOf(false) }
@@ -38,7 +39,7 @@ fun IdentifyScreen(plantIdentifier: MockPlantIdentifier) {
         onResult = { uri ->
             uri?.let {
                 selectedBitmap = BitmapFactory.decodeStream(
-                    androidx.compose.ui.platform.LocalContext.current.contentResolver.openInputStream(it)
+                    context.contentResolver.openInputStream(it)
                 )
             }
         }

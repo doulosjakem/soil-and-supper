@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -24,7 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.soilandsupper.data.repository.PlantRepository
+import com.soilandsupper.data.repository.GardenRepository
 import com.soilandsupper.domain.model.Harvest
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -32,7 +33,7 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun HarvestScreen(repository: PlantRepository) {
+fun HarvestScreen(repository: GardenRepository) {
     val harvests by repository.getAllHarvests().collectAsState(initial = emptyList())
     var showAddHarvest by remember { mutableStateOf(false) }
     var cropName by remember { mutableStateOf("") }
@@ -89,8 +90,9 @@ fun HarvestScreen(repository: PlantRepository) {
                         val qty = quantity.toDoubleOrNull()
                         if (cropName.isNotBlank() && qty != null) {
                             kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                                repository.insertHarvest(
+                                                            repository.insertHarvest(
                                     Harvest(
+                                        plantId = 0,
                                         cropName = cropName,
                                         quantity = qty,
                                         unit = unit,

@@ -7,9 +7,7 @@
 
     <application
         android:name=".SoilAndSupperApplication"
-        android:label="Soil & Supper"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="Soil &amp; Supper"
         android:supportsRtl="true"
         android:theme="@style/Theme.SoilAndSupper">
 

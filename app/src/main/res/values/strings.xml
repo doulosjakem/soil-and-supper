@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Soil & Supper</string>
+    <string name="app_name">Soil &amp; Supper</string>
     <string name="garden">Garden</string>
     <string name="harvest">Harvest</string>
     <string name="identify">Identify</string>
