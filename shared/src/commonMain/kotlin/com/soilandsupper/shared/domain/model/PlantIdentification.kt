@@ -1,4 +1,4 @@
-package com.soilandsupper.domain.model
+package com.soilandsupper.shared.domain.model
 
 data class PlantIdentification(
     val cropName: String,
@@ -6,3 +6,4 @@ data class PlantIdentification(
     val confidence: Float,
     val metadata: Map<String, String> = emptyMap()
 )
+

@@ -17,8 +17,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.soilandsupper.domain.model.GrowingSpace
-import com.soilandsupper.domain.model.Occupancy
+import com.soilandsupper.gardentimeline.CropTimelinePhase
+import com.soilandsupper.gardentimeline.CurrentSuggestionsTimelineModel
+import com.soilandsupper.gardentimeline.FutureSuggestionsTimelineModel
+import com.soilandsupper.gardentimeline.GrowingSpaceTimelineModel
+import com.soilandsupper.gardentimeline.OccupancyTimelineModel
+import com.soilandsupper.shared.domain.model.GrowingSpace
+import com.soilandsupper.shared.domain.model.Occupancy
+import com.soilandsupper.shared.domain.model.PlantingSuggestion
 import java.text.SimpleDateFormat
 import java.util.Locale
 

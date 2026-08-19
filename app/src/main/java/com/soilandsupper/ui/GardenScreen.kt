@@ -19,10 +19,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.soilandsupper.data.repository.GardenRepository
-import com.soilandsupper.domain.model.Desire
-import com.soilandsupper.domain.model.GrowingSpace
-import com.soilandsupper.domain.model.Seed
+import com.soilandsupper.repository.GardenRepository
+import com.soilandsupper.shared.domain.model.Desire
+import com.soilandsupper.shared.domain.model.GrowingSpace
+import com.soilandsupper.shared.domain.model.Seed
 
 @Composable
 fun GardenScreen(

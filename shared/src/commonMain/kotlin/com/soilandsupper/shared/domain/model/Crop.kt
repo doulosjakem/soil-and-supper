@@ -1,4 +1,4 @@
-package com.soilandsupper.domain.model
+package com.soilandsupper.shared.domain.model
 
 data class Crop(
     val id: String,
@@ -39,3 +39,4 @@ data class CropCharacteristics(
     val minimumGerminationTempCelsius: Int? = null,
     val preferredTempRangeCelsius: Pair<Int, Int>? = null
 )
+

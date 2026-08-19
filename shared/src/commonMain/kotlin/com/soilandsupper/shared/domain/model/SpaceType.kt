@@ -1,4 +1,4 @@
-package com.soilandsupper.domain.model
+package com.soilandsupper.shared.domain.model
 
 enum class SpaceType {
     BED,
@@ -14,3 +14,4 @@ enum class SpaceType {
             OTHER -> "Other"
         }
 }
+

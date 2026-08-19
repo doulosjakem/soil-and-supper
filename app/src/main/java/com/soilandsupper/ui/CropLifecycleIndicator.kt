@@ -1,5 +1,6 @@
 package com.soilandsupper.ui
 
+import com.soilandsupper.gardentimeline.CropTimelinePhase
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height

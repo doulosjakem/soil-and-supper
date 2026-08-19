@@ -1,4 +1,4 @@
-package com.soilandsupper.domain.model
+package com.soilandsupper.shared.domain.model
 
 enum class SeedAvailability {
     OWNED,
@@ -43,3 +43,4 @@ data class PlantingSuggestion(
     val plantingWindowName: String? = null,
     val hasActiveDesire: Boolean = false
 )
+

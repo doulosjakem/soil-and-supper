@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import com.soilandsupper.domain.model.MockPlantIdentifier
-import com.soilandsupper.domain.model.PlantIdentification
+import com.soilandsupper.shared.domain.model.PlantIdentification
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
