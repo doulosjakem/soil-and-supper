@@ -120,9 +120,6 @@ fun AppNavigation(
                     onPlantClick = { plantId ->
                         navController.navigate("plant_detail/$plantId")
                     },
-                    onAddPlantClick = {
-                        navController.navigate("add_plant")
-                    },
                     repository = repository
                 )
             }

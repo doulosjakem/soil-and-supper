@@ -51,6 +51,7 @@ fun DateScrubber(
     val monthFormat = remember { SimpleDateFormat("MMM", Locale.getDefault()) }
 
     val totalDays = ((endOfYear - startOfYear) / (1000 * 60 * 60 * 24)).toFloat()
+    val isToday = isSameDay(selectedDate, System.currentTimeMillis())
 
     Column(
         modifier = modifier
@@ -59,8 +60,8 @@ fun DateScrubber(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = dateFormat.format(selectedDate),
-            style = MaterialTheme.typography.bodyMedium,
+            text = if (isToday) "Today · ${dateFormat.format(selectedDate)}" else dateFormat.format(selectedDate),
+            style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary
         )
 
@@ -100,4 +101,11 @@ fun DateScrubber(
             }
         }
     }
+}
+
+private fun isSameDay(a: Long, b: Long): Boolean {
+    val ca = Calendar.getInstance().apply { timeInMillis = a }
+    val cb = Calendar.getInstance().apply { timeInMillis = b }
+    return ca.get(Calendar.YEAR) == cb.get(Calendar.YEAR) &&
+        ca.get(Calendar.DAY_OF_YEAR) == cb.get(Calendar.DAY_OF_YEAR)
 }

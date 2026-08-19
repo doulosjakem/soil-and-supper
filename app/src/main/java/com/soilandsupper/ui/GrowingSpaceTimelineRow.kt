@@ -1,6 +1,5 @@
 package com.soilandsupper.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -134,7 +133,7 @@ private fun AvailableSpaceDetails(spaceModel: GrowingSpaceTimelineModel) {
     } else {
         Text(
             text = "Nothing plantable right now",
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -147,7 +146,7 @@ private fun OccupancyDetails(occupancyModel: OccupancyTimelineModel) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             text = occupancyModel.occupancy.displayName,
-            style = MaterialTheme.typography.bodyLarge
+            style = MaterialTheme.typography.titleLarge
         )
 
         Text(
@@ -202,28 +201,17 @@ private fun FutureSuggestions(model: FutureSuggestionsTimelineModel) {
     val suggestions = model.suggestions
     val openingText = dateFormat.format(model.openingDate)
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
-            )
-            .padding(12.dp)
-    ) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            text = "After this",
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = "Space may open ~$openingText · nothing to plant yet",
+            text = "AFTER THIS",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-
-        Spacer(modifier = Modifier.height(4.dp))
-
+        Text(
+            text = "Space opens ~$openingText",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         suggestions.take(3).forEach { suggestion ->
             Row(
                 modifier = Modifier.fillMaxWidth(),

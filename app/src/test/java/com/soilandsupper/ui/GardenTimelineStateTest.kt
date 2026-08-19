@@ -614,4 +614,21 @@ class GardenTimelineStateTest {
         assertEquals(CropTimelinePhase.GROWING, today.occupancy?.phase)
         assertEquals(CropTimelinePhase.NEARING_RELEASE, future.occupancy?.phase)
     }
+
+    @Test
+    fun `lifecycle phase display names are human readable`() {
+        // The lifecycle is always accompanied by a textual label (never color-only),
+        // so each stage needs a clear, gardener-friendly phrase.
+        val expected = mapOf(
+            CropTimelinePhase.NOT_PLANTED to "Not planted",
+            CropTimelinePhase.ESTABLISHING to "Establishing",
+            CropTimelinePhase.GROWING to "Growing",
+            CropTimelinePhase.PRODUCING to "Producing",
+            CropTimelinePhase.NEARING_RELEASE to "Space opening soon",
+            CropTimelinePhase.COMPLETED to "Completed"
+        )
+        expected.forEach { (phase, label) ->
+            assertEquals(label, phase.displayName)
+        }
+    }
 }
