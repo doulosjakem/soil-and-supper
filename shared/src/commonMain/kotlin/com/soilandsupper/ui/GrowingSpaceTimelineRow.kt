@@ -25,8 +25,7 @@ import com.soilandsupper.gardentimeline.OccupancyTimelineModel
 import com.soilandsupper.shared.domain.model.GrowingSpace
 import com.soilandsupper.shared.domain.model.Occupancy
 import com.soilandsupper.shared.domain.model.PlantingSuggestion
-import java.text.SimpleDateFormat
-import java.util.Locale
+import com.soilandsupper.util.formatDate
 
 @Composable
 fun GrowingSpaceTimelineRow(
@@ -132,9 +131,9 @@ private fun AvailableSpaceDetails(spaceModel: GrowingSpaceTimelineModel) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         suggestion.estimatedHarvestDate?.let { harvest ->
-                            val dateFormat = remember { SimpleDateFormat("MMM d", Locale.getDefault()) }
+                            val dateFormat = remember { "MMM d" }
                             Text(
-                                text = "Harvest ~${dateFormat.format(harvest)}",
+                                text = "Harvest ~${formatDate(dateFormat, harvest)}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -154,7 +153,7 @@ private fun AvailableSpaceDetails(spaceModel: GrowingSpaceTimelineModel) {
 
 @Composable
 private fun OccupancyDetails(occupancyModel: OccupancyTimelineModel) {
-    val dateFormat = remember { SimpleDateFormat("MMM d", Locale.getDefault()) }
+    val dateFormat = remember { "MMM d" }
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
@@ -189,7 +188,7 @@ private fun OccupancyDetails(occupancyModel: OccupancyTimelineModel) {
             val expectedHarvest = occupancyModel.occupancy.expectedHarvestDate
             if (expectedHarvest != null) {
                 Text(
-                    text = "Harvest ~${dateFormat.format(expectedHarvest)}",
+                    text = "Harvest ~${formatDate(dateFormat, expectedHarvest)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -207,7 +206,7 @@ private fun OccupancyDetails(occupancyModel: OccupancyTimelineModel) {
             val expectedRelease = occupancyModel.occupancy.expectedReleaseDate
             if (expectedRelease != null) {
                 Text(
-                    text = "Expected opening ~${dateFormat.format(expectedRelease)}",
+                    text = "Expected opening ~${formatDate(dateFormat, expectedRelease)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -218,9 +217,9 @@ private fun OccupancyDetails(occupancyModel: OccupancyTimelineModel) {
 
 @Composable
 private fun FutureSuggestions(model: FutureSuggestionsTimelineModel) {
-    val dateFormat = remember { SimpleDateFormat("MMM d", Locale.getDefault()) }
+    val dateFormat = remember { "MMM d" }
     val suggestions = model.suggestions
-    val openingText = dateFormat.format(model.openingDate)
+    val openingText = formatDate(dateFormat, model.openingDate)
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(

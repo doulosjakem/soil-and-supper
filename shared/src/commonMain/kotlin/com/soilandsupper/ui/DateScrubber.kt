@@ -13,9 +13,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import com.soilandsupper.util.epochMillis
+import com.soilandsupper.util.formatDate
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun DateScrubber(
@@ -23,32 +25,21 @@ fun DateScrubber(
     onDateSelected: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val calendar = Calendar.getInstance()
-    calendar.timeInMillis = selectedDate
+    val currentYear = remember(selectedDate) {
+        val instant = kotlinx.datetime.Instant.fromEpochMilliseconds(selectedDate)
+        instant.toLocalDateTime(kotlinx.datetime.TimeZone.UTC).year
+    }
 
-    val currentYear = calendar.get(Calendar.YEAR)
-    val startOfYear = Calendar.getInstance().apply {
-        set(Calendar.YEAR, currentYear)
-        set(Calendar.MONTH, 0)
-        set(Calendar.DAY_OF_MONTH, 1)
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }.timeInMillis
+    val startOfYear = remember(currentYear) {
+        epochMillis(currentYear, 1, 1, 0, 0, 0)
+    }
 
-    val endOfYear = Calendar.getInstance().apply {
-        set(Calendar.YEAR, currentYear)
-        set(Calendar.MONTH, 11)
-        set(Calendar.DAY_OF_MONTH, 31)
-        set(Calendar.HOUR_OF_DAY, 23)
-        set(Calendar.MINUTE, 59)
-        set(Calendar.SECOND, 59)
-        set(Calendar.MILLISECOND, 999)
-    }.timeInMillis
+    val endOfYear = remember(currentYear) {
+        epochMillis(currentYear, 12, 31, 23, 59, 59)
+    }
 
-    val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
-    val monthFormat = remember { SimpleDateFormat("MMM", Locale.getDefault()) }
+    val dateFormat = remember { "MMM d, yyyy" }
+    val monthFormat = remember { "MMM" }
 
     val totalDays = ((endOfYear - startOfYear) / (1000 * 60 * 60 * 24)).toFloat()
     val isToday = isSameDay(selectedDate, System.currentTimeMillis())
@@ -60,7 +51,7 @@ fun DateScrubber(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = if (isToday) "Today · ${dateFormat.format(selectedDate)}" else dateFormat.format(selectedDate),
+            text = if (isToday) "Today · ${formatDate(dateFormat, selectedDate)}" else formatDate(dateFormat, selectedDate),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary
         )
@@ -81,12 +72,12 @@ fun DateScrubber(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = monthFormat.format(startOfYear),
+                text = formatDate(monthFormat, startOfYear),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = monthFormat.format(endOfYear),
+                text = formatDate(monthFormat, endOfYear),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -104,8 +95,9 @@ fun DateScrubber(
 }
 
 private fun isSameDay(a: Long, b: Long): Boolean {
-    val ca = Calendar.getInstance().apply { timeInMillis = a }
-    val cb = Calendar.getInstance().apply { timeInMillis = b }
-    return ca.get(Calendar.YEAR) == cb.get(Calendar.YEAR) &&
-        ca.get(Calendar.DAY_OF_YEAR) == cb.get(Calendar.DAY_OF_YEAR)
+    val instantA = kotlinx.datetime.Instant.fromEpochMilliseconds(a)
+    val instantB = kotlinx.datetime.Instant.fromEpochMilliseconds(b)
+    val dateA = instantA.toLocalDateTime(kotlinx.datetime.TimeZone.UTC).date
+    val dateB = instantB.toLocalDateTime(kotlinx.datetime.TimeZone.UTC).date
+    return dateA == dateB
 }
