@@ -1,6 +1,7 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.multiplatform")
+    id("org.jetbrains.compose") version "1.5.1"
 }
 
 kotlin {
@@ -22,6 +23,10 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material3)
+                implementation(compose.materialIconsExtended)
             }
         }
         val commonTest by getting {
@@ -45,6 +50,10 @@ kotlin {
             }
         }
     }
+}
+
+compose {
+    kotlinCompilerPlugin.set("1.5.8")
 }
 
 android {
