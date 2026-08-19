@@ -345,6 +345,8 @@ The exact implementation is up to the developer/agent, but preserve this separat
 
 The UI should not need to know which model is being used.
 
+**Cross-cutting AI/Vision architecture** (camera, voice, text, document import, online fallback, contributions, garden context) is documented in `docs/architecture/AI_VISION_ARCHITECTURE.md`. That document defines the contract the CMP migration and ML workstream must honor.
+
 ---
 
 # 9. Plant Identification AI
