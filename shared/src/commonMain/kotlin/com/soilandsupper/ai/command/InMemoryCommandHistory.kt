@@ -1,0 +1,200 @@
+package com.soilandsupper.ai.command
+
+import com.soilandsupper.repository.GardenRepository
+import com.soilandsupper.repository.PlantRepository
+import com.soilandsupper.service.GardenService
+import com.soilandsupper.shared.domain.model.GrowingSpace
+import com.soilandsupper.shared.domain.model.Harvest
+import com.soilandsupper.shared.domain.model.JournalEntry
+import com.soilandsupper.shared.domain.model.Occupancy
+import com.soilandsupper.shared.domain.model.OccupancyStatus
+import com.soilandsupper.shared.domain.model.Desire
+import com.soilandsupper.shared.domain.model.Plant
+import com.soilandsupper.shared.domain.model.Seed
+
+class InMemoryCommandHistory : CommandHistory {
+    val size: Int
+        get() = entries.size
+
+    private val entries = mutableListOf<HistoryEntry>()
+
+    override suspend fun record(command: GardenCommand) {
+        entries.add(HistoryEntry(command = command, timestamp = System.currentTimeMillis()))
+    }
+
+    override suspend fun undoLast(repository: GardenRepository): CommandResult? {
+        if (entries.isEmpty()) return null
+
+        val lastEntry = entries.removeAt(entries.size - 1)
+        val command = lastEntry.command
+
+        return when (command) {
+            is GardenCommand.AddGrowingSpace -> {
+                var allSpaces: List<GrowingSpace> = emptyList()
+                repository.getAllGrowingSpaces().collect { allSpaces = it }
+                val space = allSpaces.firstOrNull { it.name == command.name && it.notes == command.notes }
+                    ?: return CommandResult.NotFound(command, "GrowingSpace", -1)
+                repository.deleteGrowingSpace(space)
+                CommandResult.Success(command, "Undone: growing space removed")
+            }
+            is GardenCommand.UpdateGrowingSpace -> {
+                val current = repository.getGrowingSpaceById(command.spaceId)
+                    ?: return CommandResult.NotFound(command, "GrowingSpace", command.spaceId)
+                val restored = current.copy(
+                    name = command.name,
+                    notes = command.notes,
+                    spaceType = command.spaceType,
+                    width = command.width,
+                    length = command.length
+                )
+                repository.updateGrowingSpace(restored)
+                CommandResult.Success(command, "Undone: growing space restored")
+            }
+            is GardenCommand.RemoveGrowingSpace -> {
+                val restored = GrowingSpace(
+                    id = command.spaceId,
+                    name = "",
+                    notes = null,
+                    spaceType = null,
+                    width = null,
+                    length = null
+                )
+                repository.insertGrowingSpace(restored)
+                CommandResult.Success(command, "Undone: growing space restored")
+            }
+            is GardenCommand.PlantCrop -> {
+                val space = repository.getGrowingSpaceById(command.growingSpaceId)
+                    ?: return CommandResult.NotFound(command, "GrowingSpace", command.growingSpaceId)
+                var allOccupancies: List<Occupancy> = emptyList()
+                repository.getAllOccupancies().collect { allOccupancies = it }
+                val occupancy = allOccupancies.firstOrNull { it.growingSpaceId == command.growingSpaceId && it.cropName == command.cropName }
+                    ?: return CommandResult.NotFound(command, "Occupancy", -1)
+                val completed = GardenService.completeOccupancy(occupancy, command.startDate)
+                repository.updateOccupancy(completed)
+                CommandResult.Success(command, "Undone: planting ended")
+            }
+            is GardenCommand.HarvestCrop -> {
+                val plantRepo = repository as? PlantRepository
+                var allHarvests: List<Harvest> = emptyList()
+                plantRepo?.getAllHarvests()?.collect { allHarvests = it }
+                val harvest = allHarvests.firstOrNull { it.plantId == command.occupancyId }
+                    ?: return CommandResult.NotFound(command, "Harvest", -1)
+                if (plantRepo != null) {
+                    plantRepo.deleteHarvest(harvest)
+                }
+                CommandResult.Success(command, "Undone: harvest removed")
+            }
+            is GardenCommand.EndCrop -> {
+                val occupancy = repository.getOccupancyById(command.occupancyId)
+                    ?: return CommandResult.NotFound(command, "Occupancy", command.occupancyId)
+                val restored = occupancy.copy(
+                    endDate = null,
+                    status = OccupancyStatus.ACTIVE.name,
+                    updatedAt = System.currentTimeMillis()
+                )
+                repository.updateOccupancy(restored)
+                CommandResult.Success(command, "Undone: crop reactivated")
+            }
+            is GardenCommand.RecordObservation -> {
+                val plantRepo = repository as? PlantRepository
+                var entries: List<JournalEntry> = emptyList()
+                plantRepo?.getJournalEntriesForPlant(command.plantId ?: 0)?.collect { entries = it }
+                val entry = entries.firstOrNull()
+                    ?: return CommandResult.NotFound(command, "JournalEntry", -1)
+                if (plantRepo != null) {
+                    plantRepo.deleteJournalEntry(entry)
+                }
+                CommandResult.Success(command, "Undone: observation removed")
+            }
+            is GardenCommand.AddSeed -> {
+                var allSeeds: List<Seed> = emptyList()
+                repository.getAllSeeds().collect { allSeeds = it }
+                val seed = allSeeds.firstOrNull { it.cropName == command.cropName && it.variety == command.variety }
+                    ?: return CommandResult.NotFound(command, "Seed", -1)
+                repository.deleteSeed(seed)
+                CommandResult.Success(command, "Undone: seed removed")
+            }
+            is GardenCommand.AddDesire -> {
+                var allDesires: List<Desire> = emptyList()
+                repository.getAllDesires().collect { allDesires = it }
+                val desire = allDesires.firstOrNull { it.cropName == command.cropName && it.variety == command.variety }
+                    ?: return CommandResult.NotFound(command, "Desire", -1)
+                repository.deleteDesire(desire)
+                CommandResult.Success(command, "Undone: desire removed")
+            }
+            is GardenCommand.FulfillDesire -> {
+                val existing = repository.getDesireById(command.desireId)
+                    ?: return CommandResult.NotFound(command, "Desire", command.desireId)
+                val restored = existing.copy(
+                    isFulfilled = false,
+                    isCancelled = false,
+                    isExpired = false,
+                    updatedAt = System.currentTimeMillis()
+                )
+                repository.updateDesire(restored)
+                CommandResult.Success(command, "Undone: desire unfulfilled")
+            }
+            is GardenCommand.CancelDesire -> {
+                val existing = repository.getDesireById(command.desireId)
+                    ?: return CommandResult.NotFound(command, "Desire", command.desireId)
+                val restored = existing.copy(
+                    isFulfilled = false,
+                    isCancelled = false,
+                    isExpired = false,
+                    updatedAt = System.currentTimeMillis()
+                )
+                repository.updateDesire(restored)
+                CommandResult.Success(command, "Undone: desire uncancelled")
+            }
+            is GardenCommand.RecordPlant -> {
+                val plantRepo = repository as? PlantRepository
+                var allPlants: List<Plant> = emptyList()
+                plantRepo?.getAllPlants()?.collect { allPlants = it }
+                val plant = allPlants.firstOrNull { it.name == command.name && it.plantingDate == command.plantingDate }
+                    ?: return CommandResult.NotFound(command, "Plant", -1)
+                if (plantRepo != null) {
+                    plantRepo.deletePlant(plant)
+                }
+                CommandResult.Success(command, "Undone: plant removed")
+            }
+            is GardenCommand.UpdatePlant -> {
+                val existing = (repository as? PlantRepository)
+                    ?.getPlantById(command.plantId)
+                    ?: return CommandResult.NotFound(command, "Plant", command.plantId)
+                val restored = existing.copy(
+                    name = command.name,
+                    variety = command.variety,
+                    plantingDate = command.plantingDate,
+                    location = command.location,
+                    notes = command.notes,
+                    updatedAt = System.currentTimeMillis()
+                )
+                val plantRepo = repository as? PlantRepository
+                if (plantRepo != null) {
+                    plantRepo.updatePlant(restored)
+                }
+                CommandResult.Success(command, "Undone: plant restored")
+            }
+            is GardenCommand.RemovePlant -> {
+                val restored = Plant(
+                    id = command.plantId,
+                    name = "",
+                    variety = "",
+                    plantingDate = System.currentTimeMillis(),
+                    location = "",
+                    notes = ""
+                )
+                val plantRepo = repository as? PlantRepository
+                if (plantRepo != null) {
+                    plantRepo.insertPlant(restored)
+                }
+                CommandResult.Success(command, "Undone: plant restored")
+            }
+            else -> CommandResult.NotSupported(command)
+        }
+    }
+
+    override fun clear() {
+        entries.clear()
+    }
+}

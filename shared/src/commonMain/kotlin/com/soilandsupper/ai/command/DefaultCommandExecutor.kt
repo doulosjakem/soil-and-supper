@@ -1,0 +1,291 @@
+package com.soilandsupper.ai.command
+
+import com.soilandsupper.repository.GardenRepository
+import com.soilandsupper.repository.PlantRepository
+import com.soilandsupper.service.GardenService
+import com.soilandsupper.shared.domain.model.Desire
+import com.soilandsupper.shared.domain.model.GrowingSpace
+import com.soilandsupper.shared.domain.model.Harvest
+import com.soilandsupper.shared.domain.model.JournalEntry
+import com.soilandsupper.shared.domain.model.Occupancy
+import com.soilandsupper.shared.domain.model.OccupancyStatus
+import com.soilandsupper.shared.domain.model.Plant
+import com.soilandsupper.shared.domain.model.Seed
+
+class DefaultCommandExecutor(
+    private val validator: CommandValidator = DefaultCommandValidator(),
+    private val history: CommandHistory = InMemoryCommandHistory()
+) : CommandExecutor {
+
+    override suspend fun execute(
+        command: GardenCommand,
+        repository: GardenRepository
+    ): CommandResult {
+        var spaces: List<GrowingSpace> = emptyList()
+        repository.getAllGrowingSpaces().collect { spaces = it }
+
+        var occupancies: List<Occupancy> = emptyList()
+        repository.getAllOccupancies().collect { occupancies = it }
+
+        var seeds: List<Seed> = emptyList()
+        repository.getAllSeeds().collect { seeds = it }
+
+        var desires: List<Desire> = emptyList()
+        repository.getAllDesires().collect { desires = it }
+
+        val plantRepository = repository as? PlantRepository
+        var plants: List<Plant> = emptyList()
+        plantRepository?.getAllPlants()?.collect { plants = it }
+
+        val validation = validator.validate(
+            command = command,
+            currentSpaces = spaces,
+            currentOccupancies = occupancies,
+            currentSeeds = seeds,
+            currentDesires = desires,
+            currentPlants = plants
+        )
+
+        if (validation !is CommandResult.Success) {
+            return validation
+        }
+
+        val result = when (command) {
+            is GardenCommand.AddGrowingSpace -> executeAddGrowingSpace(command, repository)
+            is GardenCommand.UpdateGrowingSpace -> executeUpdateGrowingSpace(command, repository)
+            is GardenCommand.RemoveGrowingSpace -> executeRemoveGrowingSpace(command, repository)
+            is GardenCommand.PlantCrop -> executePlantCrop(command, repository)
+            is GardenCommand.HarvestCrop -> executeHarvestCrop(command, repository)
+            is GardenCommand.EndCrop -> executeEndCrop(command, repository)
+            is GardenCommand.RecordObservation -> executeRecordObservation(command, repository)
+            is GardenCommand.AddSeed -> executeAddSeed(command, repository)
+            is GardenCommand.AddDesire -> executeAddDesire(command, repository)
+            is GardenCommand.FulfillDesire -> executeFulfillDesire(command, repository)
+            is GardenCommand.CancelDesire -> executeCancelDesire(command, repository)
+            is GardenCommand.RecordPlant -> executeRecordPlant(command, repository)
+            is GardenCommand.UpdatePlant -> executeUpdatePlant(command, repository)
+            is GardenCommand.RemovePlant -> executeRemovePlant(command, repository)
+        }
+
+        if (result is CommandResult.Success) {
+            history.record(command)
+        }
+
+        return result
+    }
+
+    private suspend fun executeAddGrowingSpace(
+        command: GardenCommand.AddGrowingSpace,
+        repository: GardenRepository
+    ): CommandResult {
+        val space = GardenService.addGrowingSpace(
+            name = command.name,
+            notes = command.notes,
+            spaceType = command.spaceType,
+            width = command.width,
+            length = command.length
+        )
+        repository.insertGrowingSpace(space)
+        return CommandResult.Success(command, "Growing space added: ${space.name}")
+    }
+
+    private suspend fun executeUpdateGrowingSpace(
+        command: GardenCommand.UpdateGrowingSpace,
+        repository: GardenRepository
+    ): CommandResult {
+        val existing = repository.getGrowingSpaceById(command.spaceId)
+            ?: return CommandResult.NotFound(command, "GrowingSpace", command.spaceId)
+        val updated = GardenService.updateGrowingSpace(
+            space = existing,
+            name = command.name,
+            notes = command.notes,
+            spaceType = command.spaceType,
+            width = command.width,
+            length = command.length
+        )
+        repository.updateGrowingSpace(updated)
+        return CommandResult.Success(command, "Growing space updated: ${updated.name}")
+    }
+
+    private suspend fun executeRemoveGrowingSpace(
+        command: GardenCommand.RemoveGrowingSpace,
+        repository: GardenRepository
+    ): CommandResult {
+        val space = repository.getGrowingSpaceById(command.spaceId)
+            ?: return CommandResult.NotFound(command, "GrowingSpace", command.spaceId)
+        repository.deleteGrowingSpace(space)
+        return CommandResult.Success(command, "Growing space removed")
+    }
+
+    private suspend fun executePlantCrop(
+        command: GardenCommand.PlantCrop,
+        repository: GardenRepository
+    ): CommandResult {
+        val space = repository.getGrowingSpaceById(command.growingSpaceId)
+            ?: return CommandResult.NotFound(command, "GrowingSpace", command.growingSpaceId)
+        val occupancy = GardenService.recordPlanting(
+            cropName = command.cropName,
+            variety = command.variety,
+            startDate = command.startDate,
+            growingSpace = space,
+            expectedHarvestDate = command.expectedHarvestDate,
+            expectedReleaseDate = command.expectedReleaseDate,
+            notes = command.notes
+        )
+        repository.insertOccupancy(occupancy)
+        return CommandResult.Success(command, "Planted ${command.cropName} in ${space.name}")
+    }
+
+    private suspend fun executeHarvestCrop(
+        command: GardenCommand.HarvestCrop,
+        repository: GardenRepository
+    ): CommandResult {
+        val occupancy = repository.getOccupancyById(command.occupancyId)
+            ?: return CommandResult.NotFound(command, "Occupancy", command.occupancyId)
+
+        val harvest = Harvest(
+            plantId = occupancy.plantId ?: 0,
+            cropName = occupancy.cropName,
+            quantity = command.quantity,
+            unit = command.unit,
+            date = command.date,
+            notes = command.notes
+        )
+
+        val plantRepo = repository as? PlantRepository
+        if (plantRepo != null) {
+            plantRepo.insertHarvest(harvest)
+        }
+        return CommandResult.Success(command, "Harvested ${command.quantity} ${command.unit} of ${occupancy.cropName}")
+    }
+
+    private suspend fun executeEndCrop(
+        command: GardenCommand.EndCrop,
+        repository: GardenRepository
+    ): CommandResult {
+        val existing = repository.getOccupancyById(command.occupancyId)
+            ?: return CommandResult.NotFound(command, "Occupancy", command.occupancyId)
+        val completed = GardenService.completeOccupancy(existing, command.endDate)
+        repository.updateOccupancy(completed)
+        return CommandResult.Success(command, "Ended ${existing.cropName}")
+    }
+
+    private suspend fun executeRecordObservation(
+        command: GardenCommand.RecordObservation,
+        repository: GardenRepository
+    ): CommandResult {
+        val entry = JournalEntry(
+            plantId = command.plantId ?: 0,
+            date = command.date,
+            text = command.text
+        )
+        val plantRepo = repository as? PlantRepository
+        if (plantRepo != null) {
+            plantRepo.insertJournalEntry(entry)
+        }
+        return CommandResult.Success(command, "Observation recorded")
+    }
+
+    private suspend fun executeAddSeed(
+        command: GardenCommand.AddSeed,
+        repository: GardenRepository
+    ): CommandResult {
+        val seed = GardenService.addSeed(
+            cropName = command.cropName,
+            variety = command.variety,
+            state = com.soilandsupper.shared.domain.model.SeedState.valueOf(command.state),
+            notes = command.notes
+        )
+        repository.insertSeed(seed)
+        return CommandResult.Success(command, "Seed added: ${seed.displayName}")
+    }
+
+    private suspend fun executeAddDesire(
+        command: GardenCommand.AddDesire,
+        repository: GardenRepository
+    ): CommandResult {
+        val desire = GardenService.createDesire(
+            cropName = command.cropName,
+            variety = command.variety,
+            notes = command.notes
+        )
+        repository.insertDesire(desire)
+        return CommandResult.Success(command, "Desire added: ${desire.displayName}")
+    }
+
+    private suspend fun executeFulfillDesire(
+        command: GardenCommand.FulfillDesire,
+        repository: GardenRepository
+    ): CommandResult {
+        val existing = repository.getDesireById(command.desireId)
+            ?: return CommandResult.NotFound(command, "Desire", command.desireId)
+        val updated = GardenService.fulfillDesire(existing)
+        repository.updateDesire(updated)
+        return CommandResult.Success(command, "Desire fulfilled: ${updated.displayName}")
+    }
+
+    private suspend fun executeCancelDesire(
+        command: GardenCommand.CancelDesire,
+        repository: GardenRepository
+    ): CommandResult {
+        val existing = repository.getDesireById(command.desireId)
+            ?: return CommandResult.NotFound(command, "Desire", command.desireId)
+        val updated = GardenService.cancelDesire(existing)
+        repository.updateDesire(updated)
+        return CommandResult.Success(command, "Desire cancelled: ${updated.displayName}")
+    }
+
+    private suspend fun executeRecordPlant(
+        command: GardenCommand.RecordPlant,
+        repository: GardenRepository
+    ): CommandResult {
+        val plant = Plant(
+            name = command.name,
+            variety = command.variety,
+            plantingDate = command.plantingDate,
+            location = command.location,
+            notes = command.notes
+        )
+        val plantRepo = repository as? PlantRepository
+        if (plantRepo != null) {
+            plantRepo.insertPlant(plant)
+        }
+        return CommandResult.Success(command, "Plant recorded: ${plant.name}")
+    }
+
+    private suspend fun executeUpdatePlant(
+        command: GardenCommand.UpdatePlant,
+        repository: GardenRepository
+    ): CommandResult {
+        val existing = (repository as? PlantRepository)
+            ?.getPlantById(command.plantId)
+            ?: return CommandResult.NotFound(command, "Plant", command.plantId)
+        val updated = existing.copy(
+            name = command.name,
+            variety = command.variety,
+            plantingDate = command.plantingDate,
+            location = command.location,
+            notes = command.notes,
+            updatedAt = System.currentTimeMillis()
+        )
+        val plantRepo = repository as? PlantRepository
+        if (plantRepo != null) {
+            plantRepo.updatePlant(updated)
+        }
+        return CommandResult.Success(command, "Plant updated: ${updated.name}")
+    }
+
+    private suspend fun executeRemovePlant(
+        command: GardenCommand.RemovePlant,
+        repository: GardenRepository
+    ): CommandResult {
+        val plantRepo = repository as? PlantRepository
+        if (plantRepo != null) {
+            val existing = plantRepo.getPlantById(command.plantId)
+            if (existing != null) {
+                plantRepo.deletePlant(existing)
+            }
+        }
+        return CommandResult.Success(command, "Plant removed")
+    }
+}
