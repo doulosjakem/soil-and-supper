@@ -36,7 +36,7 @@ import tarfile
 import hashlib
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import defaultdict
 
 from PIL import Image
@@ -47,6 +47,7 @@ TRAINING_DATA_DIR = PROJECT_ROOT / "training_data"
 RAW_DIR = TRAINING_DATA_DIR / "raw"
 MANIFESTS_DIR = TRAINING_DATA_DIR / "manifests"
 REPORTS_DIR = TRAINING_DATA_DIR / "reports"
+INPUTS_DIR = PROJECT_ROOT / "inputs"
 
 for d in [MANIFESTS_DIR, REPORTS_DIR]:
     d.mkdir(parents=True, exist_ok=True)
@@ -56,6 +57,23 @@ SUPPORTED_ARCHIVE_EXTENSIONS = {".zip", ".tar.gz", ".tgz", ".tar"}
 
 EXACT_DEDUP_MANIFEST = MANIFESTS_DIR / "exact_dedup_manifest.jsonl"
 FIGSHARE_MANIFEST = MANIFESTS_DIR / "figshare_disease_manifest.jsonl"
+GAP_REPORT = MANIFESTS_DIR / "phase35_gap_report.json"
+CLASS_COVERAGE = MANIFESTS_DIR / "phase35_class_coverage.json"
+ACQUISITION_REPORT = REPORTS_DIR / "phase35_acquisition_report.md"
+PHASE35_LEDGER = MANIFESTS_DIR / "phase35_dataset_ledger.jsonl"
+PHASE35_IMAGE_MANIFEST = MANIFESTS_DIR / "phase35_image_manifest.jsonl"
+
+TIER1_CLASSES = [
+    "Tomato", "Pepper", "Eggplant", "Potato", "Cucumber",
+    "Summer Squash / Zucchini", "Winter Squash / Pumpkin", "Corn", "Bean", "Pea",
+    "Carrot", "Beet", "Radish", "Turnip", "Onion", "Garlic", "Leek",
+    "Broccoli", "Cabbage", "Cauliflower", "Brussels Sprouts", "Kale", "Lettuce", "Spinach", "Swiss Chard", "Sweet Potato",
+    "Watermelon", "Cantaloupe",
+    "Strawberry", "Raspberry / Blackberry", "Blueberry", "Grape",
+    "Apple", "Pear", "Peach", "Cherry", "Plum", "Apricot", "Nectarine",
+    "Basil", "Cilantro", "Parsley", "Dill", "Chives", "Mint", "Rosemary", "Thyme",
+    "Asparagus", "Rhubarb", "Hops", "Sunflower",
+]
 
 PRIORITY_1_DATASETS = [
     {
@@ -147,7 +165,42 @@ PRIORITY_1_DATASETS = [
             "Leek": "Leek",
         },
     },
+    {
+        "dataset_id": "images_cv_vegetables",
+        "name": "Vegetables Image Classification (images.cv)",
+        "source": "images.cv",
+        "url": "https://images.cv/dataset/vegetables-image-classification-dataset",
+        "license": "CC0 (claimed)",
+        "commercial_ok": None,
+        "attribution_required": False,
+        "attribution_text": "",
+        "class_mappings": {},
+    },
+    {
+        "dataset_id": "kaggle_fruit_veg",
+        "name": "Fruit and Vegetables Classification (Kaggle)",
+        "source": "Kaggle",
+        "url": "https://www.kaggle.com/datasets/youssefsalahzakria/fruit-and-vegetables-classification",
+        "license": "CC0 (claimed)",
+        "commercial_ok": None,
+        "attribution_required": False,
+        "attribution_text": "",
+        "class_mappings": {},
+    },
+    {
+        "dataset_id": "images_cv_herbs",
+        "name": "Herbs Image Classification (images.cv)",
+        "source": "images.cv",
+        "url": "https://images.cv/dataset/herbs-image-classification-dataset",
+        "license": "CC0 (claimed)",
+        "commercial_ok": None,
+        "attribution_required": False,
+        "attribution_text": "",
+        "class_mappings": {},
+    },
 ]
+
+PLANNED_DATASETS = PRIORITY_1_DATASETS
 
 
 def compute_sha256(file_path: Path, chunk_size: int = 65536) -> str:
@@ -248,6 +301,103 @@ def load_existing_hashes() -> Tuple[Set[str], Set[str]]:
     return core_hashes, figshare_hashes
 
 
+def load_ledger() -> List[Dict]:
+    entries: List[Dict] = []
+    if PHASE35_LEDGER.exists():
+        with open(PHASE35_LEDGER, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entries.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+    return entries
+
+
+def save_ledger_entry(entry: Dict) -> None:
+    entry.setdefault("processed_at", datetime.now(timezone.utc).isoformat())
+    with open(PHASE35_LEDGER, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+
+def find_ledger_entry(ledger: List[Dict], fingerprint: str) -> Optional[Dict]:
+    for entry in ledger:
+        if entry.get("fingerprint") == fingerprint:
+            return entry
+    return None
+
+
+def append_image_manifest(records: List[Dict], license: Optional[str], attribution_required: bool, attribution_text: str) -> None:
+    with open(PHASE35_IMAGE_MANIFEST, "a", encoding="utf-8") as f:
+        for record in records:
+            record["license"] = license
+            record["attribution_required"] = attribution_required
+            record["attribution_text"] = attribution_text
+            record["manifest_appended_at"] = datetime.now(timezone.utc).isoformat()
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def identify_dataset(path: Path) -> Optional[Dict]:
+    name = path.name.lower()
+    for ds in PRIORITY_1_DATASETS:
+        ds_id = ds["dataset_id"].lower()
+        if ds_id in name:
+            return ds
+    return None
+
+
+def ingest_candidate(path: Path, existing_hashes: Tuple[Set[str], Set[str]], ledger: List[Dict]) -> Dict:
+    ds_info = identify_dataset(path)
+    if not ds_info:
+        return {
+            "dataset_id": path.name,
+            "status": "REVIEW",
+            "errors": ["Could not identify dataset from path"],
+            "image_records": [],
+        }
+
+    fingerprint = f"{ds_info['dataset_id']}:{compute_sha256(path) if path.is_file() else 'dir'}"
+    existing = find_ledger_entry(ledger, fingerprint)
+    if existing:
+        return dict(existing)
+
+    if path.is_file():
+        return {
+            "dataset_id": ds_info["dataset_id"],
+            "status": "REVIEW",
+            "errors": ["Candidate is a single file, expected directory or archive"],
+            "fingerprint": fingerprint,
+            "image_records": [],
+        }
+
+    report = ingest_dataset(ds_info)
+    report["fingerprint"] = fingerprint
+    report["attribution_required"] = ds_info.get("attribution_required", False)
+    report["attribution_text"] = ds_info.get("attribution_text", "")
+
+    if report.get("status") == "ARCHIVE_INVALID":
+        report["status"] = "REJECTED"
+    elif report.get("status") == "MISSING":
+        report["status"] = "REJECTED"
+        report.setdefault("errors", []).append("Dataset directory missing or empty")
+    elif report.get("status") == "READY":
+        if ds_info.get("commercial_ok") is False:
+            report["status"] = "REJECTED"
+            report.setdefault("errors", []).append("Non-commercial license")
+        elif ds_info.get("commercial_ok") is None:
+            report["status"] = "REVIEW"
+            report.setdefault("errors", []).append("License/commercial status unverified")
+        else:
+            approved = report.get("new_unique_images", 0)
+            report["approved_images"] = approved
+            report["rejected_images"] = report.get("corrupt_images", 0) + report.get("too_small_images", 0) + report.get("duplicates_vs_core", 0) + report.get("duplicates_vs_figshare", 0)
+            report["status"] = "APPROVED"
+
+    return report
+
+
 def ingest_dataset(dataset_info: Dict) -> Dict:
     dataset_id = dataset_info["dataset_id"]
     dataset_dir = RAW_DIR / dataset_id
@@ -287,7 +437,6 @@ def ingest_dataset(dataset_info: Dict) -> Dict:
         report["errors"].append(f"Dataset directory does not exist: {dataset_dir}")
         return report
 
-    # Check for archive
     for ext in SUPPORTED_ARCHIVE_EXTENSIONS:
         archive_path = dataset_dir / f"{dataset_id}{ext}"
         if not archive_path.exists():
@@ -305,14 +454,12 @@ def ingest_dataset(dataset_info: Dict) -> Dict:
                 report["status"] = "ARCHIVE_VALID"
             break
 
-    # Discover classes
     class_dirs = []
     for item in dataset_dir.iterdir():
         if item.is_dir() and not item.name.startswith("."):
             class_dirs.append(item.name)
     report["classes_discovered"] = sorted(class_dirs)
 
-    # Map classes
     class_mappings = dataset_info.get("class_mappings", {})
     mapped_counts = defaultdict(int)
     unmapped = []
@@ -327,7 +474,6 @@ def ingest_dataset(dataset_info: Dict) -> Dict:
     report["mapped_class_counts"] = dict(mapped_counts)
     report["unmapped_classes"] = sorted(unmapped)
 
-    # Scan images
     image_files = []
     for ext in SUPPORTED_IMAGE_EXTENSIONS:
         image_files.extend(dataset_dir.rglob(f"*{ext}"))
@@ -371,11 +517,9 @@ def ingest_dataset(dataset_info: Dict) -> Dict:
             "commercial_ready": False,
         }
 
-        # Count by source class
         if img_path.parent.name in report["class_counts"]:
             report["class_counts"][img_path.parent.name] += 1
 
-        # Validate image
         try:
             with Image.open(img_path) as img:
                 img.verify()
@@ -535,233 +679,9 @@ def save_report(report: Dict, output_path: Optional[Path] = None) -> Path:
     return output_path
 
 
-
-
-def generate_gap_report(approved, review, rejected, not_yet):
-    class_sources = defaultdict(set)
-    for entry in approved:
-        for cls in entry.get("mapped_class_counts", {}).keys():
-            class_sources[cls].add(entry.get("dataset_id"))
-
-    tier1_gaps = []
-    for cls in TIER1_CLASSES:
-        if cls not in class_sources or len(class_sources[cls]) == 0:
-            tier1_gaps.append(cls)
-
-    return {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "summary": {
-            "approved": len(approved),
-            "review": len(review),
-            "rejected": len(rejected),
-            "not_yet_received": len(not_yet),
-            "tier1_classes_with_data": len([cls for cls in TIER1_CLASSES if cls in class_sources and len(class_sources[cls]) > 0]),
-            "tier1_classes_without_data": len(tier1_gaps),
-        },
-        "approved_datasets": [{"dataset_id": e.get("dataset_id"), "status": e.get("status"), "approved_images": e.get("approved_images", 0)} for e in approved],
-        "review_datasets": [{"dataset_id": e.get("dataset_id"), "status": "REVIEW", "reason": e.get("notes", "")} for e in review],
-        "rejected_datasets": [{"dataset_id": e.get("dataset_id"), "status": "REJECTED", "errors": e.get("errors", [])} for e in rejected],
-        "not_yet_received": [{"dataset_id": e.get("dataset_id"), "status": "NOT_YET_RECEIVED"} for e in not_yet],
-        "tier1_gaps": tier1_gaps,
-    }
-
-
-def write_acquisition_report(ledger_entries: List[Dict], gap_report: Dict):
-    lines = []
-    lines.append("# Soil & Supper — Phase 35 Acquisition Report")
-    lines.append("")
-    lines.append(f"**Generated**: {datetime.now(timezone.utc).isoformat()}")
-    lines.append(f"**Phase**: 35 — Incremental Dataset Intake")
-    lines.append(f"**Status**: OPEN — acquisition ongoing")
-    lines.append("")
-    lines.append("## 1. Dataset Status")
-    lines.append("")
-    lines.append("| Dataset ID | Status | Approved Images | Notes |")
-    lines.append("|------------|--------|-----------------|-------|")
-
-    for entry in ledger_entries:
-        status = entry.get("status", "UNKNOWN")
-        ds_id = entry.get("dataset_id", "unknown")
-        approved = entry.get("approved_images", 0)
-        notes = entry.get("notes", "")
-        if status in ("APPROVED", "APPROVED_WITH_ATTRIBUTION"):
-            lines.append(f"| {ds_id} | {status} | {approved:,} | {notes} |")
-        elif status == "NOT_YET_RECEIVED":
-            lines.append(f"| {ds_id} | {status} | 0 | Awaiting human download |")
-        elif status == "REVIEW":
-            lines.append(f"| {ds_id} | {status} | 0 | {notes} |")
-        elif status == "REJECTED":
-            lines.append(f"| {ds_id} | {status} | 0 | {entry.get('errors', [''])[0]} |")
-        else:
-            lines.append(f"| {ds_id} | {status} | 0 | |")
-
-    lines.append("")
-    lines.append("## 2. Tier 1 Class Coverage")
-    lines.append("")
-    lines.append("| Class | Approved Images | Source Datasets | Status |")
-    lines.append("|-------|-----------------|-----------------|--------|")
-
-    coverage = generate_class_coverage(ledger_entries)
-    for cls in TIER1_CLASSES:
-        info = coverage["classes"].get(cls, {})
-        approved = info.get("approved_images", 0)
-        sources = info.get("source_dataset_count", 0)
-        status = info.get("status", "NO_DATA")
-        lines.append(f"| {cls} | {approved:,} | {sources} | {status} |")
-
-    lines.append("")
-    lines.append("## 3. Gap Summary")
-    lines.append("")
-    summary = gap_report.get("summary", {})
-    lines.append(f"- **Approved datasets**: {summary.get('approved', 0)}")
-    lines.append(f"- **Review datasets**: {summary.get('review', 0)}")
-    lines.append(f"- **Rejected datasets**: {summary.get('rejected', 0)}")
-    lines.append(f"- **Not yet received**: {summary.get('not_yet_received', 0)}")
-    lines.append(f"- **Tier 1 classes with data**: {summary.get('tier1_classes_with_data', 0)} / {len(TIER1_CLASSES)}")
-    lines.append(f"- **Tier 1 classes without data**: {summary.get('tier1_classes_without_data', 0)}")
-    lines.append("")
-
-    if gap_report.get("tier1_gaps"):
-        lines.append("### Classes Without Commercial Data")
-        lines.append("")
-        for cls in gap_report["tier1_gaps"]:
-            lines.append(f"- {cls}")
-        lines.append("")
-
-    lines.append("## 4. Next Steps")
-    lines.append("")
-    lines.append("1. Human downloads datasets listed as NOT_YET_RECEIVED into inputs/")
-    lines.append("2. Rerun: `python training/phase35_intake.py --all`")
-    links = [
-        ("Bangladesh Comprehensive Vegetables", "https://data.mendeley.com/datasets/rtx9ngb68j", "CC BY 4.0"),
-        ("Smartphone Vegetable Detection", "https://data.mendeley.com/datasets/gnc4s3z2mf/3", "CC BY 4.0"),
-        ("VegNet", "https://data.mendeley.com/datasets/6nxnjbn9w6", "CC BY 4.0"),
-        ("BanglaVeg", "https://doi.org/10.1016/j.dcha.2025.100058", "CC BY 4.0"),
-        ("Early-Stage Crops", "https://pmc.ncbi.nlm.nih.gov/articles/PMC8933512/", "CC BY 4.0"),
-        ("Vegetables (images.cv)", "https://images.cv/dataset/vegetables-image-classification-dataset", "CC0 claimed"),
-        ("Fruit and Vegetables (Kaggle)", "https://www.kaggle.com/datasets/youssefsalahzakria/fruit-and-vegetables-classification", "CC0 claimed"),
-        ("Herbs (images.cv)", "https://images.cv/dataset/herbs-image-classification-dataset", "CC0 claimed"),
-    ]
-    for name, url, license in links:
-        lines.append(f"- [{name}]({url}) — {license}")
-    lines.append("")
-    lines.append("---")
-    lines.append("*Phase 35 remains open until acquisition is complete.*")
-    lines.append("*Do not train crop model yet.*")
-
-    ACQUISITION_REPORT.write_text("\n".join(lines), encoding="utf-8")
-    print(f"Acquisition report written to: {ACQUISITION_REPORT}")
-
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-def main():
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Phase 35 incremental dataset intake")
-    parser.add_argument("--all", action="store_true", help="Scan inputs/ and process all candidates")
-    parser.add_argument("--dataset", type=str, help="Process specific dataset path under inputs/")
-    parser.add_argument("--json", action="store_true", help="Emit JSON reports")
-    args = parser.parse_args()
-
-    ledger = load_ledger()
-    existing_hashes = load_existing_hashes()
-
-    if args.dataset:
-        candidate = Path(args.dataset)
-        if not candidate.exists():
-            print(f"ERROR: {candidate} does not exist")
-            sys.exit(1)
-        report = ingest_candidate(candidate, existing_hashes, ledger)
-        print(json.dumps(report, indent=2, ensure_ascii=False) if args.json else str(report))
-        save_ledger_entry(report)
-        if report.get("image_records"):
-            append_image_manifest(report["image_records"], report.get("license"), report.get("attribution_required", False), report.get("attribution_text", ""))
-        return
-
-    if not args.all:
-        parser.print_help()
-        sys.exit(1)
-
-    all_reports = []
-    candidates = []
-
-    if INPUTS_DIR.exists():
-        for item in sorted(INPUTS_DIR.iterdir()):
-            if item.name.startswith("."):
-                continue
-            candidates.append(item)
-
-    for ds in PLANNED_DATASETS:
-        found = False
-        for c in candidates:
-            if identify_dataset(c) and identify_dataset(c).get("dataset_id") == ds["dataset_id"]:
-                found = True
-                break
-        if not found:
-            not_yet_entry = {
-                "dataset_id": ds["dataset_id"],
-                "status": "NOT_YET_RECEIVED",
-                "discovered_at": datetime.now(timezone.utc).isoformat(),
-                "processed_at": datetime.now(timezone.utc).isoformat(),
-                "fingerprint": f"planned-{ds['dataset_id']}",
-                "source_url": ds.get("url"),
-                "license": ds.get("license"),
-                "commercial_ok": ds.get("commercial_ok", False),
-                "attribution_required": ds.get("attribution_required", False),
-                "attribution_text": ds.get("attribution_text", ""),
-                "total_images": 0,
-                "valid_images": 0,
-                "approved_images": 0,
-                "rejected_images": 0,
-                "classes_discovered": [],
-                "class_counts": {},
-                "mapped_class_counts": {},
-                "unmapped_classes": [],
-                "duplicates_vs_corpus": 0,
-                "new_unique_images": 0,
-                "image_records": [],
-                "errors": [],
-                "notes": "Planned but not yet present in inputs/",
-            }
-            if not find_ledger_entry(ledger, not_yet_entry["fingerprint"]):
-                all_reports.append(not_yet_entry)
-                save_ledger_entry(not_yet_entry)
-
-    for candidate in candidates:
-        report = ingest_candidate(candidate, existing_hashes, ledger)
-        all_reports.append(report)
-        save_ledger_entry(report)
-        if report.get("image_records"):
-            append_image_manifest(report["image_records"], report.get("license"), report.get("attribution_required", False), report.get("attribution_text", ""))
-
-    gap = generate_gap_report(all_reports)
-    with open(GAP_REPORT, "w", encoding="utf-8") as f:
-        json.dump(gap, f, indent=2, ensure_ascii=False)
-
-    coverage = generate_class_coverage(all_reports)
-    with open(CLASS_COVERAGE, "w", encoding="utf-8") as f:
-        json.dump(coverage, f, indent=2, ensure_ascii=False)
-
-    write_acquisition_report(all_reports, gap)
-
-    print("\n" + "=" * 80)
-    print("PHASE 35 INTAKE SUMMARY")
-    print("=" * 80)
-    print(f"Datasets processed: {len(all_reports)}")
-    print(f"Total images discovered: {sum(r.get('total_images', 0) for r in all_reports):,}")
-    print(f"Total valid images: {sum(r.get('valid_images', 0) for r in all_reports):,}")
-    print(f"Total approved images: {sum(r.get('approved_images', 0) for r in all_reports):,}")
-    print()
-    for r in all_reports:
-        print(f"  {r.get('dataset_id', 'unknown'):<30} {r.get('status', 'UNKNOWN'):<25} {r.get('total_images', 0):>8} images  {r.get('approved_images', 0):>8} approved")
-    print("=" * 80)
-
-
-if __name__ == "__main__":
-    main()
-
+def generate_gap_report(ledger_entries: List[Dict]) -> Dict:
+    approved = [e for e in ledger_entries if e.get("status") in ("APPROVED", "APPROVED_WITH_ATTRIBUTION")]
+    review = [e for e in ledger_entries if e.get("status") == "REVIEW"]
     rejected = [e for e in ledger_entries if e.get("status") == "REJECTED"]
     not_yet = [e for e in ledger_entries if e.get("status") == "NOT_YET_RECEIVED"]
 
@@ -793,6 +713,35 @@ if __name__ == "__main__":
     }
 
 
+def generate_class_coverage(ledger_entries: List[Dict]) -> Dict:
+    class_info: Dict[str, Dict] = defaultdict(lambda: {
+        "approved_images": 0,
+        "source_dataset_count": 0,
+        "sources": set(),
+        "status": "NO_DATA",
+    })
+
+    for entry in ledger_entries:
+        if entry.get("status") in ("APPROVED", "APPROVED_WITH_ATTRIBUTION"):
+            for cls, count in entry.get("mapped_class_counts", {}).items():
+                class_info[cls]["approved_images"] += count
+                class_info[cls]["sources"].add(entry.get("dataset_id"))
+                class_info[cls]["source_dataset_count"] = len(class_info[cls]["sources"])
+                class_info[cls]["status"] = "APPROVED"
+
+    classes = {}
+    for cls in TIER1_CLASSES:
+        info = class_info.get(cls, {"approved_images": 0, "source_dataset_count": 0, "status": "NO_DATA"})
+        classes[cls] = info
+
+    return {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "total_tier1_classes": len(TIER1_CLASSES),
+        "classes_with_data": sum(1 for c in classes.values() if c.get("status") == "APPROVED"),
+        "classes": classes,
+    }
+
+
 def write_acquisition_report(ledger_entries: List[Dict], gap_report: Dict):
     lines = []
     lines.append("# Soil & Supper — Phase 35 Acquisition Report")
@@ -859,7 +808,6 @@ def write_acquisition_report(ledger_entries: List[Dict], gap_report: Dict):
     lines.append("")
     lines.append("1. Human downloads datasets listed as NOT_YET_RECEIVED into inputs/")
     lines.append("2. Rerun: `python training/phase35_intake.py --all`")
-    lines.append("")
     links = [
         ("Bangladesh Comprehensive Vegetables", "https://data.mendeley.com/datasets/rtx9ngb68j", "CC BY 4.0"),
         ("Smartphone Vegetable Detection", "https://data.mendeley.com/datasets/gnc4s3z2mf/3", "CC BY 4.0"),
@@ -891,6 +839,7 @@ def main():
     parser.add_argument("--all", action="store_true", help="Scan inputs/ and process all candidates")
     parser.add_argument("--dataset", type=str, help="Process specific dataset path under inputs/")
     parser.add_argument("--json", action="store_true", help="Emit JSON reports")
+    parser.add_argument("--dry-run", action="store_true", help="Inspect candidates without modifying manifests")
     args = parser.parse_args()
 
     ledger = load_ledger()
@@ -903,9 +852,10 @@ def main():
             sys.exit(1)
         report = ingest_candidate(candidate, existing_hashes, ledger)
         print(json.dumps(report, indent=2, ensure_ascii=False) if args.json else str(report))
-        save_ledger_entry(report)
-        if report.get("image_records"):
-            append_image_manifest(report["image_records"], report.get("license"), report.get("attribution_required", False), report.get("attribution_text", ""))
+        if not args.dry_run:
+            save_ledger_entry(report)
+            if report.get("image_records"):
+                append_image_manifest(report["image_records"], report.get("license"), report.get("attribution_required", False), report.get("attribution_text", ""))
         return
 
     if not args.all:
@@ -955,14 +905,16 @@ def main():
             }
             if not find_ledger_entry(ledger, not_yet_entry["fingerprint"]):
                 all_reports.append(not_yet_entry)
-                save_ledger_entry(not_yet_entry)
+                if not args.dry_run:
+                    save_ledger_entry(not_yet_entry)
 
     for candidate in candidates:
         report = ingest_candidate(candidate, existing_hashes, ledger)
         all_reports.append(report)
-        save_ledger_entry(report)
-        if report.get("image_records"):
-            append_image_manifest(report["image_records"], report.get("license"), report.get("attribution_required", False), report.get("attribution_text", ""))
+        if not args.dry_run:
+            save_ledger_entry(report)
+            if report.get("image_records"):
+                append_image_manifest(report["image_records"], report.get("license"), report.get("attribution_required", False), report.get("attribution_text", ""))
 
     gap = generate_gap_report(all_reports)
     with open(GAP_REPORT, "w", encoding="utf-8") as f:
@@ -989,4 +941,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
