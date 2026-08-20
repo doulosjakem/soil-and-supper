@@ -11,21 +11,42 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.soilandsupper.ai.command.DefaultCommandExecutor
+import com.soilandsupper.ai.command.DefaultCommandValidator
+import com.soilandsupper.ai.command.InMemoryCommandHistory
+import com.soilandsupper.ai.orchestration.AIOrchestrator
+import com.soilandsupper.ai.orchestration.AIRequest
+import com.soilandsupper.ai.orchestration.AIResponse
+import com.soilandsupper.ai.orchestration.AIInput
+import com.soilandsupper.ai.orchestration.AndroidFakeAIProvider
+import com.soilandsupper.ai.orchestration.ConversationContext
+import com.soilandsupper.ai.query.DefaultGardenQuery
+import com.soilandsupper.ai.ui.AiResponseSheet
 import com.soilandsupper.data.local.SoilAndSupperDatabase
 import com.soilandsupper.data.repository.GardenRepository
 import com.soilandsupper.domain.model.MockPlantIdentifier
 import com.soilandsupper.ui.theme.SoilAndSupperTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,6 +66,18 @@ class MainActivity : ComponentActivity() {
         )
         val plantIdentifier = MockPlantIdentifier()
 
+        val history = InMemoryCommandHistory()
+        val executor = DefaultCommandExecutor(DefaultCommandValidator(), history)
+        val query = DefaultGardenQuery(repository)
+        val orchestrator = AIOrchestrator(
+            provider = AndroidFakeAIProvider(),
+            query = query,
+            validator = DefaultCommandValidator(),
+            executor = executor,
+            history = history,
+            repository = repository
+        )
+
         setContent {
             SoilAndSupperTheme {
                 Surface(
@@ -53,7 +86,8 @@ class MainActivity : ComponentActivity() {
                 ) {
                     AppNavigation(
                         repository = repository,
-                        plantIdentifier = plantIdentifier
+                        plantIdentifier = plantIdentifier,
+                        orchestrator = orchestrator
                     )
                 }
             }
@@ -65,17 +99,30 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation(
     repository: GardenRepository,
-    plantIdentifier: MockPlantIdentifier
+    plantIdentifier: MockPlantIdentifier,
+    orchestrator: AIOrchestrator
 ) {
-        val navController = rememberNavController()
+    val navController = rememberNavController()
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry.value?.destination?.route
+
+    var aiResponse by remember { mutableStateOf<AIResponse?>(null) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = remember { CoroutineScope(Dispatchers.Main.immediate) }
+
+    LaunchedEffect(aiResponse) {
+        if (aiResponse != null) {
+            sheetState.show()
+        } else {
+            sheetState.hide()
+        }
+    }
 
     Scaffold(
         bottomBar = {
             NavigationBar {
                 Screen.values().forEach { screen ->
-                                        NavigationBarItem(
+                    NavigationBarItem(
                         selected = currentRoute == screen.route,
                         onClick = {
                             navController.navigate(screen.route) {
@@ -86,13 +133,13 @@ fun AppNavigation(
                                 }
                             }
                         },
-                                                    icon = {
-                                Icon(
+                        icon = {
+                            androidx.compose.material3.Icon(
                                 imageVector = screen.icon,
                                 contentDescription = screen.label
                             )
                         },
-                                                label = { Text(screen.label) }
+                        label = { Text(screen.label) }
                     )
                 }
             }
@@ -120,7 +167,35 @@ fun AppNavigation(
                     onPlantClick = { plantId ->
                         navController.navigate("plant_detail/$plantId")
                     },
-                    repository = repository
+                    repository = repository,
+                    onAiSubmit = { text ->
+                        val request = AIRequest(input = AIInput.Text(text))
+                        scope.launch(Dispatchers.Main.immediate) {
+                            val response = orchestrator.process(request)
+                            aiResponse = response
+                        }
+                    },
+                    onAiVoice = {
+                        scope.launch(Dispatchers.Main.immediate) {
+                            val request = AIRequest(input = AIInput.VoiceTranscript(rawContent = "", confidence = null))
+                            val response = orchestrator.process(request)
+                            aiResponse = response
+                        }
+                    },
+                    onAiCamera = {
+                        scope.launch(Dispatchers.Main.immediate) {
+                            val request = AIRequest(input = AIInput.ImageReference(rawContent = "", imageId = "camera"))
+                            val response = orchestrator.process(request)
+                            aiResponse = response
+                        }
+                    },
+                    onAiDocument = {
+                        scope.launch(Dispatchers.Main.immediate) {
+                            val request = AIRequest(input = AIInput.DocumentText(rawContent = "", documentType = null))
+                            val response = orchestrator.process(request)
+                            aiResponse = response
+                        }
+                    }
                 )
             }
             composable("add_plant") {
@@ -153,6 +228,46 @@ fun AppNavigation(
             composable(Screen.GardenToTable.route) {
                 GardenToTableScreen()
             }
+        }
+    }
+
+    aiResponse?.let { response ->
+        ModalBottomSheet(
+            onDismissRequest = { aiResponse = null },
+            sheetState = sheetState
+        ) {
+            AiResponseSheet(
+                response = response,
+                onDismiss = { aiResponse = null },
+                onConfirm = {
+                    scope.launch(Dispatchers.Main.immediate) {
+                        val confirmRequest = AIRequest(
+                            input = AIInput.Text("confirm"),
+                            conversationContext = com.soilandsupper.ai.orchestration.ConversationContext(
+                                sessionId = "ui",
+                                turnCount = 1
+                            )
+                        )
+                        val confirmResponse = orchestrator.process(confirmRequest)
+                        aiResponse = confirmResponse
+                    }
+                },
+                onCancel = { aiResponse = null },
+                onUndo = {
+                    scope.launch(Dispatchers.Main.immediate) {
+                        val undoRequest = AIRequest(input = AIInput.Text("undo"))
+                        val undoResponse = orchestrator.process(undoRequest)
+                        aiResponse = undoResponse
+                    }
+                },
+                onSelectClarification = { clarification ->
+                    scope.launch(Dispatchers.Main.immediate) {
+                        val clarifyRequest = AIRequest(input = AIInput.Text(clarification))
+                        val clarifyResponse = orchestrator.process(clarifyRequest)
+                        aiResponse = clarifyResponse
+                    }
+                }
+            )
         }
     }
 }
