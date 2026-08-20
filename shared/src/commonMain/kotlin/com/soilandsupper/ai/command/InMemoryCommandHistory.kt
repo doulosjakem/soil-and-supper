@@ -11,6 +11,7 @@ import com.soilandsupper.shared.domain.model.OccupancyStatus
 import com.soilandsupper.shared.domain.model.Desire
 import com.soilandsupper.shared.domain.model.Plant
 import com.soilandsupper.shared.domain.model.Seed
+import kotlinx.coroutines.flow.first
 
 class InMemoryCommandHistory : CommandHistory {
     val size: Int
@@ -30,9 +31,7 @@ class InMemoryCommandHistory : CommandHistory {
 
         return when (command) {
             is GardenCommand.AddGrowingSpace -> {
-                var allSpaces: List<GrowingSpace> = emptyList()
-                repository.getAllGrowingSpaces().collect { allSpaces = it }
-                val space = allSpaces.firstOrNull { it.name == command.name && it.notes == command.notes }
+                val space = repository.getAllGrowingSpaces().first().firstOrNull { it.name == command.name && it.notes == command.notes }
                     ?: return CommandResult.NotFound(command, "GrowingSpace", -1)
                 repository.deleteGrowingSpace(space)
                 CommandResult.Success(command, "Undone: growing space removed")
@@ -63,11 +62,7 @@ class InMemoryCommandHistory : CommandHistory {
                 CommandResult.Success(command, "Undone: growing space restored")
             }
             is GardenCommand.PlantCrop -> {
-                val space = repository.getGrowingSpaceById(command.growingSpaceId)
-                    ?: return CommandResult.NotFound(command, "GrowingSpace", command.growingSpaceId)
-                var allOccupancies: List<Occupancy> = emptyList()
-                repository.getAllOccupancies().collect { allOccupancies = it }
-                val occupancy = allOccupancies.firstOrNull { it.growingSpaceId == command.growingSpaceId && it.cropName == command.cropName }
+                val occupancy = repository.getAllOccupancies().first().firstOrNull { it.growingSpaceId == command.growingSpaceId && it.cropName == command.cropName }
                     ?: return CommandResult.NotFound(command, "Occupancy", -1)
                 val completed = GardenService.completeOccupancy(occupancy, command.startDate)
                 repository.updateOccupancy(completed)
@@ -75,9 +70,7 @@ class InMemoryCommandHistory : CommandHistory {
             }
             is GardenCommand.HarvestCrop -> {
                 val plantRepo = repository as? PlantRepository
-                var allHarvests: List<Harvest> = emptyList()
-                plantRepo?.getAllHarvests()?.collect { allHarvests = it }
-                val harvest = allHarvests.firstOrNull { it.plantId == command.occupancyId }
+                val harvest = (repository as? PlantRepository)?.getAllHarvests()?.first()?.firstOrNull { it.plantId == command.occupancyId }
                     ?: return CommandResult.NotFound(command, "Harvest", -1)
                 if (plantRepo != null) {
                     plantRepo.deleteHarvest(harvest)
@@ -97,9 +90,7 @@ class InMemoryCommandHistory : CommandHistory {
             }
             is GardenCommand.RecordObservation -> {
                 val plantRepo = repository as? PlantRepository
-                var entries: List<JournalEntry> = emptyList()
-                plantRepo?.getJournalEntriesForPlant(command.plantId ?: 0)?.collect { entries = it }
-                val entry = entries.firstOrNull()
+                val entry = (repository as? PlantRepository)?.getJournalEntriesForPlant(command.plantId ?: 0)?.first()?.firstOrNull()
                     ?: return CommandResult.NotFound(command, "JournalEntry", -1)
                 if (plantRepo != null) {
                     plantRepo.deleteJournalEntry(entry)
@@ -107,17 +98,13 @@ class InMemoryCommandHistory : CommandHistory {
                 CommandResult.Success(command, "Undone: observation removed")
             }
             is GardenCommand.AddSeed -> {
-                var allSeeds: List<Seed> = emptyList()
-                repository.getAllSeeds().collect { allSeeds = it }
-                val seed = allSeeds.firstOrNull { it.cropName == command.cropName && it.variety == command.variety }
+                val seed = repository.getAllSeeds().first().firstOrNull { it.cropName == command.cropName && it.variety == command.variety }
                     ?: return CommandResult.NotFound(command, "Seed", -1)
                 repository.deleteSeed(seed)
                 CommandResult.Success(command, "Undone: seed removed")
             }
             is GardenCommand.AddDesire -> {
-                var allDesires: List<Desire> = emptyList()
-                repository.getAllDesires().collect { allDesires = it }
-                val desire = allDesires.firstOrNull { it.cropName == command.cropName && it.variety == command.variety }
+                val desire = repository.getAllDesires().first().firstOrNull { it.cropName == command.cropName && it.variety == command.variety }
                     ?: return CommandResult.NotFound(command, "Desire", -1)
                 repository.deleteDesire(desire)
                 CommandResult.Success(command, "Undone: desire removed")
@@ -148,9 +135,7 @@ class InMemoryCommandHistory : CommandHistory {
             }
             is GardenCommand.RecordPlant -> {
                 val plantRepo = repository as? PlantRepository
-                var allPlants: List<Plant> = emptyList()
-                plantRepo?.getAllPlants()?.collect { allPlants = it }
-                val plant = allPlants.firstOrNull { it.name == command.name && it.plantingDate == command.plantingDate }
+                val plant = (repository as? PlantRepository)?.getAllPlants()?.first()?.firstOrNull { it.name == command.name && it.plantingDate == command.plantingDate }
                     ?: return CommandResult.NotFound(command, "Plant", -1)
                 if (plantRepo != null) {
                     plantRepo.deletePlant(plant)
@@ -190,7 +175,6 @@ class InMemoryCommandHistory : CommandHistory {
                 }
                 CommandResult.Success(command, "Undone: plant restored")
             }
-            else -> CommandResult.NotSupported(command)
         }
     }
 

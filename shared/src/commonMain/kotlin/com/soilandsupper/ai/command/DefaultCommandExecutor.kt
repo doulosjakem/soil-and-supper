@@ -11,6 +11,7 @@ import com.soilandsupper.shared.domain.model.Occupancy
 import com.soilandsupper.shared.domain.model.OccupancyStatus
 import com.soilandsupper.shared.domain.model.Plant
 import com.soilandsupper.shared.domain.model.Seed
+import kotlinx.coroutines.flow.first
 
 class DefaultCommandExecutor(
     private val validator: CommandValidator = DefaultCommandValidator(),
@@ -21,21 +22,16 @@ class DefaultCommandExecutor(
         command: GardenCommand,
         repository: GardenRepository
     ): CommandResult {
-        var spaces: List<GrowingSpace> = emptyList()
-        repository.getAllGrowingSpaces().collect { spaces = it }
+        val spaces = repository.getAllGrowingSpaces().first()
 
-        var occupancies: List<Occupancy> = emptyList()
-        repository.getAllOccupancies().collect { occupancies = it }
+        val occupancies = repository.getAllOccupancies().first()
 
-        var seeds: List<Seed> = emptyList()
-        repository.getAllSeeds().collect { seeds = it }
+        val seeds = repository.getAllSeeds().first()
 
-        var desires: List<Desire> = emptyList()
-        repository.getAllDesires().collect { desires = it }
+        val desires = repository.getAllDesires().first()
 
         val plantRepository = repository as? PlantRepository
-        var plants: List<Plant> = emptyList()
-        plantRepository?.getAllPlants()?.collect { plants = it }
+        val plants = plantRepository?.getAllPlants()?.first() ?: emptyList()
 
         val validation = validator.validate(
             command = command,

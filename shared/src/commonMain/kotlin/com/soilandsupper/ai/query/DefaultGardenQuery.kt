@@ -9,15 +9,14 @@ import com.soilandsupper.shared.domain.model.Occupancy
 import com.soilandsupper.shared.domain.model.OccupancyStatus
 import com.soilandsupper.shared.domain.model.Plant
 import com.soilandsupper.shared.domain.model.Seed
+import kotlinx.coroutines.flow.first
 
 class DefaultGardenQuery(
     private val repository: GardenRepository
 ) : GardenQuery {
 
     override suspend fun getAllSpaces(): List<GrowingSpace> {
-        var spaces: List<GrowingSpace> = emptyList()
-        repository.getAllGrowingSpaces().collect { spaces = it }
-        return spaces
+        return repository.getAllGrowingSpaces().first()
     }
 
     override suspend fun getSpaceById(id: Long): GrowingSpace? {
@@ -25,20 +24,17 @@ class DefaultGardenQuery(
     }
 
     override suspend fun getActiveOccupancies(): List<Occupancy> {
-        var all: List<Occupancy> = emptyList()
-        repository.getAllOccupancies().collect { all = it }
+        val all = repository.getAllOccupancies().first()
         return all.filter { it.status == OccupancyStatus.ACTIVE.name }
     }
 
     override suspend fun getOccupanciesForSpace(spaceId: Long): List<Occupancy> {
-        var all: List<Occupancy> = emptyList()
-        repository.getAllOccupancies().collect { all = it }
+        val all = repository.getAllOccupancies().first()
         return all.filter { it.growingSpaceId == spaceId }
     }
 
     override suspend fun getUpcomingOpenings(beforeDate: Long): List<Occupancy> {
-        var all: List<Occupancy> = emptyList()
-        repository.getAllOccupancies().collect { all = it }
+        val all = repository.getAllOccupancies().first()
         return all.filter { occupancy ->
             occupancy.status == OccupancyStatus.ACTIVE.name &&
                 occupancy.expectedReleaseDate != null &&
@@ -47,35 +43,25 @@ class DefaultGardenQuery(
     }
 
     override suspend fun getAllSeeds(): List<Seed> {
-        var seeds: List<Seed> = emptyList()
-        repository.getAllSeeds().collect { seeds = it }
-        return seeds
+        return repository.getAllSeeds().first()
     }
 
     override suspend fun getAllDesires(): List<Desire> {
-        var desires: List<Desire> = emptyList()
-        repository.getAllDesires().collect { desires = it }
-        return desires
+        return repository.getAllDesires().first()
     }
 
     override suspend fun getAllPlants(): List<Plant> {
         val plantRepo = repository as? PlantRepository
-        var plants: List<Plant> = emptyList()
-        plantRepo?.getAllPlants()?.collect { plants = it }
-        return plants
+        return plantRepo?.getAllPlants()?.first() ?: emptyList()
     }
 
     override suspend fun getAllHarvests(): List<Harvest> {
         val plantRepo = repository as? PlantRepository
-        var harvests: List<Harvest> = emptyList()
-        plantRepo?.getAllHarvests()?.collect { harvests = it }
-        return harvests
+        return plantRepo?.getAllHarvests()?.first() ?: emptyList()
     }
 
     override suspend fun getHarvestsForPlant(plantId: Long): List<Harvest> {
         val plantRepo = repository as? PlantRepository
-        var harvests: List<Harvest> = emptyList()
-        plantRepo?.getHarvestsForPlant(plantId)?.collect { harvests = it }
-        return harvests
+        return plantRepo?.getHarvestsForPlant(plantId)?.first() ?: emptyList()
     }
 }
