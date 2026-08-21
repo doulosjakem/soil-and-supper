@@ -213,7 +213,7 @@ class AIOrchestratorTest {
     }
 
     @Test
-    fun `undo reaches CommandHistory`() = runBlocking {
+    fun `undo with extended phrase reaches CommandHistory`() = runBlocking {
         provider.setResponse("add a bed", AIInterpretation.CommandProposals(
             proposals = listOf(
                 AICommandProposal(
@@ -226,8 +226,8 @@ class AIOrchestratorTest {
         orchestrator.process(AIRequest(input = AIInput.Text("add a bed")))
         assertEquals(1, history.size)
 
-        provider.setResponse("undo that", AIInterpretation.InformationalAnswer("undo"))
-        val response = orchestrator.process(AIRequest(input = AIInput.Text("undo that")))
+        provider.setResponse("undo that, i meant the carrots not the beets", AIInterpretation.InformationalAnswer("undo"))
+        val response = orchestrator.process(AIRequest(input = AIInput.Text("undo that, i meant the carrots not the beets")))
 
         assertTrue(response.message.contains("Undone"))
         assertEquals(0, history.size)

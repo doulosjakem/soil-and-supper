@@ -7,6 +7,7 @@ import com.soilandsupper.ai.command.GardenCommand
 import com.soilandsupper.ai.command.InMemoryCommandHistory
 import com.soilandsupper.ai.query.DefaultGardenQuery
 import com.soilandsupper.ai.query.GardenQuery
+import com.soilandsupper.repository.PlantRepository
 import com.soilandsupper.shared.domain.model.Desire
 import com.soilandsupper.shared.domain.model.GrowingSpace
 import com.soilandsupper.shared.domain.model.Occupancy
@@ -160,7 +161,44 @@ class GardenCommandArchitectureTest {
 
         val space = query.getSpaceById(1L)
         assertNotNull(space)
-        assertEquals("Renamed Bed", space!!.name)
+        assertEquals("Bed 1", space!!.name)
+    }
+
+    @Test
+    fun `undo restores previous state after update plant`() = runBlocking {
+        repository = FakeGardenRepository(
+            initialPlants = listOf(
+                Plant(id = 1L, name = "Old Tomato", variety = "Roma", plantingDate = epochMillis(2026, 5, 1), location = "Garden", notes = "Original")
+            ),
+            initialSpaces = listOf(GrowingSpace(id = 1L, name = "Bed 1")),
+            initialOccupancies = emptyList()
+        )
+        history = InMemoryCommandHistory()
+        executor = DefaultCommandExecutor(DefaultCommandValidator(), history)
+
+        executor.execute(
+            GardenCommand.UpdatePlant(
+                plantId = 1L,
+                name = "New Tomato",
+                variety = "Cherry",
+                plantingDate = epochMillis(2026, 6, 1),
+                location = "Patio",
+                notes = "Updated"
+            ),
+            repository
+        )
+        assertTrue(history.size == 1)
+
+        val undoResult = history.undoLast(repository)
+        assertNotNull(undoResult)
+        assertTrue(undoResult!!.succeeded)
+
+        val plant = (repository as PlantRepository).getPlantById(1L)
+        assertNotNull(plant)
+        assertEquals("Old Tomato", plant!!.name)
+        assertEquals("Roma", plant.variety)
+        assertEquals("Garden", plant.location)
+        assertEquals("Original", plant.notes)
     }
 
     @Test

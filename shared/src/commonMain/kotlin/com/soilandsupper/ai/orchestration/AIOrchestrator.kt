@@ -139,10 +139,8 @@ class AIOrchestrator(
 
     private fun isUndoRequest(input: AIInput): Boolean {
         return when (input) {
-            is AIInput.Text -> input.rawContent.trim().equals("undo that", ignoreCase = true) ||
-                    input.rawContent.trim().equals("undo", ignoreCase = true)
-            is AIInput.VoiceTranscript -> input.rawContent.trim().equals("undo that", ignoreCase = true) ||
-                    input.rawContent.trim().equals("undo", ignoreCase = true)
+            is AIInput.Text -> input.rawContent.trim().startsWith("undo", ignoreCase = true)
+            is AIInput.VoiceTranscript -> input.rawContent.trim().startsWith("undo", ignoreCase = true)
             else -> false
         }
     }

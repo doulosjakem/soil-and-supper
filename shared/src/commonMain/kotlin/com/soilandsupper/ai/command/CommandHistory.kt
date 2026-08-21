@@ -9,11 +9,12 @@ import com.soilandsupper.shared.domain.model.Seed
 
 data class HistoryEntry(
     val command: GardenCommand,
-    val timestamp: Long
+    val timestamp: Long,
+    val previousState: Map<String, Any?>? = null
 )
 
 interface CommandHistory {
-    suspend fun record(command: GardenCommand)
+    suspend fun record(entry: HistoryEntry)
     suspend fun undoLast(repository: GardenRepository): CommandResult?
     fun clear()
 }

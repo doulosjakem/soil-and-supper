@@ -19,8 +19,8 @@ class InMemoryCommandHistory : CommandHistory {
 
     private val entries = mutableListOf<HistoryEntry>()
 
-    override suspend fun record(command: GardenCommand) {
-        entries.add(HistoryEntry(command = command, timestamp = System.currentTimeMillis()))
+    override suspend fun record(entry: HistoryEntry) {
+        entries.add(entry)
     }
 
     override suspend fun undoLast(repository: GardenRepository): CommandResult? {
@@ -40,11 +40,11 @@ class InMemoryCommandHistory : CommandHistory {
                 val current = repository.getGrowingSpaceById(command.spaceId)
                     ?: return CommandResult.NotFound(command, "GrowingSpace", command.spaceId)
                 val restored = current.copy(
-                    name = command.name,
-                    notes = command.notes,
-                    spaceType = command.spaceType,
-                    width = command.width,
-                    length = command.length
+                    name = lastEntry.previousState?.get("name") as? String ?: command.name,
+                    notes = lastEntry.previousState?.get("notes") as? String?,
+                    spaceType = lastEntry.previousState?.get("spaceType") as? String?,
+                    width = lastEntry.previousState?.get("width") as? Double?,
+                    length = lastEntry.previousState?.get("length") as? Double?
                 )
                 repository.updateGrowingSpace(restored)
                 CommandResult.Success(command, "Undone: growing space restored")
@@ -147,11 +147,11 @@ class InMemoryCommandHistory : CommandHistory {
                     ?.getPlantById(command.plantId)
                     ?: return CommandResult.NotFound(command, "Plant", command.plantId)
                 val restored = existing.copy(
-                    name = command.name,
-                    variety = command.variety,
-                    plantingDate = command.plantingDate,
-                    location = command.location,
-                    notes = command.notes,
+                    name = lastEntry.previousState?.get("name") as? String ?: command.name,
+                    variety = lastEntry.previousState?.get("variety") as? String ?: command.variety,
+                    plantingDate = lastEntry.previousState?.get("plantingDate") as? Long ?: command.plantingDate,
+                    location = lastEntry.previousState?.get("location") as? String ?: command.location,
+                    notes = lastEntry.previousState?.get("notes") as? String ?: command.notes,
                     updatedAt = System.currentTimeMillis()
                 )
                 val plantRepo = repository as? PlantRepository

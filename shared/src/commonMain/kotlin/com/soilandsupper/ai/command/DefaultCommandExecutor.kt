@@ -46,6 +46,34 @@ class DefaultCommandExecutor(
             return validation
         }
 
+        val previousState = when (command) {
+            is GardenCommand.UpdateGrowingSpace -> {
+                val existing = repository.getGrowingSpaceById(command.spaceId)
+                existing?.let {
+                    mapOf(
+                        "name" to it.name,
+                        "notes" to it.notes,
+                        "spaceType" to it.spaceType,
+                        "width" to it.width,
+                        "length" to it.length
+                    )
+                }
+            }
+            is GardenCommand.UpdatePlant -> {
+                val existing = (repository as? PlantRepository)?.getPlantById(command.plantId)
+                existing?.let {
+                    mapOf(
+                        "name" to it.name,
+                        "variety" to it.variety,
+                        "plantingDate" to it.plantingDate,
+                        "location" to it.location,
+                        "notes" to it.notes
+                    )
+                }
+            }
+            else -> null
+        }
+
         val result = when (command) {
             is GardenCommand.AddGrowingSpace -> executeAddGrowingSpace(command, repository)
             is GardenCommand.UpdateGrowingSpace -> executeUpdateGrowingSpace(command, repository)
@@ -64,7 +92,13 @@ class DefaultCommandExecutor(
         }
 
         if (result is CommandResult.Success) {
-            history.record(command)
+            history.record(
+                HistoryEntry(
+                    command = command,
+                    timestamp = System.currentTimeMillis(),
+                    previousState = previousState
+                )
+            )
         }
 
         return result
