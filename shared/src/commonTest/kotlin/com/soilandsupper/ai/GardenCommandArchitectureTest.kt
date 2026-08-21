@@ -10,6 +10,8 @@ import com.soilandsupper.ai.query.GardenQuery
 import com.soilandsupper.repository.PlantRepository
 import com.soilandsupper.shared.domain.model.Desire
 import com.soilandsupper.shared.domain.model.GrowingSpace
+import com.soilandsupper.shared.domain.model.Harvest
+import com.soilandsupper.shared.domain.model.JournalEntry
 import com.soilandsupper.shared.domain.model.Occupancy
 import com.soilandsupper.shared.domain.model.OccupancyStatus
 import com.soilandsupper.shared.domain.model.Plant
@@ -199,6 +201,86 @@ class GardenCommandArchitectureTest {
         assertEquals("Roma", plant.variety)
         assertEquals("Garden", plant.location)
         assertEquals("Original", plant.notes)
+    }
+
+    @Test
+    fun `undo restores previous state after harvest crop`() = runBlocking {
+        repository = FakeGardenRepository(
+            initialSpaces = listOf(GrowingSpace(id = 1L, name = "Bed 1")),
+            initialOccupancies = listOf(
+                Occupancy(
+                    id = 1L,
+                    cropName = "Tomato",
+                    variety = "Roma",
+                    startDate = epochMillis(2026, 5, 1),
+                    status = OccupancyStatus.ACTIVE.name,
+                    growingSpaceId = 1L,
+                    plantId = 10L
+                )
+            ),
+            initialPlants = emptyList()
+        )
+        history = InMemoryCommandHistory()
+        executor = DefaultCommandExecutor(DefaultCommandValidator(), history)
+
+        executor.execute(
+            GardenCommand.HarvestCrop(
+                occupancyId = 1L,
+                quantity = 5.0,
+                unit = "lb",
+                date = epochMillis(2026, 8, 1)
+            ),
+            repository
+        )
+        assertTrue(history.size == 1)
+
+        var harvestsBefore: List<Harvest> = emptyList()
+        (repository as PlantRepository).getAllHarvests().collect { harvestsBefore = it }
+        assertEquals(1, harvestsBefore.size)
+
+        val undoResult = history.undoLast(repository)
+        assertNotNull(undoResult)
+        assertTrue(undoResult!!.succeeded)
+
+        var harvestsAfter: List<Harvest> = emptyList()
+        (repository as PlantRepository).getAllHarvests().collect { harvestsAfter = it }
+        assertTrue(harvestsAfter.isEmpty())
+    }
+
+    @Test
+    fun `undo restores previous state after record observation`() = runBlocking {
+        repository = FakeGardenRepository(
+            initialPlants = listOf(
+                Plant(id = 1L, name = "Tomato", plantingDate = epochMillis(2026, 5, 1))
+            ),
+            initialSpaces = listOf(GrowingSpace(id = 1L, name = "Bed 1")),
+            initialOccupancies = emptyList(),
+            initialJournalEntries = emptyList()
+        )
+        history = InMemoryCommandHistory()
+        executor = DefaultCommandExecutor(DefaultCommandValidator(), history)
+
+        executor.execute(
+            GardenCommand.RecordObservation(
+                plantId = 1L,
+                text = "First fruit appeared",
+                date = epochMillis(2026, 7, 1)
+            ),
+            repository
+        )
+        assertTrue(history.size == 1)
+
+        var entriesBefore: List<JournalEntry> = emptyList()
+        (repository as PlantRepository).getJournalEntriesForPlant(1L).collect { entriesBefore = it }
+        assertEquals(1, entriesBefore.size)
+
+        val undoResult = history.undoLast(repository)
+        assertNotNull(undoResult)
+        assertTrue(undoResult!!.succeeded)
+
+        var entriesAfter: List<JournalEntry> = emptyList()
+        (repository as PlantRepository).getJournalEntriesForPlant(1L).collect { entriesAfter = it }
+        assertTrue(entriesAfter.isEmpty())
     }
 
     @Test

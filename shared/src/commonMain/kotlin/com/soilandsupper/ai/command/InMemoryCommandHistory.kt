@@ -70,11 +70,11 @@ class InMemoryCommandHistory : CommandHistory {
             }
             is GardenCommand.HarvestCrop -> {
                 val plantRepo = repository as? PlantRepository
-                val harvest = (repository as? PlantRepository)?.getAllHarvests()?.first()?.firstOrNull { it.plantId == command.occupancyId }
                     ?: return CommandResult.NotFound(command, "Harvest", -1)
-                if (plantRepo != null) {
-                    plantRepo.deleteHarvest(harvest)
-                }
+                val harvestId = lastEntry.previousState?.get("harvestId") as? Long
+                val harvest = plantRepo.getAllHarvests().first().firstOrNull { it.id == harvestId }
+                    ?: return CommandResult.NotFound(command, "Harvest", harvestId ?: -1)
+                plantRepo.deleteHarvest(harvest)
                 CommandResult.Success(command, "Undone: harvest removed")
             }
             is GardenCommand.EndCrop -> {
@@ -90,11 +90,11 @@ class InMemoryCommandHistory : CommandHistory {
             }
             is GardenCommand.RecordObservation -> {
                 val plantRepo = repository as? PlantRepository
-                val entry = (repository as? PlantRepository)?.getJournalEntriesForPlant(command.plantId ?: 0)?.first()?.firstOrNull()
                     ?: return CommandResult.NotFound(command, "JournalEntry", -1)
-                if (plantRepo != null) {
-                    plantRepo.deleteJournalEntry(entry)
-                }
+                val entryId = lastEntry.previousState?.get("journalEntryId") as? Long
+                val entry = plantRepo.getJournalEntriesForPlant(command.plantId ?: 0).first().firstOrNull { it.id == entryId }
+                    ?: return CommandResult.NotFound(command, "JournalEntry", entryId ?: -1)
+                plantRepo.deleteJournalEntry(entry)
                 CommandResult.Success(command, "Undone: observation removed")
             }
             is GardenCommand.AddSeed -> {

@@ -8,7 +8,6 @@ import com.soilandsupper.shared.domain.model.GrowingSpace
 import com.soilandsupper.shared.domain.model.Harvest
 import com.soilandsupper.shared.domain.model.JournalEntry
 import com.soilandsupper.shared.domain.model.Occupancy
-import com.soilandsupper.shared.domain.model.OccupancyStatus
 import com.soilandsupper.shared.domain.model.Plant
 import com.soilandsupper.shared.domain.model.Seed
 import kotlinx.coroutines.flow.first
@@ -46,6 +45,9 @@ class DefaultCommandExecutor(
             return validation
         }
 
+        var createdHarvestId: Long? = null
+        var createdJournalEntryId: Long? = null
+
         val previousState = when (command) {
             is GardenCommand.UpdateGrowingSpace -> {
                 val existing = repository.getGrowingSpaceById(command.spaceId)
@@ -79,9 +81,34 @@ class DefaultCommandExecutor(
             is GardenCommand.UpdateGrowingSpace -> executeUpdateGrowingSpace(command, repository)
             is GardenCommand.RemoveGrowingSpace -> executeRemoveGrowingSpace(command, repository)
             is GardenCommand.PlantCrop -> executePlantCrop(command, repository)
-            is GardenCommand.HarvestCrop -> executeHarvestCrop(command, repository)
+            is GardenCommand.HarvestCrop -> {
+                val occupancy = repository.getOccupancyById(command.occupancyId)
+                    ?: return CommandResult.NotFound(command, "Occupancy", command.occupancyId)
+
+                val harvest = Harvest(
+                    plantId = occupancy.plantId ?: 0,
+                    cropName = occupancy.cropName,
+                    quantity = command.quantity,
+                    unit = command.unit,
+                    date = command.date,
+                    notes = command.notes
+                )
+
+                val plantRepo = repository as? PlantRepository
+                createdHarvestId = plantRepo?.insertHarvest(harvest)
+                CommandResult.Success(command, "Harvested ${command.quantity} ${command.unit} of ${occupancy.cropName}")
+            }
             is GardenCommand.EndCrop -> executeEndCrop(command, repository)
-            is GardenCommand.RecordObservation -> executeRecordObservation(command, repository)
+            is GardenCommand.RecordObservation -> {
+                val entry = JournalEntry(
+                    plantId = command.plantId ?: 0,
+                    date = command.date,
+                    text = command.text
+                )
+                val plantRepo = repository as? PlantRepository
+                createdJournalEntryId = plantRepo?.insertJournalEntry(entry)
+                CommandResult.Success(command, "Observation recorded")
+            }
             is GardenCommand.AddSeed -> executeAddSeed(command, repository)
             is GardenCommand.AddDesire -> executeAddDesire(command, repository)
             is GardenCommand.FulfillDesire -> executeFulfillDesire(command, repository)
@@ -96,7 +123,11 @@ class DefaultCommandExecutor(
                 HistoryEntry(
                     command = command,
                     timestamp = System.currentTimeMillis(),
-                    previousState = previousState
+                    previousState = when (command) {
+                        is GardenCommand.HarvestCrop -> mapOf("harvestId" to createdHarvestId)
+                        is GardenCommand.RecordObservation -> mapOf("journalEntryId" to createdJournalEntryId)
+                        else -> previousState
+                    }
                 )
             )
         }
@@ -166,29 +197,6 @@ class DefaultCommandExecutor(
         return CommandResult.Success(command, "Planted ${command.cropName} in ${space.name}")
     }
 
-    private suspend fun executeHarvestCrop(
-        command: GardenCommand.HarvestCrop,
-        repository: GardenRepository
-    ): CommandResult {
-        val occupancy = repository.getOccupancyById(command.occupancyId)
-            ?: return CommandResult.NotFound(command, "Occupancy", command.occupancyId)
-
-        val harvest = Harvest(
-            plantId = occupancy.plantId ?: 0,
-            cropName = occupancy.cropName,
-            quantity = command.quantity,
-            unit = command.unit,
-            date = command.date,
-            notes = command.notes
-        )
-
-        val plantRepo = repository as? PlantRepository
-        if (plantRepo != null) {
-            plantRepo.insertHarvest(harvest)
-        }
-        return CommandResult.Success(command, "Harvested ${command.quantity} ${command.unit} of ${occupancy.cropName}")
-    }
-
     private suspend fun executeEndCrop(
         command: GardenCommand.EndCrop,
         repository: GardenRepository
@@ -198,22 +206,6 @@ class DefaultCommandExecutor(
         val completed = GardenService.completeOccupancy(existing, command.endDate)
         repository.updateOccupancy(completed)
         return CommandResult.Success(command, "Ended ${existing.cropName}")
-    }
-
-    private suspend fun executeRecordObservation(
-        command: GardenCommand.RecordObservation,
-        repository: GardenRepository
-    ): CommandResult {
-        val entry = JournalEntry(
-            plantId = command.plantId ?: 0,
-            date = command.date,
-            text = command.text
-        )
-        val plantRepo = repository as? PlantRepository
-        if (plantRepo != null) {
-            plantRepo.insertJournalEntry(entry)
-        }
-        return CommandResult.Success(command, "Observation recorded")
     }
 
     private suspend fun executeAddSeed(
