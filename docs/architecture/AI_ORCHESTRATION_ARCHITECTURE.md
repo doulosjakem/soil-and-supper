@@ -268,6 +268,24 @@ Location: `shared/src/commonTest/kotlin/com/soilandsupper/ai/orchestration/FakeA
 
 A future implementation can load a local model, run inference, and map the output to `AIInterpretation` subtypes without changing the orchestrator or domain layers.
 
+### Structured Output Contract
+
+For robust integration, a real local model must produce structured output that maps to `AIInterpretation`. See `AI_LOCAL_MODEL_CONTRACT.md` for the full contract, expected JSON schema, parsing rules, validation boundary, and platform-neutral implementation guidance.
+
+Key requirements:
+- Output must be one of the five `AIInterpretation` subtypes.
+- `AICommandProposal` must carry a valid `GardenCommand` with non-blank `explanation`.
+- `confidence` must be in [0.0, 1.0] if present.
+- Malformed output must fail safely through `AIInterpretationValidator`.
+
+### Validation Boundary
+
+`AIOrchestrator` validates every `AIInterpretation` before processing. Invalid interpretations (empty proposals, blank messages, out-of-range confidence, etc.) produce an error `AIResponse` and do not mutate garden state.
+
+### Platform Runtime Guidance
+
+Platform-specific model runtimes (TFLite, LiteRT-LM, llama.cpp, Core ML) must be implemented in platform source sets, not in `commonMain`. See `AI_LOCAL_MODEL_CONTRACT.md` for runtime options, licensing analysis, and decision matrix.
+
 ---
 
 ## 14. Offline-First Constraint

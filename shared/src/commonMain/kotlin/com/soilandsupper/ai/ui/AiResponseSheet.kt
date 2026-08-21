@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +38,8 @@ fun AiResponseSheet(
     onCancel: () -> Unit,
     onUndo: () -> Unit,
     onSelectClarification: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    loading: Boolean = false
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -49,6 +51,25 @@ fun AiResponseSheet(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            if (loading) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(32.dp),
+                        strokeWidth = 3.dp
+                    )
+                    Text(
+                        text = "Working on that...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                return@Column
+            }
+
             if (response.hasError && response.executedCommands.isEmpty() && response.pendingConfirmation.isEmpty()) {
                 AiErrorContent(response = response, onDismiss = onDismiss)
                 return@Column
@@ -124,64 +145,63 @@ private fun AiExecutedCommands(
     val succeeded = commands.filter { it.succeeded }
     val failed = commands.filter { !it.succeeded }
 
-    if (succeeded.isNotEmpty()) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = "Executed",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary
-            )
-            succeeded.forEach { result ->
-                Surface(
-                    modifier = Modifier.clip(RoundedCornerShape(8.dp)),
-                    color = MaterialTheme.colorScheme.primaryContainer
-                ) {
-                    Text(
-                        text = result.message,
-                        modifier = Modifier.padding(12.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (succeeded.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                succeeded.forEach { result ->
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = result.message,
+                            modifier = Modifier.padding(12.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
             }
         }
-    }
 
-    if (failed.isNotEmpty()) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(
-                text = "Failed",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error
-            )
-            failed.forEach { result ->
-                Surface(
-                    modifier = Modifier.clip(RoundedCornerShape(8.dp)),
-                    color = MaterialTheme.colorScheme.errorContainer
-                ) {
-                    Text(
-                        text = result.message,
-                        modifier = Modifier.padding(12.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onErrorContainer
-                    )
+        if (failed.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "Couldn't do",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+                failed.forEach { result ->
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = result.message,
+                            modifier = Modifier.padding(12.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
                 }
             }
         }
-    }
 
-    if (succeeded.isNotEmpty()) {
-        FloatingActionButton(
-            onClick = onUndo,
-            modifier = Modifier.size(48.dp),
-            shape = RoundedCornerShape(16.dp),
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
-        ) {
-            Icon(
-                imageVector = Icons.Default.Undo,
-                contentDescription = "Undo last action",
-                tint = MaterialTheme.colorScheme.onSecondaryContainer
-            )
+        if (succeeded.isNotEmpty()) {
+            FloatingActionButton(
+                onClick = onUndo,
+                modifier = Modifier.size(48.dp),
+                shape = RoundedCornerShape(16.dp),
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Undo,
+                    contentDescription = "Undo last action",
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
         }
     }
 }
@@ -194,27 +214,20 @@ private fun AiConfirmationPanel(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            text = "Confirm changes",
+            text = "Does that sound right?",
             style = MaterialTheme.typography.titleSmall
         )
         proposals.forEach { proposal ->
             Surface(
-                modifier = Modifier.clip(RoundedCornerShape(8.dp)),
-                color = MaterialTheme.colorScheme.surfaceVariant
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(8.dp)
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        text = proposal.explanation.ifBlank { proposal.command.toString() },
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    proposal.confidence?.let { confidence ->
-                        Text(
-                            text = "Confidence: ${(confidence * 100).toInt()}%",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                Text(
+                    text = proposal.explanation.ifBlank { proposal.command.toString() },
+                    modifier = Modifier.padding(12.dp),
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
         Row(
@@ -231,7 +244,7 @@ private fun AiConfirmationPanel(
                 onClick = onConfirm,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Confirm")
+                Text("Yes, do it")
             }
         }
     }
@@ -274,7 +287,7 @@ private fun AiErrorsList(errors: List<String>) {
     if (errors.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            text = "Issues",
+            text = "Couldn't do",
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.error
         )

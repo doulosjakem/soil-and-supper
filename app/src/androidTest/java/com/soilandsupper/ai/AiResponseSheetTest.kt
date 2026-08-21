@@ -76,7 +76,6 @@ class AiResponseSheetStateTest {
             )
         }
 
-        composeTestRule.onNodeWithText("Executed").assertIsDisplayed()
         composeTestRule.onNodeWithText("Growing space added: Bed 2").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Undo last action").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Undo last action").performClick()

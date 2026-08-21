@@ -9,8 +9,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.FloatingActionButton
@@ -33,10 +31,9 @@ fun AiInputBar(
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
     onVoice: () -> Unit,
-    onCamera: () -> Unit,
-    onDocument: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    loading: Boolean = false
 ) {
     Row(
         modifier = modifier
@@ -50,12 +47,12 @@ fun AiInputBar(
             onValueChange = onValueChange,
             modifier = Modifier.weight(1f),
             placeholder = { Text("Ask about your garden...") },
-            enabled = enabled,
+            enabled = enabled && !loading,
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
             keyboardActions = KeyboardActions(
                 onSend = {
-                    if (value.isNotBlank() && enabled) {
+                    if (value.isNotBlank() && enabled && !loading) {
                         onSend()
                     }
                 }
@@ -69,13 +66,13 @@ fun AiInputBar(
                     onClick = onSend,
                     modifier = Modifier.size(36.dp),
                     shape = CircleShape,
-                    containerColor = if (value.isNotBlank() && enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    containerColor = if (value.isNotBlank() && enabled && !loading) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Send,
                         contentDescription = "Send",
-                        tint = if (value.isNotBlank() && enabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = if (value.isNotBlank() && enabled && !loading) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -92,34 +89,6 @@ fun AiInputBar(
             Icon(
                 imageVector = Icons.Default.Mic,
                 contentDescription = "Voice input",
-                modifier = Modifier.size(20.dp)
-            )
-        }
-
-        FloatingActionButton(
-            onClick = onCamera,
-            modifier = Modifier.size(40.dp),
-            shape = CircleShape,
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.CameraAlt,
-                contentDescription = "Camera",
-                modifier = Modifier.size(20.dp)
-            )
-        }
-
-        FloatingActionButton(
-            onClick = onDocument,
-            modifier = Modifier.size(40.dp),
-            shape = CircleShape,
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Description,
-                contentDescription = "Import document",
                 modifier = Modifier.size(20.dp)
             )
         }

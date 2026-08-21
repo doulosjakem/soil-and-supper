@@ -21,6 +21,8 @@ class AIOrchestrator(
     private val history: CommandHistory,
     private val repository: GardenRepository
 ) {
+    private val interpretationValidator = AIInterpretationValidator()
+
     suspend fun process(request: AIRequest): AIResponse {
         if (isUndoRequest(request.input)) {
             return handleUndo()
@@ -30,6 +32,14 @@ class AIOrchestrator(
         val enrichedRequest = request.copy(gardenContext = gardenContext)
 
         val interpretation = provider.interpret(enrichedRequest)
+
+        val validationResult = interpretationValidator.validate(interpretation)
+        if (validationResult is AIInterpretationValidator.ValidationResult.Invalid) {
+            return AIResponse(
+                message = "I received an invalid interpretation: ${validationResult.errors.joinToString(", ")}",
+                errors = validationResult.errors
+            )
+        }
 
         return when (interpretation) {
             is AIInterpretation.InformationalAnswer -> AIResponse(message = interpretation.message)

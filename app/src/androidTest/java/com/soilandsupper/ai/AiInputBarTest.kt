@@ -30,16 +30,12 @@ class AiInputBarTest {
                 value = "",
                 onValueChange = {},
                 onSend = {},
-                onVoice = {},
-                onCamera = {},
-                onDocument = {}
+                onVoice = {}
             )
         }
 
         composeTestRule.onNodeWithText("Ask about your garden...").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Voice input").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Camera").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Import document").assertIsDisplayed()
     }
 
     @Test
@@ -50,9 +46,7 @@ class AiInputBarTest {
                 value = "add a bed",
                 onValueChange = {},
                 onSend = { sent = true },
-                onVoice = {},
-                onCamera = {},
-                onDocument = {}
+                onVoice = {}
             )
         }
 
@@ -68,50 +62,12 @@ class AiInputBarTest {
                 value = "",
                 onValueChange = {},
                 onSend = {},
-                onVoice = { voiceClicked = true },
-                onCamera = {},
-                onDocument = {}
+                onVoice = { voiceClicked = true }
             )
         }
 
         composeTestRule.onNodeWithContentDescription("Voice input").performClick()
         assert(voiceClicked)
-    }
-
-    @Test
-    fun inputBar_cameraButtonCallsOnCamera() {
-        var cameraClicked = false
-        composeTestRule.setContent {
-            AiInputBar(
-                value = "",
-                onValueChange = {},
-                onSend = {},
-                onVoice = {},
-                onCamera = { cameraClicked = true },
-                onDocument = {}
-            )
-        }
-
-        composeTestRule.onNodeWithContentDescription("Camera").performClick()
-        assert(cameraClicked)
-    }
-
-    @Test
-    fun inputBar_documentButtonCallsOnDocument() {
-        var documentClicked = false
-        composeTestRule.setContent {
-            AiInputBar(
-                value = "",
-                onValueChange = {},
-                onSend = {},
-                onVoice = {},
-                onCamera = {},
-                onDocument = { documentClicked = true }
-            )
-        }
-
-        composeTestRule.onNodeWithContentDescription("Import document").performClick()
-        assert(documentClicked)
     }
 
     @Test
@@ -122,9 +78,7 @@ class AiInputBarTest {
                 value = currentValue,
                 onValueChange = { currentValue = it },
                 onSend = { currentValue = "" },
-                onVoice = {},
-                onCamera = {},
-                onDocument = {}
+                onVoice = {}
             )
         }
 

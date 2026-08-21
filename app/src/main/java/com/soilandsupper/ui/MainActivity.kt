@@ -107,6 +107,7 @@ fun AppNavigation(
     val currentRoute = navBackStackEntry.value?.destination?.route
 
     var aiResponse by remember { mutableStateOf<AIResponse?>(null) }
+    var aiLoading by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = remember { CoroutineScope(Dispatchers.Main.immediate) }
 
@@ -169,33 +170,30 @@ fun AppNavigation(
                     },
                     repository = repository,
                     onAiSubmit = { text ->
-                        val request = AIRequest(input = AIInput.Text(text))
+                        aiLoading = true
                         scope.launch(Dispatchers.Main.immediate) {
-                            val response = orchestrator.process(request)
-                            aiResponse = response
+                            try {
+                                val request = AIRequest(input = AIInput.Text(text))
+                                val response = orchestrator.process(request)
+                                aiResponse = response
+                            } finally {
+                                aiLoading = false
+                            }
                         }
                     },
                     onAiVoice = {
+                        aiLoading = true
                         scope.launch(Dispatchers.Main.immediate) {
-                            val request = AIRequest(input = AIInput.VoiceTranscript(rawContent = "", confidence = null))
-                            val response = orchestrator.process(request)
-                            aiResponse = response
+                            try {
+                                val request = AIRequest(input = AIInput.VoiceTranscript(rawContent = "", confidence = null))
+                                val response = orchestrator.process(request)
+                                aiResponse = response
+                            } finally {
+                                aiLoading = false
+                            }
                         }
                     },
-                    onAiCamera = {
-                        scope.launch(Dispatchers.Main.immediate) {
-                            val request = AIRequest(input = AIInput.ImageReference(rawContent = "", imageId = "camera"))
-                            val response = orchestrator.process(request)
-                            aiResponse = response
-                        }
-                    },
-                    onAiDocument = {
-                        scope.launch(Dispatchers.Main.immediate) {
-                            val request = AIRequest(input = AIInput.DocumentText(rawContent = "", documentType = null))
-                            val response = orchestrator.process(request)
-                            aiResponse = response
-                        }
-                    }
+                    loading = aiLoading
                 )
             }
             composable("add_plant") {

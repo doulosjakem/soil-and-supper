@@ -32,8 +32,8 @@ fun GardenScreen(
     repository: GardenRepository,
     onAiSubmit: (String) -> Unit = {},
     onAiVoice: () -> Unit = {},
-    onAiCamera: () -> Unit = {},
-    onAiDocument: () -> Unit = {}
+    loading: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     val growingSpaces by repository.getAllGrowingSpaces().collectAsState(initial = emptyList())
     val occupancies by repository.getAllOccupancies().collectAsState(initial = emptyList())
@@ -51,7 +51,7 @@ fun GardenScreen(
 
     var aiInput by remember { mutableStateOf("") }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize()) {
         Scaffold { padding ->
             LazyColumn(
                 modifier = Modifier
@@ -102,8 +102,7 @@ fun GardenScreen(
                 aiInput = ""
             },
             onVoice = onAiVoice,
-            onCamera = onAiCamera,
-            onDocument = onAiDocument
+            loading = loading
         )
     }
 }

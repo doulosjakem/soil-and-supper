@@ -449,4 +449,248 @@ class AIOrchestratorTest {
         assertTrue(response.message.contains("Tomato"))
         assertTrue(response.executedCommands.isEmpty())
     }
+
+    @Test
+    fun `malformed command proposals with empty list are rejected`() = runBlocking {
+        provider.setResponse("do something", AIInterpretation.CommandProposals(proposals = emptyList()))
+
+        val response = orchestrator.process(
+            AIRequest(
+                input = AIInput.Text("do something")
+            )
+        )
+
+        assertTrue(response.hasError)
+        assertTrue(response.message.contains("invalid interpretation"))
+        assertTrue(response.executedCommands.isEmpty())
+        assertEquals(0, history.size)
+    }
+
+    @Test
+    fun `malformed command proposal with blank explanation is rejected`() = runBlocking {
+        provider.setResponse("do something", AIInterpretation.CommandProposals(
+            proposals = listOf(
+                AICommandProposal(
+                    command = GardenCommand.AddGrowingSpace(name = "Bed 2"),
+                    explanation = ""
+                )
+            )
+        ))
+
+        val response = orchestrator.process(
+            AIRequest(
+                input = AIInput.Text("do something")
+            )
+        )
+
+        assertTrue(response.hasError)
+        assertTrue(response.message.contains("invalid interpretation"))
+        assertTrue(response.executedCommands.isEmpty())
+        assertEquals(0, history.size)
+    }
+
+    @Test
+    fun `malformed command proposal with out-of-range confidence is rejected`() = runBlocking {
+        provider.setResponse("do something", AIInterpretation.CommandProposals(
+            proposals = listOf(
+                AICommandProposal(
+                    command = GardenCommand.AddGrowingSpace(name = "Bed 2"),
+                    explanation = "Add bed",
+                    confidence = -0.5f
+                )
+            )
+        ))
+
+        val response = orchestrator.process(
+            AIRequest(
+                input = AIInput.Text("do something")
+            )
+        )
+
+        assertTrue(response.hasError)
+        assertTrue(response.message.contains("invalid interpretation"))
+        assertTrue(response.executedCommands.isEmpty())
+        assertEquals(0, history.size)
+    }
+
+    @Test
+    fun `malformed clarification request with blank question is rejected`() = runBlocking {
+        provider.setResponse("do something", AIInterpretation.ClarificationRequest(
+            question = "",
+            pendingProposals = emptyList()
+        ))
+
+        val response = orchestrator.process(
+            AIRequest(
+                input = AIInput.Text("do something")
+            )
+        )
+
+        assertTrue(response.hasError)
+        assertTrue(response.message.contains("invalid interpretation"))
+        assertTrue(response.executedCommands.isEmpty())
+    }
+
+    @Test
+    fun `malformed uncertainty with blank reason is rejected`() = runBlocking {
+        provider.setResponse("do something", AIInterpretation.Uncertainty(reason = ""))
+
+        val response = orchestrator.process(
+            AIRequest(
+                input = AIInput.Text("do something")
+            )
+        )
+
+        assertTrue(response.hasError)
+        assertTrue(response.message.contains("invalid interpretation"))
+        assertTrue(response.executedCommands.isEmpty())
+    }
+
+    @Test
+    fun `malformed informational answer with blank message is rejected`() = runBlocking {
+        provider.setResponse("do something", AIInterpretation.InformationalAnswer(message = ""))
+
+        val response = orchestrator.process(
+            AIRequest(
+                input = AIInput.Text("do something")
+            )
+        )
+
+        assertTrue(response.hasError)
+        assertTrue(response.message.contains("invalid interpretation"))
+        assertTrue(response.executedCommands.isEmpty())
+    }
+
+    @Test
+    fun `malformed recognition result with blank recognized value is rejected`() = runBlocking {
+        provider.setResponse("what's this plant", AIInterpretation.RecognitionResult(recognized = "", confidence = 0.9f))
+
+        val response = orchestrator.process(
+            AIRequest(
+                input = AIInput.Text("what's this plant")
+            )
+        )
+
+        assertTrue(response.hasError)
+        assertTrue(response.message.contains("invalid interpretation"))
+        assertTrue(response.executedCommands.isEmpty())
+    }
+
+    @Test
+    fun `malformed recognition result with out-of-range confidence is rejected`() = runBlocking {
+        provider.setResponse("what's this plant", AIInterpretation.RecognitionResult(recognized = "Tomato", confidence = 1.5f))
+
+        val response = orchestrator.process(
+            AIRequest(
+                input = AIInput.Text("what's this plant")
+            )
+        )
+
+        assertTrue(response.hasError)
+        assertTrue(response.message.contains("invalid interpretation"))
+        assertTrue(response.executedCommands.isEmpty())
+    }
+
+    @Test
+    fun `ambiguous output does not mutate state`() = runBlocking {
+        provider.setResponse("plant beans", AIInterpretation.CommandProposals(
+            proposals = listOf(
+                AICommandProposal(
+                    command = GardenCommand.PlantCrop(cropName = "Bean", growingSpaceId = 1L, startDate = epochMillis(2026, 6, 1)),
+                    explanation = "Plant beans",
+                    ambiguities = listOf("Which bed?")
+                )
+            )
+        ))
+
+        val response = orchestrator.process(
+            AIRequest(
+                input = AIInput.Text("plant beans")
+            )
+        )
+
+        assertTrue(response.needsClarification)
+        assertTrue(response.pendingConfirmation.isNotEmpty())
+        assertTrue(response.executedCommands.isEmpty())
+        assertEquals(0, history.size)
+    }
+
+    @Test
+    fun `uncertain output does not mutate state`() = runBlocking {
+        provider.setResponse("something random", AIInterpretation.Uncertainty("Could not understand intent"))
+
+        val response = orchestrator.process(
+            AIRequest(
+                input = AIInput.Text("something random")
+            )
+        )
+
+        assertTrue(response.hasError)
+        assertTrue(response.executedCommands.isEmpty())
+        assertEquals(0, history.size)
+    }
+
+    @Test
+    fun `multi-command output remains atomic with validation`() = runBlocking {
+        provider.setResponse("add two beds", AIInterpretation.CommandProposals(
+            proposals = listOf(
+                AICommandProposal(
+                    command = GardenCommand.AddGrowingSpace(name = "Bed 2"),
+                    explanation = "Add Bed 2"
+                ),
+                AICommandProposal(
+                    command = GardenCommand.AddGrowingSpace(name = ""),
+                    explanation = "Add invalid bed"
+                )
+            )
+        ))
+
+        val response = orchestrator.process(
+            AIRequest(
+                input = AIInput.Text("add two beds")
+            )
+        )
+
+        assertTrue(response.hasError)
+        assertTrue(response.executedCommands.isNotEmpty())
+        assertTrue(response.executedCommands.count { !it.succeeded } > 0)
+        assertEquals(1, history.size)
+    }
+
+    @Test
+    fun `read-only query remains read-only`() = runBlocking {
+        provider.setResponse("what's growing in bed 1", AIInterpretation.InformationalAnswer("Tomato is growing in Bed 1"))
+
+        val response = orchestrator.process(
+            AIRequest(
+                input = AIInput.Text("what's growing in bed 1")
+            )
+        )
+
+        assertFalse(response.hasError)
+        assertEquals("Tomato is growing in Bed 1", response.message)
+        assertTrue(response.executedCommands.isEmpty())
+        assertEquals(0, history.size)
+    }
+
+    @Test
+    fun `undo remains domain-owned`() = runBlocking {
+        provider.setResponse("add a bed", AIInterpretation.CommandProposals(
+            proposals = listOf(
+                AICommandProposal(
+                    command = GardenCommand.AddGrowingSpace(name = "Bed 2"),
+                    explanation = "Add a new bed"
+                )
+            )
+        ))
+
+        orchestrator.process(AIRequest(input = AIInput.Text("add a bed")))
+        assertEquals(1, history.size)
+
+        provider.setResponse("undo that", AIInterpretation.InformationalAnswer("undo"))
+        val response = orchestrator.process(AIRequest(input = AIInput.Text("undo that")))
+
+        assertTrue(response.message.contains("Undone"))
+        assertEquals(0, history.size)
+    }
 }
