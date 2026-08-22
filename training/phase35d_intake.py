@@ -418,24 +418,46 @@ def process_dataset(dataset_dir: Path, dataset_info: Dict, core_hashes: Set[str]
     all_files = [f for f in dataset_dir.rglob("*") if f.is_file()]
     report["total_files"] = len(all_files)
 
-    class_dirs = []
     skip_dirs = {".cache", "extracted", "splits", "images", "leaf_grouping", "data", "train", "val", "test", "valid", "Train", "Val", "Test", "Valid"}
+    split_dirs = {"train", "val", "test", "valid", "Train", "Val", "Test", "Valid", "train_set_folder", "validation_set_folder", "test_set_folder", "training_set", "validation_set", "testing_set"}
+
+    def has_images(d: Path) -> bool:
+        return any(f.is_file() and f.suffix.lower() in exts for f in d.rglob("*"))
+
+    def find_class_dirs(root: Path) -> List[Path]:
+        found = []
+        for item in root.iterdir():
+            if item.is_dir() and not item.name.startswith(".") and item.name not in skip_dirs:
+                if has_images(item):
+                    found.append(item)
+        return found
+
+    class_dirs = []
+
     for item in dataset_dir.iterdir():
-        if item.is_dir() and not item.name.startswith(".") and item.name not in skip_dirs:
-            imgs = [f for f in item.rglob("*") if f.is_file() and f.suffix.lower() in exts]
-            if imgs:
-                class_dirs.append(item)
+        if not item.is_dir() or item.name.startswith("."):
+            continue
+        children = {sub.name.lower() for sub in item.iterdir() if sub.is_dir()}
+        if children & split_dirs:
+            for sub in item.iterdir():
+                if sub.is_dir() and sub.name.lower() in split_dirs:
+                    class_dirs.extend(find_class_dirs(sub))
+        elif item.name not in skip_dirs and has_images(item):
+            class_dirs.append(item)
 
     if not class_dirs:
         for candidate in [dataset_dir / "train", dataset_dir / "Train", dataset_dir / "images", dataset_dir / "extracted"]:
             if candidate.exists():
-                for item in candidate.iterdir():
-                    if item.is_dir() and not item.name.startswith("."):
-                        imgs = [f for f in item.rglob("*") if f.is_file() and f.suffix.lower() in exts]
-                        if imgs:
-                            class_dirs.append(item)
+                class_dirs = find_class_dirs(candidate)
                 if class_dirs:
                     break
+
+    if not class_dirs:
+        for item in dataset_dir.iterdir():
+            if item.is_dir() and not item.name.startswith(".") and item.name in skip_dirs:
+                found = find_class_dirs(item)
+                if found:
+                    class_dirs.extend(found)
 
     if class_dirs:
         report["classes_discovered"] = sorted([d.name for d in class_dirs])
@@ -537,7 +559,7 @@ def read_dataset_metadata(dataset_dir: Path) -> Dict:
         metadata["readme_text"] = readme.read_text(encoding="utf-8", errors="ignore")
     if manifest.exists():
         try:
-            metadata["manifest_data"] = json.loads(manifest.read_text(encoding="utf-8"))
+            metadata["manifest_data"] = json.loads(manifest.read_text(encoding="utf-8-sig"))
         except json.JSONDecodeError:
             metadata["manifest_data"] = {}
 
