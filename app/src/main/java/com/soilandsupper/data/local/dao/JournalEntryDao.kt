@@ -14,6 +14,9 @@ interface JournalEntryDao {
     @Query("SELECT * FROM journal_entries WHERE plantId = :plantId ORDER BY date DESC")
     fun getJournalEntriesForPlant(plantId: Long): Flow<List<JournalEntry>>
 
+    @Query("SELECT * FROM journal_entries WHERE id = :id")
+    suspend fun getJournalEntryById(id: Long): JournalEntry?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertJournalEntry(entry: JournalEntry): Long
 

@@ -91,9 +91,9 @@ fun HarvestScreen(repository: GardenRepository) {
                         val qty = quantity.toDoubleOrNull()
                         if (cropName.isNotBlank() && qty != null) {
                             kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                                                            repository.insertHarvest(
+                                repository.insertHarvest(
                                     Harvest(
-                                        plantId = 0,
+                                        plantId = null,
                                         cropName = cropName,
                                         quantity = qty,
                                         unit = unit,

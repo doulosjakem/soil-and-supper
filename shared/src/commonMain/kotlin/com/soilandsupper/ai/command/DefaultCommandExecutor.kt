@@ -86,7 +86,7 @@ class DefaultCommandExecutor(
                     ?: return CommandResult.NotFound(command, "Occupancy", command.occupancyId)
 
                 val harvest = Harvest(
-                    plantId = occupancy.plantId ?: 0,
+                    plantId = occupancy.plantId,
                     cropName = occupancy.cropName,
                     quantity = command.quantity,
                     unit = command.unit,
@@ -101,7 +101,7 @@ class DefaultCommandExecutor(
             is GardenCommand.EndCrop -> executeEndCrop(command, repository)
             is GardenCommand.RecordObservation -> {
                 val entry = JournalEntry(
-                    plantId = command.plantId ?: 0,
+                    plantId = command.plantId,
                     date = command.date,
                     text = command.text
                 )

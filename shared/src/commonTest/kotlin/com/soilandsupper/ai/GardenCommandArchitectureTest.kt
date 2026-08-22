@@ -18,6 +18,7 @@ import com.soilandsupper.shared.domain.model.Plant
 import com.soilandsupper.shared.domain.model.Seed
 import com.soilandsupper.shared.domain.model.SeedState
 import com.soilandsupper.util.epochMillis
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -366,6 +367,81 @@ class GardenCommandArchitectureTest {
         )
         assertTrue(result is CommandResult.Conflict)
         assertFalse(result.succeeded)
+    }
+
+    @Test
+    fun `successful plant crop creates occupancy in growing space`() = runBlocking {
+        val result = executor.execute(
+            GardenCommand.PlantCrop(
+                cropName = "Carrot",
+                growingSpaceId = 2L,
+                startDate = epochMillis(2026, 6, 1)
+            ),
+            repository
+        )
+        assertTrue(result is CommandResult.Success)
+        assertTrue(result.succeeded)
+
+        val occupancies = repository.getAllOccupancies().first()
+        val occupancy = occupancies.firstOrNull { it.growingSpaceId == 2L && it.cropName == "Carrot" }
+        assertNotNull(occupancy)
+        assertEquals(2L, occupancy!!.growingSpaceId)
+        assertEquals("Carrot", occupancy.cropName)
+        assertEquals(OccupancyStatus.ACTIVE.name, occupancy.status)
+    }
+
+    @Test
+    fun `harvest crop with occupancy without plant uses null plantId`() = runBlocking {
+        repository = FakeGardenRepository(
+            initialSpaces = listOf(GrowingSpace(id = 1L, name = "Bed 1")),
+            initialOccupancies = listOf(
+                Occupancy(
+                    id = 1L,
+                    cropName = "Tomato",
+                    startDate = epochMillis(2026, 5, 1),
+                    status = OccupancyStatus.ACTIVE.name,
+                    growingSpaceId = 1L,
+                    plantId = null
+                )
+            ),
+            initialPlants = emptyList()
+        )
+        history = InMemoryCommandHistory()
+        executor = DefaultCommandExecutor(DefaultCommandValidator(), history)
+
+        val result = executor.execute(
+            GardenCommand.HarvestCrop(
+                occupancyId = 1L,
+                quantity = 5.0,
+                unit = "lb",
+                date = epochMillis(2026, 8, 1)
+            ),
+            repository
+        )
+        assertTrue(result is CommandResult.Success)
+        assertTrue(result.succeeded)
+
+        val harvests = (repository as PlantRepository).getAllHarvests().first()
+        val harvest = harvests.firstOrNull { it.cropName == "Tomato" }
+        assertNotNull(harvest)
+        assertNull(harvest!!.plantId)
+    }
+
+    @Test
+    fun `record observation without plantId stores null plantId`() = runBlocking {
+        val result = executor.execute(
+            GardenCommand.RecordObservation(
+                text = "First leaves appeared",
+                date = epochMillis(2026, 6, 1)
+            ),
+            repository
+        )
+        assertTrue(result is CommandResult.Success)
+        assertTrue(result.succeeded)
+
+        val undoResult = history.undoLast(repository)
+        assertNotNull(undoResult)
+        assertTrue(undoResult!!.succeeded)
     }
 
     @Test

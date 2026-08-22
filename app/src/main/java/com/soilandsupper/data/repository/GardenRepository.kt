@@ -185,6 +185,9 @@ class GardenRepository(
     override fun getJournalEntriesForPlant(plantId: Long): Flow<List<SharedJournalEntry>> =
         journalEntryDao.getJournalEntriesForPlant(plantId).map { list -> list.map { it.toShared() } }
 
+    override suspend fun getJournalEntryById(id: Long): SharedJournalEntry? =
+        journalEntryDao.getJournalEntryById(id)?.toShared()
+
     override suspend fun insertJournalEntry(entry: SharedJournalEntry): Long =
         journalEntryDao.insertJournalEntry(entry.toRoom())
 

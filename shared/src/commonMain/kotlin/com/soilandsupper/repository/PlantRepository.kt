@@ -25,6 +25,8 @@ interface PlantRepository {
 
     fun getJournalEntriesForPlant(plantId: Long): Flow<List<JournalEntry>>
 
+    suspend fun getJournalEntryById(id: Long): JournalEntry?
+
     suspend fun insertJournalEntry(entry: JournalEntry): Long
 
     suspend fun updateJournalEntry(entry: JournalEntry)

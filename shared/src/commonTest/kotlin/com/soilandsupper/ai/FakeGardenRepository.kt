@@ -99,6 +99,7 @@ class FakeGardenRepository(
     override suspend fun insertPhoto(photo: PlantPhoto) = throw UnsupportedOperationException()
     override suspend fun deletePhoto(photo: PlantPhoto) = throw UnsupportedOperationException()
     override fun getJournalEntriesForPlant(plantId: Long): Flow<List<JournalEntry>> = flowOf(journalEntries.filter { it.plantId == plantId })
+    override suspend fun getJournalEntryById(id: Long): JournalEntry? = journalEntries.firstOrNull { it.id == id }
     override suspend fun insertJournalEntry(entry: JournalEntry): Long { val id = nextId(); journalEntries.add(entry.copy(id = id)); return id }
     override suspend fun updateJournalEntry(entry: JournalEntry) = throw UnsupportedOperationException()
     override suspend fun deleteJournalEntry(entry: JournalEntry) { journalEntries.remove(entry) }

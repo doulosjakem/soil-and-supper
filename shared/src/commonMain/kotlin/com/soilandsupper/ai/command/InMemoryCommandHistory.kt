@@ -92,8 +92,9 @@ class InMemoryCommandHistory : CommandHistory {
                 val plantRepo = repository as? PlantRepository
                     ?: return CommandResult.NotFound(command, "JournalEntry", -1)
                 val entryId = lastEntry.previousState?.get("journalEntryId") as? Long
-                val entry = plantRepo.getJournalEntriesForPlant(command.plantId ?: 0).first().firstOrNull { it.id == entryId }
-                    ?: return CommandResult.NotFound(command, "JournalEntry", entryId ?: -1)
+                    ?: return CommandResult.NotFound(command, "JournalEntry", -1)
+                val entry = plantRepo.getJournalEntryById(entryId)
+                    ?: return CommandResult.NotFound(command, "JournalEntry", entryId)
                 plantRepo.deleteJournalEntry(entry)
                 CommandResult.Success(command, "Undone: observation removed")
             }
