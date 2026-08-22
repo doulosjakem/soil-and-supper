@@ -36,10 +36,15 @@ class AndroidFakeAIProvider : LocalAIProvider {
 
         if (lower.contains("harvest")) {
             val active = request.gardenContext?.activeOccupancies ?: emptyList()
-            return if (active.isEmpty()) {
+            val cropMatch = extractCropName(lower)
+            val targets = if (cropMatch != null) {
+                active.filter { it.cropName.equals(cropMatch, ignoreCase = true) }
+            } else active
+
+            return if (targets.isEmpty()) {
                 AIInterpretation.InformationalAnswer("Nothing to harvest right now.")
             } else {
-                val proposals = active.map { occ ->
+                val proposals = targets.map { occ ->
                     AICommandProposal(
                         command = GardenCommand.HarvestCrop(
                             occupancyId = occ.id,
@@ -103,29 +108,34 @@ class AndroidFakeAIProvider : LocalAIProvider {
             val active = request.gardenContext?.activeOccupancies ?: emptyList()
             val spaces = request.gardenContext?.spaces ?: emptyList()
             val proposals = mutableListOf<AICommandProposal>()
-            if (active.isNotEmpty()) {
+            val targetSpace = mentionedBed?.let { name -> spaces.firstOrNull { s -> s.name.equals(name, ignoreCase = true) } }
+            val occupancyToHarvest = targetSpace?.let { space ->
+                active.firstOrNull { it.growingSpaceId == space.id }
+            } ?: active.firstOrNull()
+
+            if (occupancyToHarvest != null) {
                 proposals.add(
                     AICommandProposal(
                         command = GardenCommand.HarvestCrop(
-                            occupancyId = active.first().id,
+                            occupancyId = occupancyToHarvest.id,
                             quantity = 1.0,
                             unit = "lb",
                             date = System.currentTimeMillis()
                         ),
-                        explanation = "Harvest ${active.first().cropName}"
+                        explanation = "Harvest ${occupancyToHarvest.cropName}"
                     )
                 )
             }
-            val targetSpace = mentionedBed?.let { name -> spaces.firstOrNull { s -> s.name.equals(name, ignoreCase = true) } } ?: spaces.firstOrNull()
-            if (targetSpace != null) {
+            val plantSpace = targetSpace ?: spaces.firstOrNull()
+            if (plantSpace != null) {
                 proposals.add(
                     AICommandProposal(
                         command = GardenCommand.PlantCrop(
                             cropName = cropName,
-                            growingSpaceId = targetSpace.id,
+                            growingSpaceId = plantSpace.id,
                             startDate = System.currentTimeMillis()
                         ),
-                        explanation = "Plant $cropName in ${targetSpace.name}"
+                        explanation = "Plant $cropName in ${plantSpace.name}"
                     )
                 )
             }

@@ -101,6 +101,23 @@ class AiResponseSheetStateTest {
         composeTestRule.onNodeWithText("I'm not sure how to help with that yet.").assertIsDisplayed()
         composeTestRule.onNodeWithText("Unknown request").assertIsDisplayed()
     }
+
+    @Test
+    fun loadingState_showsWorkingMessage() {
+        composeTestRule.setContent {
+            AiResponseSheetContent(
+                response = AIResponse(message = ""),
+                onDismiss = {},
+                onConfirm = {},
+                onCancel = {},
+                onUndo = {},
+                onSelectClarification = {},
+                loading = true
+            )
+        }
+
+        composeTestRule.onNodeWithText("Working on that...").assertIsDisplayed()
+    }
 }
 
 @Composable
@@ -110,7 +127,8 @@ private fun AiResponseSheetContent(
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
     onUndo: () -> Unit,
-    onSelectClarification: (String) -> Unit
+    onSelectClarification: (String) -> Unit,
+    loading: Boolean = false
 ) {
     androidx.compose.material3.Surface(
         modifier = androidx.compose.ui.Modifier.fillMaxSize(),
@@ -122,7 +140,8 @@ private fun AiResponseSheetContent(
             onConfirm = onConfirm,
             onCancel = onCancel,
             onUndo = onUndo,
-            onSelectClarification = onSelectClarification
+            onSelectClarification = onSelectClarification,
+            loading = loading
         )
     }
 }

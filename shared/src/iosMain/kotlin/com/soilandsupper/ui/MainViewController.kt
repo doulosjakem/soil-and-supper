@@ -7,7 +7,6 @@ fun MainViewController(): ComposeUIViewController {
     return ComposeUIViewController {
         SoilAndSupperTheme {
             GardenScreen(
-                onPlantClick = {},
                 repository = IosGardenRepository()
             )
         }

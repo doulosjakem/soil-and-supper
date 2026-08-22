@@ -92,7 +92,6 @@ class DefaultPlanningEngine : PlanningEngine {
 
         val allSuggestions = mutableListOf<PlantingSuggestion>()
         for (space in openSpaces) {
-            val activeForSpace = allOccupancies.filter { it.growingSpaceId == space.id && it.status == OccupancyStatus.ACTIVE.name }
             allSuggestions.addAll(evaluateCrops(space, onDate, inGarden, seeds, desires))
         }
         return deduplicateAndRank(allSuggestions)
@@ -300,10 +299,6 @@ class DefaultPlanningEngine : PlanningEngine {
         } else {
             if (currentMonth >= window.startMonth) currentMonth else window.startMonth
         }
-
-        val instant = Instant.fromEpochMilliseconds(date)
-        val localDateTime = instant.toLocalDateTime(TimeZone.UTC)
-        val year = localDateTime.year
 
         val calendar = java.util.Calendar.getInstance()
         calendar.timeInMillis = date

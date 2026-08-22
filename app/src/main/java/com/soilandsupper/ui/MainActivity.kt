@@ -165,9 +165,6 @@ fun AppNavigation(
         ) {
             composable(Screen.Garden.route) {
                 GardenScreen(
-                    onPlantClick = { plantId ->
-                        navController.navigate("plant_detail/$plantId")
-                    },
                     repository = repository,
                     onAiSubmit = { text ->
                         aiLoading = true

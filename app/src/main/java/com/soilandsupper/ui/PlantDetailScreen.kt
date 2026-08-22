@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -61,6 +62,7 @@ fun PlantDetailScreen(
     var harvestQuantity by remember { mutableStateOf("") }
     var harvestUnit by remember { mutableStateOf("lb") }
     var harvestNotes by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(plantId) {
         launch {
@@ -104,7 +106,7 @@ fun PlantDetailScreen(
                         PhotoThumbnail(
                             uriString = photo.uri,
                             onDelete = {
-                                kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                                scope.launch(kotlinx.coroutines.Dispatchers.IO) {
                                     repository.deletePhoto(photo)
                                 }
                             }
@@ -112,7 +114,7 @@ fun PlantDetailScreen(
                     }
                     item {
                         AddPhotoButton(onPhotoSelected = { uri ->
-                            kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
                                 repository.insertPhoto(
                                     PlantPhoto(
                                         plantId = plantId,
@@ -137,7 +139,7 @@ fun PlantDetailScreen(
                     )
                     FloatingActionButton(
                         onClick = { showAddJournal = true },
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Add journal entry")
                     }
@@ -155,7 +157,7 @@ fun PlantDetailScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = {
                             if (newJournalText.isNotBlank()) {
-                                kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                                scope.launch(kotlinx.coroutines.Dispatchers.IO) {
                                     repository.insertJournalEntry(
                                         JournalEntry(
                                             plantId = plantId,
@@ -183,7 +185,7 @@ fun PlantDetailScreen(
                 JournalEntryItem(
                     entry = entry,
                     onDelete = {
-                        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                        scope.launch(kotlinx.coroutines.Dispatchers.IO) {
                             repository.deleteJournalEntry(entry)
                         }
                     }
@@ -202,7 +204,7 @@ fun PlantDetailScreen(
                     )
                     FloatingActionButton(
                         onClick = { showAddHarvest = true },
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(Icons.Default.Add, contentDescription = "Add harvest")
                     }
@@ -233,7 +235,7 @@ fun PlantDetailScreen(
                         Button(onClick = {
                             val qty = harvestQuantity.toDoubleOrNull()
                             if (qty != null) {
-                                kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                                scope.launch(kotlinx.coroutines.Dispatchers.IO) {
                                     repository.insertHarvest(
                                         Harvest(
                                             plantId = plantId,
@@ -268,7 +270,7 @@ fun PlantDetailScreen(
                 HarvestItem(
                     harvest = harvest,
                     onDelete = {
-                        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                        scope.launch(kotlinx.coroutines.Dispatchers.IO) {
                             repository.deleteHarvest(harvest)
                         }
                     }

@@ -36,7 +36,6 @@ class GardenTimelineUiTest {
 
         composeTestRule.setContent {
             GardenScreen(
-                onPlantClick = { },
                 repository = emptyRepo
             )
         }
@@ -49,7 +48,6 @@ class GardenTimelineUiTest {
     fun occupiedSpace_currentCropAppears() {
         composeTestRule.setContent {
             GardenScreen(
-                onPlantClick = { },
                 repository = fakeRepository
             )
         }
@@ -63,7 +61,6 @@ class GardenTimelineUiTest {
     fun occupiedSpace_currentCropIsVisuallyPrimary() {
         composeTestRule.setContent {
             GardenScreen(
-                onPlantClick = { },
                 repository = fakeRepository
             )
         }
@@ -76,7 +73,6 @@ class GardenTimelineUiTest {
     fun futureOpening_showsFutureOpportunity() {
         composeTestRule.setContent {
             GardenScreen(
-                onPlantClick = { },
                 repository = fakeRepository
             )
         }
@@ -88,7 +84,6 @@ class GardenTimelineUiTest {
     fun openSpace_showsAvailableSpace() {
         composeTestRule.setContent {
             GardenScreen(
-                onPlantClick = { },
                 repository = fakeRepository
             )
         }
@@ -100,7 +95,6 @@ class GardenTimelineUiTest {
     fun openSpace_showsCurrentSuggestions() {
         composeTestRule.setContent {
             GardenScreen(
-                onPlantClick = { },
                 repository = fakeRepository
             )
         }
@@ -112,7 +106,6 @@ class GardenTimelineUiTest {
     fun dateScrubber_changesProjection() {
         composeTestRule.setContent {
             GardenScreen(
-                onPlantClick = { },
                 repository = fakeRepository
             )
         }
@@ -124,7 +117,6 @@ class GardenTimelineUiTest {
     fun lifecycleStates_haveTextLabels() {
         composeTestRule.setContent {
             GardenScreen(
-                onPlantClick = { },
                 repository = fakeRepository
             )
         }
@@ -136,7 +128,6 @@ class GardenTimelineUiTest {
     fun futureSuggestions_haveAccessibleLabels() {
         composeTestRule.setContent {
             GardenScreen(
-                onPlantClick = { },
                 repository = fakeRepository
             )
         }
@@ -149,7 +140,6 @@ class GardenTimelineUiTest {
     fun dateScrubber_isAccessible() {
         composeTestRule.setContent {
             GardenScreen(
-                onPlantClick = { },
                 repository = fakeRepository
             )
         }
@@ -162,7 +152,6 @@ class GardenTimelineUiTest {
     fun buttons_haveMeaningfulLabels() {
         composeTestRule.setContent {
             GardenScreen(
-                onPlantClick = { },
                 repository = fakeRepository
             )
         }

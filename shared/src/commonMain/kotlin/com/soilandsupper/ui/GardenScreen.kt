@@ -28,7 +28,6 @@ import com.soilandsupper.shared.domain.model.Seed
 
 @Composable
 fun GardenScreen(
-    onPlantClick: (Long) -> Unit,
     repository: GardenRepository,
     onAiSubmit: (String) -> Unit = {},
     onAiVoice: () -> Unit = {},

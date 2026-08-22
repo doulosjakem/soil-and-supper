@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -61,27 +62,33 @@ fun AiInputBar(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                 unfocusedBorderColor = MaterialTheme.colorScheme.outline
             ),
-            trailingIcon = {
+             trailingIcon = {
+                val sendEnabled = value.isNotBlank() && enabled && !loading
                 FloatingActionButton(
-                    onClick = onSend,
-                    modifier = Modifier.size(36.dp),
+                    onClick = { if (sendEnabled) onSend() },
+                    modifier = Modifier
+                        .size(48.dp)
+                        .alpha(if (sendEnabled) 1f else 0.38f),
                     shape = CircleShape,
-                    containerColor = if (value.isNotBlank() && enabled && !loading) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                    containerColor = if (sendEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                     elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Send,
                         contentDescription = "Send",
-                        tint = if (value.isNotBlank() && enabled && !loading) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp)
+                        tint = if (sendEnabled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
         )
 
+        val voiceEnabled = enabled && !loading
         FloatingActionButton(
-            onClick = onVoice,
-            modifier = Modifier.size(40.dp),
+            onClick = { if (voiceEnabled) onVoice() },
+            modifier = Modifier
+                .size(48.dp)
+                .alpha(if (voiceEnabled) 1f else 0.38f),
             shape = CircleShape,
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
             elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
@@ -89,7 +96,8 @@ fun AiInputBar(
             Icon(
                 imageVector = Icons.Default.Mic,
                 contentDescription = "Voice input",
-                modifier = Modifier.size(20.dp)
+                tint = if (voiceEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
+                modifier = Modifier.size(24.dp)
             )
         }
     }

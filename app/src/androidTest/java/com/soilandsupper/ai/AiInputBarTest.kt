@@ -86,4 +86,26 @@ class AiInputBarTest {
         composeTestRule.onNodeWithContentDescription("Send").performClick()
         composeTestRule.onNodeWithText("Ask about your garden...").assertIsDisplayed()
     }
+
+    @Test
+    fun inputBar_loading_disablesInputAndShowsNoSendAction() {
+        var sent = false
+        var voiceClicked = false
+        composeTestRule.setContent {
+            AiInputBar(
+                value = "add a bed",
+                onValueChange = {},
+                onSend = { sent = true },
+                onVoice = { voiceClicked = true },
+                loading = true,
+                enabled = false
+            )
+        }
+
+        composeTestRule.onNodeWithText("add a bed").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Send").performClick()
+        composeTestRule.onNodeWithContentDescription("Voice input").performClick()
+        assert(!sent)
+        assert(!voiceClicked)
+    }
 }
