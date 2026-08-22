@@ -10,9 +10,9 @@
 
 Phase 35I performed a rigorous, independent audit of the Phase 35H approved corpus. The audit corrected critical class-discovery bugs, performed corpus-wide SHA256 deduplication, verified licenses, assessed attribution obligations, and evaluated training readiness.
 
-**Key finding**: The actual usable, deduplicated, correctly-mapped training corpus is **34,399 unique images across 29 Tier-1 classes** — not the previously reported 134,832. The discrepancy is due to:
+**Key finding**: The actual usable, deduplicated, correctly-mapped training corpus is **33,708 unique images across 29 Tier-1 classes** — not the previously reported 134,832. The discrepancy is due to:
 1. Broken class-discovery in 4 major approved datasets (15,879 images were unmapped)
-2. Extensive cross-dataset exact duplication (6,314 duplicate groups)
+2. Extensive cross-dataset exact duplication (5,447 duplicate groups)
 3. Cross-class labeling conflicts (366 conflicting hashes)
 
 **FINAL RECOMMENDATION: NOT READY FOR TRAINING**
@@ -24,6 +24,7 @@ The corpus is commercially clean and properly attributed, but:
 - No train/validation/test split has been designed or verified
 - veg_object_bangla_inbox (3,534 images) cannot be used for classification
 - hf_digigreen (414 images) has no viable class mapping
+- zenodo_vegann (407 images) is a segmentation dataset unsuitable for classification
 
 Training requires explicit human approval after the blockers are resolved.
 
@@ -38,16 +39,16 @@ Training requires explicit human approval after the blockers are resolved.
 | bangladesh_veg_inbox | APPROVED | 1,878 | 1,876 | 1,852 |
 | fruits262_101class_subset | APPROVED | 50,007 | 49,991 | ~4,050* |
 | hf_100crops | APPROVED | 8,358 | 3,489 | 3,489 |
-| hf_digigreen | APPROVED | 839 | 414 | 0 |
+| hf_digigreen | UNSUITABLE | 839 | 414 | 0 |
 | hf_food_ingredients_v2 | APPROVED | 1,001 | 493 | 493 |
 | hf_food_veg | APPROVED | 2,217 | 1,099 | 1,099 |
 | hf_veg_bangladesh | APPROVED | 3,083 | 3,066 | 3,066 |
 | plants_type_30class | APPROVED | 30,001 | 30,000 | 17,000 |
 | plants_type_30class_alt | APPROVED | 30,007 | 29,994 | 16,993 |
 | veg_bangla_inbox | APPROVED | 4,321 | 4,319 | 4,319 |
-| veg_object_bangla_inbox | APPROVED | 7,069 | 3,534 | 0 |
+| veg_object_bangla_inbox | UNSUITABLE | 7,069 | 3,534 | 0 |
 | vegnet_inbox | APPROVED | 6,152 | 6,150 | 6,150 |
-| zenodo_vegann | APPROVED | 422 | 407 | 407 |
+| zenodo_vegann | UNSUITABLE | 422 | 407 | 0 |
 
 * fruits262_101class_subset mapped count is approximate because many of its 101 classes are not in our Tier-1 taxonomy.
 
@@ -71,9 +72,8 @@ Training requires explicit human approval after the blockers are resolved.
 
 | Duplicate Type | Count | Notes |
 |----------------|-------|-------|
-| Exact duplicate groups (all datasets) | 8,552 groups | From ledger SHA256 analysis |
-| Cross-dataset duplicate groups | 6,314 groups | Same image in multiple approved datasets |
-| plants_type_30class ↔ plants_type_30class_alt overlap | 2,953 images | Confirmed via filesystem hashing |
+| Exact duplicate groups (all datasets) | 5,447 groups | From ledger SHA256 analysis |
+| Cross-dataset duplicate groups | 2,953 images | Same image in plants_type_30class and plants_type_30class_alt (same Kaggle source) |
 | Cross-class label conflicts | 366 hashes | Same image labeled as different classes |
 
 ### 2.5 Corrupt/Invalid Exclusions
@@ -112,11 +112,35 @@ From intake pipeline validation:
 - `plants_type_30class` / `plants_type_30class_alt`: The free2aitools metadata index records license as "Data files © Original Authors" rather than CC0. The local manifest records CC0 1.0. The actual Kaggle dataset page must be checked directly.
 - `fruits262_101class_subset`: free2aitools confirms CC0, but direct Kaggle verification is pending.
 
-These datasets are large (59,994 images combined). If their licenses are not actually CC0, they cannot be used commercially.
+**LICENSE CONTRADICTION**:
+- `hf_food_veg`: Dataset README states CC BY 4.0, but Hugging Face YAML metadata lists Apache-2.0. Both licenses permit commercial use; Apache-2.0 does not require attribution.
+
+These datasets are large (59,994 images combined for the two plants_type datasets). If their licenses are not actually CC0, they cannot be used commercially.
 
 ---
 
-## 4. ATTRIBUTION AUDIT
+## 4. INTAKE PIPELINE BUGS
+
+### 4.1 Bugs Discovered During Audit
+
+Four critical bugs were discovered in the Phase 35 intake pipeline that affected class discovery and image counts:
+
+| # | Bug | Root Cause | Impact |
+|---|-----|------------|--------|
+| 1 | Nested wrapper misclassification | Pipeline treated nested dataset directories as class folders instead of unwrapping them | 15,879 images unmapped in 4 datasets |
+| 2 | Hidden directory skipping | Pipeline ignored directories starting with `.` or `_` | Some annotation/metadata directories skipped incorrectly |
+| 3 | Train/test split fragmentation | Pipeline counted train, test, and val splits as separate datasets | Inflated dataset counts and duplicate rates |
+| 4 | Structure mismatch | Pipeline assumed uniform directory structure across all datasets | Classes misaligned in datasets with non-standard layouts |
+
+### 4.2 Bug Impact
+
+- **Corrected class counts**: After fixing bugs, mapped image counts changed significantly for bangladesh_veg_inbox, veg_bangla_inbox, vegnet_inbox, and hf_digigreen.
+- **Duplicate rate correction**: Cross-dataset duplicate count revised from 6,314 to 2,953 (plants_type_30class ↔ plants_type_30class_alt only).
+- **Total duplicate groups**: Corrected from 8,552 to 5,447 across all priority datasets.
+
+---
+
+## 5. ATTRIBUTION AUDIT
 
 ### 4.1 Attribution Required
 
@@ -191,9 +215,9 @@ All approved datasets passed basic readability validation. The excluded images a
 
 | Metric | Pre-Dedup | Post-Dedup |
 |--------|-----------|------------|
-| Total valid images | 134,832 | 38,992 (unique across all classes) |
-| Total mapped images | 79,694 | 34,399 |
-| Unique mapped images | - | 34,399 |
+| Total valid images | ~144,395 | 33,708 (unique across all classes) |
+| Total mapped images | ~79,694 | 33,708 |
+| Unique mapped images | - | 33,708 |
 
 The deduplication reduced the apparent corpus by ~75%. This is primarily because:
 1. plants_type_30class and plants_type_30class_alt share ~3k images
@@ -274,45 +298,46 @@ No ambiguous mappings that would inflate class counts incorrectly.
 
 | Class | Images | Sources | Diversity | Quality | Status |
 |-------|--------|---------|-----------|---------|--------|
-| Pepper | 6,678 | 9 | High | Good | READY |
-| Eggplant | 3,123 | 7 | High | Good | READY |
-| Cucumber | 2,495 | 6 | High | Good | READY |
-| Corn | 2,448 | 5 | High | Good | READY |
-| Onion | 1,319 | 4 | High | Good | READY |
-| Kale | 1,845 | 2 | Moderate | Moderate | READY |
-| Spinach | 1,792 | 2 | Moderate | Moderate | READY |
-| Sweet Potato | 1,754 | 2 | Moderate | Moderate | READY |
-| Watermelon | 1,871 | 2 | Moderate | Moderate | READY |
-| Cantaloupe | 1,827 | 2 | Moderate | Moderate | READY |
-| Bean | 1,010 | 3 | High | Good | READY |
+| Pepper | 6,449 | 8 | High | Good | READY |
+| Eggplant | 2,675 | 7 | High | Good | READY |
+| Cucumber | 2,055 | 6 | High | Good | READY |
+| Corn | 1,837 | 5 | High | Good | READY |
+| Onion | 1,739 | 4 | High | Good | READY |
+| Kale | 1,000 | 2 | Moderate | Moderate | READY |
+| Spinach | 1,000 | 2 | Moderate | Moderate | READY |
+| Sweet Potato | 1,000 | 2 | Moderate | Moderate | READY |
+| Watermelon | 1,000 | 2 | Moderate | Moderate | READY |
+| Cantaloupe | 1,000 | 2 | Moderate | Moderate | READY |
+| Bean | 2,584 | 5 | High | Good | READY |
+| Apple | 1,704 | 4 | High | Good | READY |
+| Tomato | 3,345 | 4 | High | Good | READY |
 
 ### 9.2 Moderate Coverage (500-1,000 images)
 
 | Class | Images | Sources | Diversity | Quality | Status |
 |-------|--------|---------|-----------|---------|--------|
-| Tomato | 3,014 | 4 | High | Good | READY |
-| Potato | 767 | 4 | High | Good | READY |
-| Strawberry | 503 | 2 | Moderate | Moderate | BORDERLINE |
-| Apple | 516 | 2 | Moderate | Moderate | BORDERLINE |
+| Potato | 1,056 | 4 | High | Good | READY |
+| Strawberry | 492 | 2 | Moderate | Moderate | BORDERLINE |
+| Grape | 500 | 1 | Low | Moderate | BORDERLINE |
+| Raspberry / Blackberry | 1,000 | 1 | Low | Moderate | BORDERLINE |
+| Apricot | 500 | 1 | Low | Moderate | BORDERLINE |
+| Pea | 500 | 1 | Low | Moderate | BORDERLINE |
+| Garlic | 499 | 3 | Moderate | Good | BORDERLINE |
 
 ### 9.3 Sparse Coverage (<500 images)
 
 | Class | Images | Sources | Diversity | Quality | Status |
 |-------|--------|---------|-----------|---------|--------|
-| Pea | 450 | 1 | Low | Moderate | BORDERLINE |
-| Grape | 450 | 1 | Low | Moderate | BORDERLINE |
-| Raspberry/Blackberry | 450 | 1 | Low | Moderate | BORDERLINE |
-| Apricot | 450 | 1 | Low | Moderate | BORDERLINE |
 | Radish | 398 | 2 | Moderate | Good | BORDERLINE |
-| Carrot | 353 | 3 | Moderate | Good | BORDERLINE |
-| Broccoli | 256 | 3 | Moderate | Moderate | BORDERLINE |
-| Cauliflower | 170 | 2 | Low | Moderate | NEEDS MORE DATA |
-| Garlic | 147 | 2 | Low | Moderate | NEEDS MORE DATA |
-| Cabbage | 129 | 2 | Low | Moderate | NEEDS MORE DATA |
-| Beet | 92 | 2 | Low | Moderate | NEEDS MORE DATA |
-| Winter Squash/Pumpkin | 34 | 1 | Very Low | Good | NEEDS MORE DATA |
-| Summer Squash/Zucchini | 18 | 1 | Very Low | Good | NEEDS MORE DATA |
-| Blueberry | 40 | 1 | Very Low | Moderate | NEEDS MORE DATA |
+| Carrot | 333 | 3 | Moderate | Good | BORDERLINE |
+| Broccoli | 255 | 3 | Moderate | Moderate | BORDERLINE |
+| Cauliflower | 174 | 2 | Low | Moderate | NEEDS MORE DATA |
+| Cabbage | 139 | 2 | Low | Moderate | NEEDS MORE DATA |
+| Beet | 279 | 3 | Moderate | Good | BORDERLINE |
+| Winter Squash / Pumpkin | 34 | 1 | Very Low | Good | NEEDS MORE DATA |
+| Summer Squash / Zucchini | 18 | 1 | Very Low | Good | NEEDS MORE DATA |
+| Blueberry | 80 | 1 | Very Low | Moderate | NEEDS MORE DATA |
+| Cilantro | 63 | 1 | Very Low | Good | NEEDS MORE DATA |
 
 ---
 
@@ -394,20 +419,20 @@ Also worth investigating:
 | Statistic | Value |
 |-----------|-------|
 | Minimum | 503 (Strawberry) |
-| Maximum | 6,678 (Pepper) |
-| Median | 1,792 |
+| Maximum | 6,449 (Pepper) |
+| Median | 1,704 |
 | Mean | 2,026.6 |
-| Imbalance ratio | 13.2:1 |
+| Imbalance ratio | 12.8:1 |
 
-### 11.3 Broadest 22-Class Distribution
+### 11.3 Broadest 25-Class Distribution
 
 | Statistic | Value |
 |-----------|-------|
-| Minimum | 256 (Broccoli) |
-| Maximum | 6,678 (Pepper) |
-| Median | 1,319 |
-| Mean | 1,960.0 |
-| Imbalance ratio | 26.1:1 |
+| Minimum | 139 (Cabbage) |
+| Maximum | 6,449 (Pepper) |
+| Median | 1,000 |
+| Mean | 1,348.3 |
+| Imbalance ratio | 46.4:1 |
 
 ### 11.4 Training Considerations
 
@@ -417,9 +442,9 @@ For the conservative 15-class model:
 - **Augmentation**: Standard augmentation (flip, rotate, color jitter) sufficient.
 - **Balanced sampling**: Use weighted random sampler or focal loss.
 
-For the broadest 22-class model:
+For the broadest 25-class model:
 - **Class weighting**: Required.
-- **Oversampling**: Required for Broccoli, Carrot, Radish, Pea, Grape, Raspberry/Blackberry, Apricot.
+- **Oversampling**: Required for Cabbage, Broccoli, Carrot, Radish, Beet, Garlic, Strawberry, Pea, Grape, Apricot.
 - **Augmentation**: Aggressive augmentation for sparse classes.
 - **Balanced sampling**: Essential.
 
@@ -433,6 +458,7 @@ For the broadest 22-class model:
 |---------|--------|
 | veg_object_bangla_inbox | Object detection annotations only; no classification labels |
 | hf_digigreen | Disease/disorder dataset; images are `_flat` with no class mapping to Tier-1 crops |
+| zenodo_vegann | Segmentation dataset; RGB images with binary masks, not classification imagery |
 
 ### 12.2 Image Subsets to Exclude
 
@@ -457,11 +483,12 @@ For the broadest 22-class model:
 ### 13.1 Existing Splits
 
 - **plants_type_30class** and **plants_type_30class_alt**: Both contain train/test/val splits. However, they share 2,953 images. Using both splits would create leakage.
+- **fruits262_101class_subset**: Test split uses numeric IDs (0-99) requiring classname.txt mapping for proper evaluation.
 - **Other datasets**: No reliable pre-existing splits verified.
 
 ### 13.2 Leakage Findings
 
-- **Exact cross-split duplicates**: Not explicitly analyzed per dataset, but the 6,314 cross-dataset duplicates include some that may cross splits.
+- **Exact cross-split duplicates**: Not explicitly analyzed per dataset, but the 5,447 cross-dataset duplicates include some that may cross splits.
 - **Near-duplicates**: Not analyzed (would require perceptual hashing).
 - **Source leakage**: The two 30-class datasets share images. If both are used, their splits must be merged and re-split.
 
@@ -485,53 +512,54 @@ For the broadest 22-class model:
 
 ## 14. FINAL TAXONOMY RECOMMENDATION
 
-### 14.1 Recommended: Broadest Responsible First Model — 22 Classes
+### 14.1 Recommended: Broadest Responsible First Model — 25 Classes (17 Vegetables + 8 Fruits)
 
-After weighing all evidence (image count, source diversity, label quality, real-world usefulness, commercial cleanliness), the broadest responsible first-model taxonomy is **22 classes**.
+After weighing all evidence (image count, source diversity, label quality, real-world usefulness, commercial cleanliness), the broadest responsible first-model taxonomy is **25 classes**.
 
-**Vegetables (15)**
-1. Pepper
-2. Eggplant
-3. Cucumber
-4. Corn
-5. Onion
-6. Tomato
-7. Kale
-8. Spinach
-9. Sweet Potato
-10. Watermelon
-11. Cantaloupe
-12. Bean
-13. Potato
-14. Carrot
-15. Broccoli
+**Vegetables (17)**
+1. Pepper — 6,449 images, 8 sources
+2. Eggplant — 2,675 images, 7 sources
+3. Cucumber — 2,055 images, 6 sources
+4. Corn — 1,837 images, 5 sources
+5. Onion — 1,739 images, 4 sources
+6. Tomato — 3,345 images, 4 sources
+7. Bean — 2,584 images, 5 sources
+8. Kale — 1,000 images, 2 sources
+9. Spinach — 1,000 images, 2 sources
+10. Sweet Potato — 1,000 images, 2 sources
+11. Watermelon — 1,000 images, 2 sources
+12. Cantaloupe — 1,000 images, 2 sources
+13. Apple — 1,704 images, 4 sources
+14. Potato — 1,056 images, 4 sources
+15. Carrot — 333 images, 3 sources
+16. Broccoli — 255 images, 3 sources
+17. Garlic — 499 images, 3 sources
 
-**Fruits (7)**
-16. Apple
-17. Strawberry
-18. Grape
-19. Raspberry / Blackberry
-20. Apricot
-21. Pea
-22. Radish
+**Fruits (8)**
+18. Strawberry — 492 images, 2 sources
+19. Grape — 500 images, 1 source
+20. Raspberry / Blackberry — 1,000 images, 1 source
+21. Apricot — 500 images, 1 source
+22. Pea — 500 images, 1 source
+23. Radish — 398 images, 2 sources
+24. Beet — 279 images, 3 sources
+25. Cabbage — 139 images, 2 sources
 
 **Rationale**:
-- All 22 classes have 256+ unique images after dedup
-- All have at least 2 independent sources (except Pea, Grape, Raspberry/Blackberry, Apricot which have 1 source each)
+- All 25 classes have 139+ unique images after dedup
+- Most have at least 2 independent sources
 - All represent common garden crops with real-world utility
 - Label mappings are consistent and well-understood
 - Commercial licenses are verified or under review
-- The 15-class conservative model is a fallback if the 22-class model proves unstable
+- The 15-class conservative model is a fallback if the 25-class model proves unstable
+- Cauliflower (174 images) was considered but Cabbage (139 images) was selected for broader brassica coverage
 
 ### 14.2 Classes Excluded from V1
 
 | Class | Images | Reason for Exclusion |
 |-------|--------|---------------------|
-| Blueberry | 40 | Too few images, single source |
-| Beet | 92 | Too few images |
-| Cabbage | 129 | Too few images |
-| Garlic | 147 | Too few images |
-| Cauliflower | 170 | Too few images |
+| Blueberry | 80 | Too few images, single source |
+| Cauliflower | 174 | Too few images |
 | Summer Squash/Zucchini | 18 | Too few images |
 | Winter Squash/Pumpkin | 34 | Too few images |
 | Brussels Sprouts | 0 | No data |
@@ -545,7 +573,6 @@ After weighing all evidence (image count, source diversity, label quality, real-
 | Plum | 0 | No data |
 | Nectarine | 0 | No data |
 | Basil | 0 | No data |
-| Cilantro | 0 | No data |
 | Parsley | 0 | No data |
 | Dill | 0 | No data |
 | Chives | 0 | No data |
@@ -561,19 +588,30 @@ After weighing all evidence (image count, source diversity, label quality, real-
 
 ## 15. DATA ACQUISITION GAPS
 
-### 15.1 Prioritized Acquisition List
+### 15.1 Prioritized Acquisition List (Post-V1)
+
+The following classes are excluded from V1 and require additional data before inclusion:
 
 | Priority | Class | Current Count | Source Diversity | Why Insufficient | Desired Count | Image Type | Preferred License |
 |----------|-------|---------------|------------------|------------------|---------------|------------|-------------------|
-| 1 | Blueberry | 40 | 1 | Far below minimum for reliable training | 500 | Field/garden photos | CC BY 4.0 or CC0 |
+| 1 | Blueberry | 80 | 1 | Below minimum for reliable training | 500 | Field/garden photos | CC BY 4.0 or CC0 |
 | 2 | Summer Squash/Zucchini | 18 | 1 | Near-zero coverage | 500 | Field/garden photos | CC BY 4.0 or CC0 |
 | 3 | Winter Squash/Pumpkin | 34 | 1 | Near-zero coverage | 500 | Field/garden photos | CC BY 4.0 or CC0 |
-| 4 | Beet | 92 | 2 | Very sparse | 300 | Field/garden photos | CC BY 4.0 or CC0 |
-| 5 | Cabbage | 129 | 2 | Very sparse | 300 | Field/garden photos | CC BY 4.0 or CC0 |
-| 6 | Garlic | 147 | 2 | Very sparse | 300 | Field/garden photos | CC BY 4.0 or CC0 |
-| 7 | Cauliflower | 170 | 2 | Very sparse | 300 | Field/garden photos | CC BY 4.0 or CC0 |
-| 8 | Carrot | 353 | 3 | Below 500 threshold | 500 | Field/garden photos | CC BY 4.0 or CC0 |
-| 9 | Broccoli | 256 | 3 | Below 500 threshold | 500 | Field/garden photos | CC BY 4.0 or CC0 |
+| 4 | Cauliflower | 174 | 2 | Very sparse | 300 | Field/garden photos | CC BY 4.0 or CC0 |
+
+### 15.2 Classes Included in V1 Despite Sparse Data
+
+The following classes are included in the 25-class V1 model but have sparse coverage. They require targeted augmentation and class weighting during training:
+
+| Class | V1 Count | Status | Mitigation |
+|-------|----------|--------|------------|
+| Cabbage | 139 | Sparse | Aggressive augmentation, class weighting |
+| Broccoli | 255 | Sparse | Augmentation, class weighting |
+| Beet | 279 | Moderate | Standard augmentation, class weighting |
+| Carrot | 333 | Moderate | Standard augmentation, class weighting |
+| Radish | 398 | Moderate | Standard augmentation, class weighting |
+| Garlic | 499 | Moderate | Standard augmentation, class weighting |
+| Strawberry | 492 | Moderate | Standard augmentation, class weighting |
 
 ---
 
@@ -585,9 +623,10 @@ Before training can proceed, the following must be resolved:
 2. **Cross-class conflict resolution**: Determine policy for 366 conflicting hashes (exclude, assign to one class, or investigate source).
 3. **veg_object_bangla_inbox**: Either extract class labels from XML annotations or exclude 3,534 images.
 4. **hf_digigreen**: Either manually label 414 disease images or exclude them.
-5. **Train/val/test split design**: Implement stratified, source-aware split with duplicate-group handling.
-6. **Class imbalance mitigation**: Decide on class weighting, oversampling, or focal loss strategy.
-7. **Human approval**: Explicit human sign-off required before any model training.
+5. **zenodo_vegann**: Exclude 407 segmentation images or convert masks to classification labels.
+6. **Train/val/test split design**: Implement stratified, source-aware split with duplicate-group handling.
+7. **Class imbalance mitigation**: Decide on class weighting, oversampling, or focal loss strategy.
+8. **Human approval**: Explicit human sign-off required before any model training.
 
 ---
 
@@ -598,11 +637,14 @@ Before training can proceed, the following must be resolved:
 | `training/phase35i_audit.py` | Created | Initial fast audit script |
 | `training/phase35i_correct_mappings.py` | Created | Class mapping correction script |
 | `training/phase35i_dedup_counts.py` | Created | Deduplicated class count computation |
-| `training_data/manifests/phase35i_audit_summary.json` | Created | Duplicate analysis summary |
-| `training_data/manifests/phase35i_class_coverage_corrected.json` | Created | Pre-dedup corrected coverage |
-| `training_data/manifests/phase35i_class_coverage_deduped.json` | Created | Post-dedup final coverage |
-| `training_data/manifests/phase35i_conflicts.json` | Created | Cross-class conflict records |
-| `training_data/manifests/phase35i_dataset_summaries.json` | Created | Dataset-level summaries |
+| `training_data/manifests/phase35i_audit_results.json` | Created | Audit results cache |
+| `training_data/manifests/phase35i_corrected_coverage.json` | Created | Corrected Tier-1 class coverage |
+| `training_data/manifests/phase35i_duplicates.json` | Created | SHA256 duplicate analysis (5,447 groups) |
+| `training_data/manifests/phase35d_dataset_ledger.jsonl` | Created | Original (buggy) manifests |
+| `training_data/manifests/phase35d_class_coverage.json` | Created | Original (buggy) coverage |
+| `training_data/manifests/phase35d_gap_report.json` | Created | Original gap report |
+| `docs/ML_DATASET_ATTRIBUTIONS.md` | Updated | Verified attribution for all 13 approved datasets; marked 3 unsuitable for V1 |
+| `docs/ML_PHASE35I_TRAINING_READINESS.md` | Created | This report |
 
 ---
 
@@ -611,12 +653,13 @@ Before training can proceed, the following must be resolved:
 **NOT READY FOR TRAINING**
 
 The corpus is commercially clean and properly attributed, but:
-- Only 34,399 unique mapped images across 29 classes (not 134,832)
+- Only 33,708 unique mapped images across 29 classes (not 134,832)
 - 7 classes have fewer than 200 images
 - 366 images have unresolved cross-class label conflicts
 - No verified train/validation/test split exists
 - 3,534 images from veg_object_bangla_inbox are unusable
 - 414 images from hf_digigreen are unmapped
+- 407 images from zenodo_vegann are segmentation masks, not classification imagery
 - 3 Kaggle datasets require direct license verification
 
 **Next steps**: Resolve blockers, design clean split, obtain explicit human approval, then proceed to Phase 36 model training.
