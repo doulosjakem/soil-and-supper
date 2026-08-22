@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.soilandsupper.util.epochMillis
 import com.soilandsupper.util.formatDate
@@ -65,6 +67,8 @@ fun DateScrubber(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
+                .semantics { contentDescription = "Select garden date" },
+            valueRange = 0f..1f
         )
 
         Row(

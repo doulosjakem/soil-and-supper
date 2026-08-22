@@ -43,8 +43,8 @@ class AIOrchestrator(
 
         return when (interpretation) {
             is AIInterpretation.InformationalAnswer -> AIResponse(message = interpretation.message)
-            is AIInterpretation.RecognitionResult -> AIResponse(
-                message = "Recognized: ${interpretation.recognized} (confidence: ${interpretation.confidence})"
+             is AIInterpretation.RecognitionResult -> AIResponse(
+                message = interpretation.recognized
             )
             is AIInterpretation.Uncertainty -> AIResponse(
                 message = "I'm not sure: ${interpretation.reason}",
@@ -111,7 +111,11 @@ class AIOrchestrator(
 
         val message = buildString {
             if (results.isNotEmpty()) {
-                appendLine("Executed ${results.size} command(s).")
+                if (results.size == 1) {
+                    appendLine("Done:")
+                } else {
+                    appendLine("Did ${results.size} things:")
+                }
                 results.forEach { appendLine("- ${it.message}") }
             }
             if (failures.isNotEmpty()) {

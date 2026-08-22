@@ -287,7 +287,7 @@ class AIOrchestratorTest {
             )
         )
 
-        assertTrue(response.message.contains("Executed 1 command(s)"))
+        assertTrue(response.message.contains("Done:"))
     }
 
     @Test

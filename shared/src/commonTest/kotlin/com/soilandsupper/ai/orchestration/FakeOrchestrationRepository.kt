@@ -84,6 +84,7 @@ class FakeOrchestrationRepository(
     override suspend fun insertPhoto(photo: PlantPhoto): Long { return 0 }
     override suspend fun deletePhoto(photo: PlantPhoto) {}
     override fun getJournalEntriesForPlant(plantId: Long): Flow<List<JournalEntry>> = flowOf(emptyList())
+    override suspend fun getJournalEntryById(id: Long): JournalEntry? = null
     override suspend fun insertJournalEntry(entry: JournalEntry): Long { return 0 }
     override suspend fun updateJournalEntry(entry: JournalEntry) {}
     override suspend fun deleteJournalEntry(entry: JournalEntry) {}
