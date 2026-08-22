@@ -445,6 +445,52 @@ class GardenCommandArchitectureTest {
     }
 
     @Test
+    fun `record observation for plant is isolated by plantId`() = runBlocking {
+        repository = FakeGardenRepository(
+            initialPlants = listOf(
+                Plant(id = 1L, name = "Tomato", plantingDate = epochMillis(2026, 5, 1)),
+                Plant(id = 2L, name = "Pepper", plantingDate = epochMillis(2026, 5, 1))
+            ),
+            initialSpaces = listOf(GrowingSpace(id = 1L, name = "Bed 1")),
+            initialOccupancies = emptyList(),
+            initialJournalEntries = emptyList()
+        )
+        history = InMemoryCommandHistory()
+        executor = DefaultCommandExecutor(DefaultCommandValidator(), history)
+
+        executor.execute(
+            GardenCommand.RecordObservation(
+                plantId = 1L,
+                text = "Tomato observation",
+                date = epochMillis(2026, 7, 1)
+            ),
+            repository
+        )
+        executor.execute(
+            GardenCommand.RecordObservation(
+                plantId = 2L,
+                text = "Pepper observation",
+                date = epochMillis(2026, 7, 2)
+            ),
+            repository
+        )
+
+        var plant1Entries: List<JournalEntry> = emptyList()
+        (repository as PlantRepository).getJournalEntriesForPlant(1L).collect { plant1Entries = it }
+        assertEquals(1, plant1Entries.size)
+        assertEquals("Tomato observation", plant1Entries.first().text)
+
+        var plant2Entries: List<JournalEntry> = emptyList()
+        (repository as PlantRepository).getJournalEntriesForPlant(2L).collect { plant2Entries = it }
+        assertEquals(1, plant2Entries.size)
+        assertEquals("Pepper observation", plant2Entries.first().text)
+
+        var unlinkedEntries: List<JournalEntry> = emptyList()
+        (repository as PlantRepository).getJournalEntriesForPlant(999L).collect { unlinkedEntries = it }
+        assertTrue(unlinkedEntries.isEmpty())
+    }
+
+    @Test
     fun `harvest crop with invalid occupancy is rejected`() = runBlocking {
         val result = executor.execute(
             GardenCommand.HarvestCrop(

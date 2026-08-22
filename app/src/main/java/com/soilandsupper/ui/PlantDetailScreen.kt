@@ -36,6 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
+import com.soilandsupper.ai.command.CommandExecutor
+import com.soilandsupper.ai.command.GardenCommand
 import com.soilandsupper.data.repository.GardenRepository
 import com.soilandsupper.shared.domain.model.Harvest
 import com.soilandsupper.shared.domain.model.JournalEntry
@@ -50,7 +52,8 @@ import java.util.Locale
 fun PlantDetailScreen(
     plantId: Long,
     onBack: () -> Unit,
-    repository: GardenRepository
+    repository: GardenRepository,
+    commandExecutor: CommandExecutor
 ) {
     var plant by remember { mutableStateOf<Plant?>(null) }
     var photos by remember { mutableStateOf<List<PlantPhoto>>(emptyList()) }
@@ -141,7 +144,7 @@ fun PlantDetailScreen(
                         onClick = { showAddJournal = true },
                         modifier = Modifier.size(48.dp)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add journal entry")
+                        Icon(Icons.Default.Add, contentDescription = "Add observation")
                     }
                 }
             }
@@ -151,18 +154,20 @@ fun PlantDetailScreen(
                     OutlinedTextField(
                         value = newJournalText,
                         onValueChange = { newJournalText = it },
-                        label = { Text("Journal entry") },
+                        label = { Text("Observation") },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = {
                             if (newJournalText.isNotBlank()) {
                                 scope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                                    repository.insertJournalEntry(
-                                        JournalEntry(
-                                            plantId = plantId,
-                                            text = newJournalText
-                                        )
+                                    commandExecutor.execute(
+                                        GardenCommand.RecordObservation(
+                                            text = newJournalText,
+                                            date = System.currentTimeMillis(),
+                                            plantId = plantId
+                                        ),
+                                        repository
                                     )
                                 }
                                 newJournalText = ""
@@ -181,15 +186,24 @@ fun PlantDetailScreen(
                 }
             }
 
-            items(journalEntries) { entry ->
-                JournalEntryItem(
-                    entry = entry,
-                    onDelete = {
-                        scope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                            repository.deleteJournalEntry(entry)
+            if (journalEntries.isEmpty()) {
+                item {
+                    Text(
+                        text = "No observations yet",
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+            } else {
+                items(journalEntries) { entry ->
+                    JournalEntryItem(
+                        entry = entry,
+                        onDelete = {
+                            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                                repository.deleteJournalEntry(entry)
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
 
             item {

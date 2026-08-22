@@ -1,6 +1,7 @@
 package com.soilandsupper.ui
 
 import com.soilandsupper.repository.GardenRepository
+import com.soilandsupper.repository.PlantRepository
 import com.soilandsupper.shared.domain.model.Desire
 import com.soilandsupper.shared.domain.model.Garden
 import com.soilandsupper.shared.domain.model.GrowingSpace
@@ -14,26 +15,39 @@ import com.soilandsupper.shared.domain.model.Seed
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 
 class FakeGardenRepository(
     private val initialGardens: List<Garden> = emptyList(),
     private val initialSpaces: List<GrowingSpace> = emptyList(),
     private val initialSeeds: List<Seed> = emptyList(),
     private val initialDesires: List<Desire> = emptyList(),
-    private val initialOccupancies: List<Occupancy> = emptyList()
-) : GardenRepository {
+    private val initialOccupancies: List<Occupancy> = emptyList(),
+    private val initialPlants: List<Plant> = emptyList(),
+    private val initialHarvests: List<Harvest> = emptyList(),
+    private val initialJournalEntries: List<JournalEntry> = emptyList(),
+    private val initialPhotos: List<PlantPhoto> = emptyList()
+) : GardenRepository, PlantRepository {
 
     private val gardensFlow = MutableStateFlow(initialGardens)
     private val spacesFlow = MutableStateFlow(initialSpaces)
     private val seedsFlow = MutableStateFlow(initialSeeds)
     private val desiresFlow = MutableStateFlow(initialDesires)
     private val occupanciesFlow = MutableStateFlow(initialOccupancies)
+    private val plantsFlow = MutableStateFlow(initialPlants)
+    private val harvestsFlow = MutableStateFlow(initialHarvests)
+    private val journalEntriesFlow = MutableStateFlow(initialJournalEntries)
+    private val photosFlow = MutableStateFlow(initialPhotos)
 
     fun setGardens(gardens: List<Garden>) { gardensFlow.value = gardens }
     fun setSpaces(spaces: List<GrowingSpace>) { spacesFlow.value = spaces }
     fun setSeeds(seeds: List<Seed>) { seedsFlow.value = seeds }
     fun setDesires(desires: List<Desire>) { desiresFlow.value = desires }
     fun setOccupancies(occupancies: List<Occupancy>) { occupanciesFlow.value = occupancies }
+    fun setPlants(plants: List<Plant>) { plantsFlow.value = plants }
+    fun setHarvests(harvests: List<Harvest>) { harvestsFlow.value = harvests }
+    fun setJournalEntries(entries: List<JournalEntry>) { journalEntriesFlow.value = entries }
+    fun setPhotos(photos: List<PlantPhoto>) { photosFlow.value = photos }
 
     override fun getAllGardens(): Flow<List<Garden>> = gardensFlow.asStateFlow()
     override suspend fun getGardenById(id: Long): Garden? = initialGardens.firstOrNull { it.id == id }
@@ -73,8 +87,34 @@ class FakeGardenRepository(
     override fun getAllPlannedPlantings(): Flow<List<PlannedPlanting>> = throw UnsupportedOperationException()
     override suspend fun getPlannedPlantingById(id: Long): PlannedPlanting? = throw UnsupportedOperationException()
     override fun getPlannedPlantingsForGarden(gardenId: Long): Flow<List<PlannedPlanting>> = throw UnsupportedOperationException()
-    override fun getPlannedPlantingsForSpace(spaceId: Long): Flow<List<PlannedPlanting>> = throw UnsupportedOperationException()
     override suspend fun insertPlannedPlanting(plan: PlannedPlanting): Long = throw UnsupportedOperationException()
-    override suspend fun updatePlannedPlanting(plan: PlannedPlanting) { throw UnsupportedOperationException() }
-    override suspend fun deletePlannedPlanting(plan: PlannedPlanting) { throw UnsupportedOperationException() }
+    override suspend fun updatePlannedPlanting(plan: PlannedPlanting) = throw UnsupportedOperationException()
+    override suspend fun deletePlannedPlanting(plan: PlannedPlanting) = throw UnsupportedOperationException()
+    override fun getPlannedPlantingsForSpace(spaceId: Long): Flow<List<PlannedPlanting>> = throw UnsupportedOperationException()
+
+    override fun getAllPlants(): Flow<List<Plant>> = plantsFlow.asStateFlow()
+    override suspend fun getPlantById(id: Long): Plant? = initialPlants.firstOrNull { it.id == id }
+    override suspend fun insertPlant(plant: Plant): Long = throw UnsupportedOperationException()
+    override suspend fun updatePlant(plant: Plant) { throw UnsupportedOperationException() }
+    override suspend fun deletePlant(plant: Plant) { throw UnsupportedOperationException() }
+
+    override fun getPhotosForPlant(plantId: Long): Flow<List<PlantPhoto>> = throw UnsupportedOperationException()
+    override suspend fun insertPhoto(photo: PlantPhoto) = throw UnsupportedOperationException()
+    override suspend fun deletePhoto(photo: PlantPhoto) = throw UnsupportedOperationException()
+
+    override fun getJournalEntriesForPlant(plantId: Long): Flow<List<JournalEntry>> =
+        journalEntriesFlow.map { entries -> entries.filter { it.plantId == plantId } }
+
+    override suspend fun getJournalEntryById(id: Long): JournalEntry? =
+        journalEntriesFlow.value.firstOrNull { it.id == id }
+
+    override suspend fun insertJournalEntry(entry: JournalEntry): Long = throw UnsupportedOperationException()
+    override suspend fun updateJournalEntry(entry: JournalEntry) = throw UnsupportedOperationException()
+    override suspend fun deleteJournalEntry(entry: JournalEntry) = throw UnsupportedOperationException()
+
+    override fun getAllHarvests(): Flow<List<Harvest>> = throw UnsupportedOperationException()
+    override fun getHarvestsForPlant(plantId: Long): Flow<List<Harvest>> = throw UnsupportedOperationException()
+    override suspend fun insertHarvest(harvest: Harvest): Long = throw UnsupportedOperationException()
+    override suspend fun updateHarvest(harvest: Harvest) = throw UnsupportedOperationException()
+    override suspend fun deleteHarvest(harvest: Harvest) = throw UnsupportedOperationException()
 }

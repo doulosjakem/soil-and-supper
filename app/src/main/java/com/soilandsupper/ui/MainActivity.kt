@@ -95,7 +95,8 @@ class MainActivity : ComponentActivity() {
                     AppNavigation(
                         repository = repository,
                         plantIdentifier = plantIdentifier,
-                        orchestrator = orchestrator
+                        orchestrator = orchestrator,
+                        commandExecutor = executor
                     )
                 }
             }
@@ -108,7 +109,8 @@ class MainActivity : ComponentActivity() {
 fun AppNavigation(
     repository: GardenRepository,
     plantIdentifier: MockPlantIdentifier,
-    orchestrator: AIOrchestrator
+    orchestrator: AIOrchestrator,
+    commandExecutor: com.soilandsupper.ai.command.CommandExecutor
 ) {
     val navController = rememberNavController()
     val navBackStackEntry = navController.currentBackStackEntryAsState()
@@ -225,7 +227,8 @@ fun AppNavigation(
                     PlantDetailScreen(
                         plantId = plantId,
                         onBack = { navController.popBackStack() },
-                        repository = repository
+                        repository = repository,
+                        commandExecutor = commandExecutor
                     )
                 }
             }
