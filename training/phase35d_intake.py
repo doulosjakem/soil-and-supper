@@ -452,12 +452,18 @@ def process_dataset(dataset_dir: Path, dataset_info: Dict, core_hashes: Set[str]
                 if class_dirs:
                     break
 
-    if not class_dirs:
-        for item in dataset_dir.iterdir():
-            if item.is_dir() and not item.name.startswith(".") and item.name in skip_dirs:
-                found = find_class_dirs(item)
-                if found:
-                    class_dirs.extend(found)
+    processed_parents = set()
+    if class_dirs:
+        processed_parents.add(class_dirs[0].parent.resolve())
+
+    for item in dataset_dir.iterdir():
+        if item.is_dir() and not item.name.startswith(".") and item.name in skip_dirs:
+            if item.resolve() in processed_parents:
+                continue
+            found = find_class_dirs(item)
+            if found:
+                class_dirs.extend(found)
+                processed_parents.add(item.resolve())
 
     if class_dirs:
         report["classes_discovered"] = sorted([d.name for d in class_dirs])
